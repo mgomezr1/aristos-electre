@@ -57,23 +57,24 @@ El fondo es un azul petróleo profundo. Dos colores tienen significado dentro de
 
 ## 5. Exportación a Excel
 
-El libro tiene cinco hojas:
+El libro tiene seis hojas:
 
 - Menú. Datos del análisis y un índice con enlaces a las demás hojas.
 - Decisión. La matriz de decisión, el mínimo y el máximo por criterio, y la matriz normalizada. Los mínimos, máximos y la normalización están escritos como fórmulas reales de Excel, de modo que el estudiante puede seguir el cálculo celda por celda.
 - Concordancia. El índice de concordancia entre cada par de alternativas.
 - Discordancia. El índice de discordancia entre cada par.
-- Resultado. El núcleo en ELECTRE I o el ranking en ELECTRE II.
+- Núcleo ELECTRE I. La relación de superación entre cada par y el núcleo de alternativas no superadas.
+- Ranking ELECTRE II. El ranking completo de mejor a peor.
 
 Los porcentajes se muestran con dos decimales. Cuando los datos son de prueba, el nombre del archivo lleva el prefijo PRUEBA y la hoja Menú lo advierte.
 
 ## 6. Informe ejecutivo en PDF
 
-El PDF se genera con código propio en JavaScript, sin bibliotecas, por lo que funciona sin conexión. Su estructura es:
+El PDF se genera con código propio en JavaScript, sin bibliotecas, por lo que funciona sin conexión. El informe presenta los resultados de las dos variantes, sin importar cuál se haya elegido como principal. Su estructura es:
 
-- Recomendación.
+- Recomendación, con el resultado de ELECTRE I y el de ELECTRE II.
 - Estructura del modelo, con la tabla de criterios, sentidos y pesos.
-- Resultados principales, con la tabla del núcleo o del ranking.
+- Resultados principales, con la tabla del núcleo de ELECTRE I y la tabla del ranking de ELECTRE II.
 - Robustez de la recomendación, si se ejecutó el análisis de sensibilidad.
 - Nota metodológica.
 - Referencias en APA 7.
@@ -119,6 +120,10 @@ La alternativa a supera a b cuando se cumplen dos condiciones a la vez:
     C(a, b) >= c*    y    D(a, b) <= d*
 
 donde c* es el umbral de concordancia y d* el de discordancia. En el modo de veto por criterio, la segunda condición se sustituye por la ausencia de veto: a no supera a b si en algún criterio la desventaja de a, medida en las unidades propias de ese criterio, supera el umbral de veto v(j) de ese criterio.
+
+### Umbrales recomendados
+
+La aplicación ofrece una opción recomendada para fijar los umbrales, siguiendo la práctica clásica del método: c* se toma como el promedio de los elementos de la matriz de concordancia, y d* como el promedio de los elementos de la matriz de discordancia. En ambos casos el promedio se calcula sobre los elementos fuera de la diagonal. En el paso 2, una vez completa la matriz de decisión, el botón «Calcular umbrales recomendados» los aplica. Conviene después someterlos al análisis de sensibilidad del paso 4, porque siguen siendo valores de referencia y no constantes universales.
 
 ### Núcleo
 

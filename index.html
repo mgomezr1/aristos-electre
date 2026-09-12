@@ -770,6 +770,10 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
 .tabla-criterios .cc-etq { font-size: 0.78rem; color: var(--texto-3); }
 
 
+
+.titulo-variante { display: flex; align-items: center; gap: 0.6rem; font-size: 1.15rem; margin-top: 0.4rem; }
+.chip-principal { background: var(--argos); color: #0A1A24; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+
 /* Complementos de resultados */
 .tabla-titulo { text-align: left; font-size: 0.92rem; font-weight: 650; color: var(--texto-2); padding: 0 0 0.6rem; caption-side: top; }
 .doble-columna { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.4rem; }
@@ -880,6 +884,7 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
     <!-- Umbrales, dependientes de la variante -->
     <div id="umbralesI" class="bloque-umbrales">
       <h3 class="titulo-menor">Umbrales de ELECTRE I</h3>
+      <p class="ayuda ayuda--bloque">Opción recomendada: en el paso 2, una vez llena la matriz, pulse «Calcular umbrales recomendados». La aplicación fija c* como el promedio de los elementos de la matriz de concordancia y d* como el promedio de los de la discordancia, siguiendo la práctica clásica del método. Conviene después someterlos al análisis de sensibilidad del paso 4.</p>
       <div class="rejilla-config">
         <div class="campo">
           <label for="cEstrella">Umbral de concordancia c*</label>
@@ -976,6 +981,7 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
 
     <div class="acciones-seccion">
       <button type="button" id="cargarEjemplo" class="boton boton--suave">Cargar datos de prueba</button>
+      <button type="button" id="umbralesSugeridos" class="boton boton--suave">Calcular umbrales recomendados</button>
       <button type="button" id="calcularResultados" class="boton boton--principal">Calcular</button>
     </div>
     <div class="mensaje" id="mensajeDatos" role="status" aria-live="polite" hidden></div>
@@ -1333,6 +1339,29 @@ function electreII(d) {
 /** Punto de entrada del cálculo según la variante configurada. */
 function calcularElectre(d) { return d.variante === "II" ? electreII(d) : electreI(d); }
 
+/** Promedio de los elementos fuera de la diagonal de una matriz cuadrada. */
+function promedioFueraDiagonal(M) {
+  let suma = 0, cuenta = 0;
+  for (let a = 0; a < M.length; a++) for (let b = 0; b < M.length; b++) {
+    if (a === b || M[a][b] === null || M[a][b] === undefined) continue;
+    suma += M[a][b]; cuenta++;
+  }
+  return cuenta === 0 ? 0 : suma / cuenta;
+}
+
+/**
+ * Umbrales recomendados según la práctica clásica de ELECTRE:
+ * c* es el promedio de los elementos de la matriz de concordancia y
+ * d* el promedio de los elementos de la matriz de discordancia.
+ * Requiere la matriz de decisión completa.
+ */
+function umbralesRecomendados(datos) {
+  const orientada = normalizarDecision(datos.matriz, datos.sentidos, datos.normalizacion);
+  const C = matrizConcordancia(orientada, datos.pesos);
+  const D = matrizDiscordanciaGlobal(orientada);
+  return { cEstrella: promedioFueraDiagonal(C), dEstrella: promedioFueraDiagonal(D) };
+}
+
 /* -------------------------------------------------------------------------
    3. UTILIDADES DE FORMATO Y MENSAJES
    ------------------------------------------------------------------------- */
@@ -1663,6 +1692,40 @@ function construirTablaVetos() {
 }
 
 /** Datos de prueba coherentes, marcados como tales. */
+/** Calcula y aplica los umbrales recomendados a partir de la matriz actual. */
+function aplicarUmbralesRecomendados() {
+  const problemas = validarDatos();
+  if (problemas.length) {
+    mostrarMensaje("mensajeDatos", "Para calcular los umbrales recomendados, primero complete la matriz de decisión y los pesos. " + problemas[0], "advertencia");
+    return;
+  }
+  const datos = {
+    matriz: estado.matriz.map((f) => f.map(Number)),
+    pesos: estado.pesos.map(Number), sentidos: estado.sentidos.slice(),
+    normalizacion: estado.normalizacion
+  };
+  const rec = umbralesRecomendados(datos);
+  if (estado.variante === "I") {
+    estado.umbrales.cEstrella = Number(rec.cEstrella.toFixed(4));
+    estado.umbrales.dEstrella = Number(rec.dEstrella.toFixed(4));
+    $("cEstrella").value = estado.umbrales.cEstrella;
+    if (estado.modoVeto !== "criterio") $("dEstrella").value = estado.umbrales.dEstrella;
+  } else {
+    // En ELECTRE II se sugiere centrar los dos niveles alrededor del promedio.
+    const c = rec.cEstrella, d = rec.dEstrella;
+    estado.umbrales.c1 = Number(Math.min(1, c + 0.10).toFixed(4));
+    estado.umbrales.c2 = Number(Math.max(0, c - 0.05).toFixed(4));
+    estado.umbrales.d1 = Number(Math.max(0, d - 0.10).toFixed(4));
+    estado.umbrales.d2 = Number(Math.min(1, d + 0.10).toFixed(4));
+    $("c1").value = estado.umbrales.c1; $("c2").value = estado.umbrales.c2;
+    $("d1").value = estado.umbrales.d1; $("d2").value = estado.umbrales.d2;
+  }
+  const texto = estado.variante === "I"
+    ? "Umbrales recomendados aplicados: c* = " + conDecimales(rec.cEstrella, 4) + " (promedio de la concordancia) y d* = " + conDecimales(rec.dEstrella, 4) + " (promedio de la discordancia). Puede ajustarlos y conviene revisarlos en el análisis de sensibilidad."
+    : "Umbrales recomendados aplicados alrededor del promedio de concordancia (" + conDecimales(rec.cEstrella, 4) + ") y de discordancia (" + conDecimales(rec.dEstrella, 4) + "). Puede ajustarlos en el paso 1.";
+  mostrarMensaje("mensajeDatos", texto, "info");
+}
+
 function cargarDatosPrueba() {
   const nA = estado.numAlternativas, nC = estado.numCriterios;
   estado.nombresAlternativas = Array.from({ length: nA }, (_, i) => "Proveedor " + String.fromCharCode(65 + i));
@@ -1718,8 +1781,11 @@ function calcularYMostrar() {
     modoVeto: estado.modoVeto, vetos: estado.vetos.map((v) => (v === "" ? null : Number(v))),
     umbrales: Object.assign({}, estado.umbrales)
   };
-  estado.resultados = calcularElectre(datos);
-  estado.resultados.datos = datos;
+  // Se calculan ambas variantes para que el informe muestre todos los resultados,
+  // sin importar cuál se eligió como principal.
+  estado.resultadosI = electreI(datos); estado.resultadosI.datos = datos;
+  estado.resultadosII = electreII(datos); estado.resultadosII.datos = datos;
+  estado.resultados = estado.variante === "II" ? estado.resultadosII : estado.resultadosI;
   ocultarMensaje("mensajeDatos");
   estado.sensibilidad = null;
   renderizarResultados();
@@ -1829,58 +1895,67 @@ function grafoSuperacion(S, destacados) {
 
 /** Renderiza toda la sección de resultados. */
 function renderizarResultados() {
-  const r = estado.resultados;
+  const rI = estado.resultadosI;
+  const rII = estado.resultadosII;
   const cont = $("contenedorResultados");
+  const principal = estado.variante;
   const marcaPrueba = estado.origen === "prueba"
     ? '<div class="mensaje mensaje--advertencia" role="note">Resultados calculados con datos de prueba generados por la aplicación. No representan un caso real.</div>'
     : "";
 
   let html = marcaPrueba + '<div class="panel">';
 
+  // Nota sobre el informe completo
+  html += '<div class="mensaje mensaje--info" role="note">Este informe muestra los resultados de las dos variantes. La variante elegida en el paso 1 fue ELECTRE ' + principal + ', que aparece señalada como principal.</div>';
+
   // Matrices de concordancia y discordancia (comunes a ambas variantes)
-  html += tablaIndice(r.C, "Tabla 1. Índice de concordancia C(a, b)", "Proporción del peso de los criterios en que la alternativa de la fila iguala o supera a la de la columna. Más alto es más apoyo a la superación.", "concordancia");
+  html += tablaIndice(rI.C, "Tabla 1. Índice de concordancia C(a, b)", "Proporción del peso de los criterios en que la alternativa de la fila iguala o supera a la de la columna. Más alto es más apoyo a la superación.", "concordancia");
   html += '<div class="separador"></div>';
-  html += tablaIndice(r.D, "Tabla 2. Índice de discordancia D(a, b)", "Peor desventaja relativa de la fila frente a la columna. Más alto es más oposición a la superación.", "discordancia");
+  html += tablaIndice(rI.D, "Tabla 2. Índice de discordancia D(a, b)", "Peor desventaja relativa de la fila frente a la columna. Más alto es más oposición a la superación.", "discordancia");
   html += '<div class="separador"></div>';
 
-  if (r.variante === "I") {
-    html += tablaSuperacion(r.S, r.veto);
-    html += '<div class="separador"></div>';
-    html += '<h3 class="titulo-menor">Grafo de superación</h3>';
-    html += grafoSuperacion(r.S, r.nucleo);
-    html += '<div class="separador"></div>';
-    // Núcleo
-    const nombresNucleo = r.nucleo.map((i) => estado.nombresAlternativas[i]);
-    html += '<div class="bloque-resultado">';
-    html += '<h3 class="titulo-menor">Resultado: núcleo de alternativas no superadas</h3>';
-    html += "<p>El núcleo reúne las alternativas que ninguna otra supera. Son las opciones defendibles con los umbrales actuales:</p>";
-    html += '<p style="margin:0.8rem 0;">' + nombresNucleo.map((n) => '<span class="chip-nucleo">' + escaparHtml(n) + "</span>").join(" ") + "</p>";
-    if (r.nucleo.length === estado.numAlternativas) {
-      html += '<div class="mensaje mensaje--advertencia" role="note">Con estos umbrales, ninguna alternativa supera a otra: el núcleo es el conjunto completo. Baje c* o suba d* para exigir más y discriminar mejor. Diríjase al paso 4 para explorarlo.</div>';
-    } else if (r.nucleo.length === 1) {
-      html += '<div class="mensaje mensaje--exito" role="note">El núcleo tiene una sola alternativa. Es una recomendación clara con los umbrales actuales, pero verifique su robustez en el paso 4.</div>';
-    }
-    html += "</div>";
-  } else {
-    // ELECTRE II: ranking
-    html += '<h3 class="titulo-menor">Preórdenes de destilación</h3>';
-    html += '<p class="ayuda ayuda--bloque">ELECTRE II combina dos ordenamientos: uno descendente, de la mejor hacia la peor, y uno ascendente, en sentido inverso. El ranking final promedia ambas posiciones. Ver los dos por separado revela empates y desacuerdos.</p>';
-    html += '<div class="doble-columna">';
-    html += "<div><strong>Descendente</strong><ol class=\"lista-preorden\">" + r.descendente.map((niv) => "<li>" + niv.map((i) => escaparHtml(estado.nombresAlternativas[i])).join(", ") + "</li>").join("") + "</ol></div>";
-    html += "<div><strong>Ascendente</strong><ol class=\"lista-preorden\">" + r.ascendente.map((niv) => "<li>" + niv.map((i) => escaparHtml(estado.nombresAlternativas[i])).join(", ") + "</li>").join("") + "</ol></div>";
-    html += "</div><div class=\"separador\"></div>";
-    // Tabla de ranking
-    html += '<div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Tabla 3. Ranking final</caption><thead><tr><th>Puesto</th><th>Alternativa</th><th>Posición promedio</th></tr></thead><tbody>';
-    r.orden.forEach((idx, puesto) => {
-      const destacar = puesto === 0 ? ' style="background:rgba(var(--argos-rgb),0.28)"' : "";
-      html += "<tr" + destacar + '><td class="celda-indice">' + (puesto + 1) + '</td><td class="etiqueta-fila">' + escaparHtml(estado.nombresAlternativas[idx]) + '</td><td class="celda-indice">' + conDecimales(r.promedio[idx], 2) + "</td></tr>";
-    });
-    html += "</tbody></table></div>";
-    html += '<div class="bloque-resultado"><h3 class="titulo-menor">Recomendación</h3><p>Con los umbrales actuales, la alternativa mejor posicionada es <span class="chip-nucleo">' + escaparHtml(estado.nombresAlternativas[r.orden[0]]) + "</span>. Verifique su robustez en el paso 4.</p></div>";
+  // --- Bloque ELECTRE I: núcleo ---
+  html += bloqueTitular("ELECTRE I: núcleo de alternativas no superadas", principal === "I");
+  html += tablaSuperacion(rI.S, rI.veto);
+  html += '<div class="separador"></div>';
+  html += '<h3 class="titulo-menor">Grafo de superación</h3>';
+  html += grafoSuperacion(rI.S, rI.nucleo);
+  html += '<div class="separador"></div>';
+  const nombresNucleo = rI.nucleo.map((i) => estado.nombresAlternativas[i]);
+  html += '<div class="bloque-resultado">';
+  html += "<p>El núcleo reúne las alternativas que ninguna otra supera. Son las opciones defendibles con los umbrales actuales:</p>";
+  html += '<p style="margin:0.8rem 0;">' + nombresNucleo.map((n) => '<span class="chip-nucleo">' + escaparHtml(n) + "</span>").join(" ") + "</p>";
+  if (rI.nucleo.length === estado.numAlternativas) {
+    html += '<div class="mensaje mensaje--advertencia" role="note">Con estos umbrales, ninguna alternativa supera a otra: el núcleo es el conjunto completo. Baje c* o suba d* para exigir más y discriminar mejor. Diríjase al paso 4 para explorarlo.</div>';
+  } else if (rI.nucleo.length === 1) {
+    html += '<div class="mensaje mensaje--exito" role="note">El núcleo tiene una sola alternativa. Es una recomendación clara con los umbrales actuales, pero verifique su robustez en el paso 4.</div>';
   }
+  html += "</div>";
+  html += '<div class="separador"></div>';
+
+  // --- Bloque ELECTRE II: ranking ---
+  html += bloqueTitular("ELECTRE II: ranking completo", principal === "II");
+  html += '<p class="ayuda ayuda--bloque">ELECTRE II combina dos ordenamientos: uno descendente, de la mejor hacia la peor, y uno ascendente, en sentido inverso. El ranking final promedia ambas posiciones. Ver los dos por separado revela empates y desacuerdos.</p>';
+  html += '<div class="doble-columna">';
+  html += "<div><strong>Descendente</strong><ol class=\"lista-preorden\">" + rII.descendente.map((niv) => "<li>" + niv.map((i) => escaparHtml(estado.nombresAlternativas[i])).join(", ") + "</li>").join("") + "</ol></div>";
+  html += "<div><strong>Ascendente</strong><ol class=\"lista-preorden\">" + rII.ascendente.map((niv) => "<li>" + niv.map((i) => escaparHtml(estado.nombresAlternativas[i])).join(", ") + "</li>").join("") + "</ol></div>";
+  html += "</div><div class=\"separador\"></div>";
+  html += '<div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Tabla 3. Ranking final</caption><thead><tr><th>Puesto</th><th>Alternativa</th><th>Posición promedio</th></tr></thead><tbody>';
+  rII.orden.forEach((idx, puesto) => {
+    const destacar = puesto === 0 ? ' style="background:rgba(var(--argos-rgb),0.28)"' : "";
+    html += "<tr" + destacar + '><td class="celda-indice">' + (puesto + 1) + '</td><td class="etiqueta-fila">' + escaparHtml(estado.nombresAlternativas[idx]) + '</td><td class="celda-indice">' + conDecimales(rII.promedio[idx], 2) + "</td></tr>";
+  });
+  html += "</tbody></table></div>";
+  html += '<div class="bloque-resultado"><p>Según ELECTRE II, la alternativa mejor posicionada es <span class="chip-nucleo">' + escaparHtml(estado.nombresAlternativas[rII.orden[0]]) + "</span>. Verifique su robustez en el paso 4.</p></div>";
 
   html += "</div>";
   cont.innerHTML = html;
+}
+
+/** Título de bloque de variante, con marca de principal cuando corresponde. */
+function bloqueTitular(texto, esPrincipal) {
+  return '<h3 class="titulo-menor titulo-variante">' + escaparHtml(texto) +
+    (esPrincipal ? ' <span class="chip-principal">variante elegida</span>' : "") + "</h3>";
 }
 
 /* -------------------------------------------------------------------------
@@ -2398,44 +2473,62 @@ function excelHojaDiscordancia() {
 }
 
 /** Hoja de resultado: núcleo o ranking. */
-function excelHojaResultado() {
+/** Hoja del núcleo de ELECTRE I con la relación de superación. */
+function excelHojaNucleo() {
   const h = crearHojaExcel();
-  const r = estado.resultados;
-  if (r.variante === "I") {
-    h.poner(0, 0, "Resultado: núcleo de alternativas no superadas");
-    h.poner(2, 0, "Alternativa");
-    h.poner(2, 1, "¿En el núcleo?");
-    estado.nombresAlternativas.forEach((n, i) => {
-      h.poner(3 + i, 0, n);
-      h.poner(3 + i, 1, r.nucleo.includes(i) ? "Sí" : "No");
-    });
-  } else {
-    h.poner(0, 0, "Resultado: ranking de ELECTRE II");
-    h.poner(2, 0, "Puesto"); h.poner(2, 1, "Alternativa"); h.poner(2, 2, "Posición promedio");
-    r.orden.forEach((idx, puesto) => {
-      h.poner(3 + puesto, 0, puesto + 1);
-      h.poner(3 + puesto, 1, estado.nombresAlternativas[idx]);
-      h.poner(3 + puesto, 2, r.promedio[idx], { formato: "0.00" });
-    });
-  }
+  const r = estado.resultadosI;
+  const nA = estado.numAlternativas;
+  h.poner(0, 0, "ELECTRE I: relación de superación y núcleo");
+  h.poner(2, 0, "¿La fila supera a la columna?");
+  estado.nombresAlternativas.forEach((n, b) => h.poner(3, 1 + b, n));
+  const fila0 = 4;
+  estado.nombresAlternativas.forEach((n, a) => {
+    h.poner(fila0 + a, 0, n);
+    for (let b = 0; b < nA; b++) {
+      if (a === b) { h.poner(fila0 + a, 1 + b, "—"); continue; }
+      h.poner(fila0 + a, 1 + b, r.S[a][b] ? "Sí" : (r.veto && r.veto[a][b] ? "Veto" : "No"));
+    }
+  });
+  const filaN = fila0 + nA + 2;
+  h.poner(filaN, 0, "Alternativa"); h.poner(filaN, 1, "¿En el núcleo?");
+  estado.nombresAlternativas.forEach((n, i) => {
+    h.poner(filaN + 1 + i, 0, n);
+    h.poner(filaN + 1 + i, 1, r.nucleo.includes(i) ? "Sí" : "No");
+  });
+  h.anchos([20].concat(estado.nombresAlternativas.map(() => 12)));
+  return h.cerrar();
+}
+
+/** Hoja del ranking de ELECTRE II. */
+function excelHojaRanking() {
+  const h = crearHojaExcel();
+  const r = estado.resultadosII;
+  h.poner(0, 0, "ELECTRE II: ranking completo");
+  h.poner(2, 0, "Puesto"); h.poner(2, 1, "Alternativa"); h.poner(2, 2, "Posición promedio");
+  r.orden.forEach((idx, puesto) => {
+    h.poner(3 + puesto, 0, puesto + 1);
+    h.poner(3 + puesto, 1, estado.nombresAlternativas[idx]);
+    h.poner(3 + puesto, 2, r.promedio[idx], { formato: "0.00" });
+  });
   h.anchos([10, 24, 16]);
   return h.cerrar();
 }
 
-/** Ensambla y descarga el libro de Excel. */
+/** Ensambla y descarga el libro de Excel con todos los resultados. */
 function exportarExcel() {
   if (!estado.resultados) { mostrarMensaje("mensajeExportacion", "Primero calcule los resultados en el paso 3.", "error"); return; }
   if (typeof XLSX === "undefined") { mostrarMensaje("mensajeExportacion", "No se pudo cargar la biblioteca de Excel. Verifique su conexión a internet e intente de nuevo.", "error"); return; }
   const prefijo = estado.origen === "prueba" ? "PRUEBA_" : "";
   const libro = XLSX.utils.book_new();
-  const nombres = ["Menú", "Decisión", "Concordancia", "Discordancia", "Resultado"];
+  const hojas = ["Decisión", "Concordancia", "Discordancia", "Núcleo ELECTRE I", "Ranking ELECTRE II"];
   const dec = excelHojaDecision();
-  XLSX.utils.book_append_sheet(libro, excelHojaMenu(nombres.slice(1)), "Menú");
+  XLSX.utils.book_append_sheet(libro, excelHojaMenu(hojas), "Menú");
   XLSX.utils.book_append_sheet(libro, dec.hoja, "Decisión");
   XLSX.utils.book_append_sheet(libro, excelHojaConcordancia(dec), "Concordancia");
   XLSX.utils.book_append_sheet(libro, excelHojaDiscordancia(), "Discordancia");
-  XLSX.utils.book_append_sheet(libro, excelHojaResultado(), "Resultado");
-  const archivo = prefijo + "Aristos_ELECTRE_" + estado.variante + ".xlsx";
+  XLSX.utils.book_append_sheet(libro, excelHojaNucleo(), "Núcleo ELECTRE I");
+  XLSX.utils.book_append_sheet(libro, excelHojaRanking(), "Ranking ELECTRE II");
+  const archivo = prefijo + "Aristos_ELECTRE.xlsx";
   XLSX.writeFile(libro, archivo);
   mostrarMensaje("mensajeExportacion", "Libro de Excel descargado: " + archivo, "exito");
 }
@@ -2477,7 +2570,7 @@ function generarInformePDF() {
   // Portada del informe
   doc.rect(doc.margen.izq, doc.y, doc.anchoUtil, 66, { relleno: COLORES_PDF.petroleo });
   doc.texto(doc.margen.izq + 16, doc.y + 28, APLICATIVO.nombre, { tamano: 20, negrita: true, color: COLORES_PDF.blanco });
-  doc.texto(doc.margen.izq + 16, doc.y + 48, "Informe ejecutivo · ELECTRE " + r.variante + (r.variante === "I" ? " (núcleo de no superadas)" : " (ranking completo)"), { tamano: 10, color: COLORES_PDF.aquaClaro });
+  doc.texto(doc.margen.izq + 16, doc.y + 48, "Informe ejecutivo · ELECTRE I y II · variante elegida: ELECTRE " + estado.variante, { tamano: 10, color: COLORES_PDF.aquaClaro });
   doc.y += 80;
 
   if (esPrueba) {
@@ -2486,20 +2579,20 @@ function generarInformePDF() {
     doc.y += 34;
   }
 
+  const rI = estado.resultadosI, rII = estado.resultadosII;
+
   // 1. Recomendación
   doc.tituloSeccion("1. Recomendación");
-  if (r.variante === "I") {
-    const nombresNucleo = r.nucleo.map((i) => estado.nombresAlternativas[i]);
-    if (r.nucleo.length === 1) {
-      doc.parrafo("Con los umbrales aplicados, el núcleo de ELECTRE I contiene una sola alternativa no superada: " + nombresNucleo[0] + ". Es la recomendación más clara posible con este método, sujeta a la verificación de robustez.", { tamano: 10 });
-    } else if (r.nucleo.length === estado.numAlternativas) {
-      doc.parrafo("Con los umbrales aplicados, ninguna alternativa supera a otra: el núcleo es el conjunto completo. ELECTRE I no discrimina en esta configuración. Conviene exigir más concordancia o menos discordancia para obtener un núcleo más reducido.", { tamano: 10 });
-    } else {
-      doc.parrafo("El núcleo de ELECTRE I reúne las alternativas que ninguna otra supera. Son las opciones defendibles con los umbrales aplicados: " + nombresNucleo.join(", ") + ". La decisión final entre ellas requiere criterios adicionales o el paso a ELECTRE II para un ranking.", { tamano: 10 });
-    }
+  doc.parrafo("Variante elegida en el análisis: ELECTRE " + estado.variante + ". Este informe presenta los resultados de las dos variantes.", { tamano: 9, color: COLORES_PDF.tinta2 });
+  const nombresNucleo = rI.nucleo.map((i) => estado.nombresAlternativas[i]);
+  if (rI.nucleo.length === 1) {
+    doc.parrafo("ELECTRE I. El núcleo contiene una sola alternativa no superada: " + nombresNucleo[0] + ". Es la recomendación más clara posible con esta variante, sujeta a la verificación de robustez.", { tamano: 10 });
+  } else if (rI.nucleo.length === estado.numAlternativas) {
+    doc.parrafo("ELECTRE I. Ninguna alternativa supera a otra con los umbrales aplicados: el núcleo es el conjunto completo. Conviene exigir más concordancia o menos discordancia para discriminar.", { tamano: 10 });
   } else {
-    doc.parrafo("Con los umbrales aplicados, ELECTRE II ordena las alternativas de mejor a peor. La mejor posicionada es " + estado.nombresAlternativas[r.orden[0]] + ". El orden completo aparece en la sección de resultados.", { tamano: 10 });
+    doc.parrafo("ELECTRE I. El núcleo reúne las alternativas que ninguna otra supera: " + nombresNucleo.join(", ") + ". La decisión final entre ellas requiere criterios adicionales o el ranking de ELECTRE II.", { tamano: 10 });
   }
+  doc.parrafo("ELECTRE II. La alternativa mejor posicionada en el ranking es " + estado.nombresAlternativas[rII.orden[0]] + ". El orden completo aparece en la sección de resultados.", { tamano: 10 });
 
   // 2. Estructura del modelo
   doc.tituloSeccion("2. Estructura del modelo");
@@ -2511,20 +2604,18 @@ function generarInformePDF() {
     })
   );
 
-  // 3. Resultados
+  // 3. Resultados: ambas variantes
   doc.tituloSeccion("3. Resultados principales");
-  if (r.variante === "I") {
-    doc.parrafo("Relación de superación: una alternativa supera a otra cuando la concordancia alcanza c* = " + estado.resultados.datos.umbrales.cEstrella + " y la discordancia no la veta.", { tamano: 9.5 });
-    doc.tabla(
-      [{ titulo: "Alternativa", ancho: 0.5 }, { titulo: "¿En el núcleo?", ancho: 0.5, alineacion: "der" }],
-      estado.nombresAlternativas.map((n, i) => [n, { texto: r.nucleo.includes(i) ? "Sí" : "No", negrita: r.nucleo.includes(i), color: r.nucleo.includes(i) ? COLORES_PDF.verde : COLORES_PDF.tinta3 }])
-    );
-  } else {
-    doc.tabla(
-      [{ titulo: "Puesto", ancho: 0.2 }, { titulo: "Alternativa", ancho: 0.5 }, { titulo: "Posición promedio", ancho: 0.3, alineacion: "der" }],
-      r.orden.map((idx, puesto) => [String(puesto + 1), { texto: estado.nombresAlternativas[idx], negrita: puesto === 0 }, conDecimales(r.promedio[idx], 2)])
-    );
-  }
+  doc.parrafo("ELECTRE I: núcleo de alternativas no superadas.", { tamano: 9.5, negrita: true });
+  doc.tabla(
+    [{ titulo: "Alternativa", ancho: 0.5 }, { titulo: "¿En el núcleo?", ancho: 0.5, alineacion: "der" }],
+    estado.nombresAlternativas.map((n, i) => [n, { texto: rI.nucleo.includes(i) ? "Sí" : "No", negrita: rI.nucleo.includes(i), color: rI.nucleo.includes(i) ? COLORES_PDF.verde : COLORES_PDF.tinta3 }])
+  );
+  doc.parrafo("ELECTRE II: ranking completo.", { tamano: 9.5, negrita: true });
+  doc.tabla(
+    [{ titulo: "Puesto", ancho: 0.2 }, { titulo: "Alternativa", ancho: 0.5 }, { titulo: "Posición promedio", ancho: 0.3, alineacion: "der" }],
+    rII.orden.map((idx, puesto) => [String(puesto + 1), { texto: estado.nombresAlternativas[idx], negrita: puesto === 0 }, conDecimales(rII.promedio[idx], 2)])
+  );
 
   // 4. Robustez
   doc.tituloSeccion("4. Robustez de la recomendación");
@@ -2545,8 +2636,8 @@ function generarInformePDF() {
   // 5. Nota metodológica
   doc.tituloSeccion("5. Nota metodológica");
   doc.parrafo("ELECTRE es una familia de métodos de superación desarrollada por Bernard Roy. A diferencia de los métodos que agregan todo en un único puntaje, ELECTRE compara las alternativas por pares y admite que algunas sean incomparables. La concordancia mide el peso de los criterios a favor de una superación; la discordancia mide la oposición más fuerte. Una superación se acepta si hay concordancia suficiente y ninguna desventaja la veta.", { tamano: 9 });
-  if (r.variante === "I") doc.parrafo("ELECTRE I entrega un núcleo: el subconjunto de alternativas que ninguna otra del núcleo supera. No produce un orden completo, y esa es una elección metodológica, no una limitación por resolver.", { tamano: 9 });
-  else doc.parrafo("ELECTRE II construye un ranking mediante dos relaciones de superación, una fuerte y una débil, y combina un preorden descendente con uno ascendente.", { tamano: 9 });
+  doc.parrafo("ELECTRE I entrega un núcleo: el subconjunto de alternativas que ninguna otra del núcleo supera. No produce un orden completo, y esa es una elección metodológica, no una limitación por resolver.", { tamano: 9 });
+  doc.parrafo("ELECTRE II construye un ranking mediante dos relaciones de superación, una fuerte y una débil, y combina un preorden descendente con uno ascendente.", { tamano: 9 });
 
   // 6. Referencias
   doc.tituloSeccion("6. Referencias");
@@ -2576,7 +2667,7 @@ function exportarInformePDF() {
     const blob = new Blob([bytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = prefijo + "Aristos_ELECTRE_" + estado.variante + ".pdf";
+    a.href = url; a.download = prefijo + "Aristos_ELECTRE.pdf";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     mostrarMensaje("mensajeExportacion", "Informe PDF descargado.", "exito");
@@ -2654,17 +2745,18 @@ const PRUEBAS = [
     const r = electreII(d);
     return { ok: r.orden[0] === 0 && r.orden[2] === 2, detalle: "orden=" + JSON.stringify(r.orden.map((i) => i + 1)) };
   }},
-  { nombre: "11. Estructura del Excel: cinco hojas con nombres esperados", fn: () => {
+  { nombre: "11. Estructura del Excel: seis hojas con nombres esperados", fn: () => {
     if (typeof XLSX === "undefined") return { ok: false, detalle: "SheetJS no disponible en este entorno" };
     guardarEstadoParaPrueba();
     const libro = XLSX.utils.book_new();
     const dec = excelHojaDecision();
-    XLSX.utils.book_append_sheet(libro, excelHojaMenu(["Decisión", "Concordancia", "Discordancia", "Resultado"]), "Menú");
+    XLSX.utils.book_append_sheet(libro, excelHojaMenu(["Decisión", "Concordancia", "Discordancia", "Núcleo ELECTRE I", "Ranking ELECTRE II"]), "Menú");
     XLSX.utils.book_append_sheet(libro, dec.hoja, "Decisión");
     XLSX.utils.book_append_sheet(libro, excelHojaConcordancia(dec), "Concordancia");
     XLSX.utils.book_append_sheet(libro, excelHojaDiscordancia(), "Discordancia");
-    XLSX.utils.book_append_sheet(libro, excelHojaResultado(), "Resultado");
-    const esperadas = ["Menú", "Decisión", "Concordancia", "Discordancia", "Resultado"];
+    XLSX.utils.book_append_sheet(libro, excelHojaNucleo(), "Núcleo ELECTRE I");
+    XLSX.utils.book_append_sheet(libro, excelHojaRanking(), "Ranking ELECTRE II");
+    const esperadas = ["Menú", "Decisión", "Concordancia", "Discordancia", "Núcleo ELECTRE I", "Ranking ELECTRE II"];
     const ok = esperadas.every((n) => libro.SheetNames.includes(n));
     return { ok, detalle: "hojas=" + libro.SheetNames.join(", ") };
   }},
@@ -2688,7 +2780,9 @@ function guardarEstadoParaPrueba() {
   estado.matriz = [[8, 6, 7], [5, 9, 4], [6, 5, 8]];
   estado.variante = "I"; estado.modoVeto = "global"; estado.normalizacion = "minmax";
   const datos = { matriz: estado.matriz, pesos: estado.pesos, sentidos: estado.sentidos, variante: "I", normalizacion: "minmax", modoVeto: "global", vetos: [null, null, null], umbrales: Object.assign({}, estado.umbrales) };
-  estado.resultados = electreI(datos); estado.resultados.datos = datos;
+  estado.resultadosI = electreI(datos); estado.resultadosI.datos = datos;
+  estado.resultadosII = electreII(datos); estado.resultadosII.datos = datos;
+  estado.resultados = estado.resultadosI;
 }
 
 /** Ejecuta la batería y muestra la tabla de resultados. */
@@ -2739,6 +2833,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("modoVeto").addEventListener("change", alternarCampoVeto);
   $("aplicarConfiguracion").addEventListener("click", aplicarConfiguracion);
   $("cargarEjemplo").addEventListener("click", cargarDatosPrueba);
+  $("umbralesSugeridos").addEventListener("click", aplicarUmbralesRecomendados);
   $("calcularResultados").addEventListener("click", calcularYMostrar);
   $("limpiarAplicacion").addEventListener("click", limpiarAplicacion);
   $("ejecutarBarridoI").addEventListener("click", ejecutarBarridoI);
