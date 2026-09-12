@@ -1,0 +1,2754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Aplicación web autocontenida para aplicar el método ELECTRE I y II de superación en decisiones multicriterio">
+<meta name="theme-color" content="#0A1A24">
+<meta name="author" content="Mario Sergio Gómez Rueda">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Áristos ELECTRE">
+<meta property="og:description" content="Aplicación académica para decidir con ELECTRE: concordancia, discordancia, veto, núcleo de alternativas no superadas, ranking e informes.">
+<meta property="og:locale" content="es_CO">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A1A24'/%3E%3Ccircle cx='9' cy='9' r='3.5' fill='%23F2B441'/%3E%3Ccircle cx='23' cy='9' r='3.5' fill='%235BC8C2'/%3E%3Ccircle cx='9' cy='23' r='3.5' fill='%235BC8C2'/%3E%3Ccircle cx='23' cy='23' r='3.5' fill='%23F2B441'/%3E%3Cpath d='M11.5 9 h9 M9 11.5 v9 M11.5 23 h9 M23 11.5 v9' stroke='%23315058' stroke-width='1.4'/%3E%3Cpath d='M12 12 L20 20' stroke='%23F2B441' stroke-width='1.6'/%3E%3C/svg%3E">
+<title>Áristos ELECTRE: método de superación para decisiones multicriterio</title>
+
+<!-- Biblioteca SheetJS para generar el archivo Excel (única dependencia externa) -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+<style>
+/* =========================================================================
+   SISTEMA VISUAL DE ÁRISTOS ELECTRE
+   Concepto cromático: en ELECTRE una alternativa «supera» a otra cuando la
+   concordancia es suficiente y ninguna desventaja la veta. El ámbar «argos»
+   señala la fuerza de la concordancia (a favor de la superación) y el aqua
+   «veto» señala la discordancia (en contra). Ambos tiñen las matrices, el
+   grafo y el ejemplo de la portada. Fondo azul-petróleo profundo, sin bordes.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Tipografía. Opción A activa: pila de fuentes del sistema.
+   Opción B (fuentes locales): descomente el bloque @font-face, coloque los
+   archivos .woff2 en la carpeta «fuentes» junto a index.html y cambie las
+   variables --fuente-titulos y --fuente-cuerpo por las líneas comentadas.
+   -------------------------------------------------------------------------
+@font-face {
+  font-family: "MiFuenteTitulos";
+  src: url("fuentes/MiFuenteTitulos.woff2") format("woff2");
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "MiFuenteCuerpo";
+  src: url("fuentes/MiFuenteCuerpo.woff2") format("woff2");
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+   ------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: dark;
+
+  /* Superficies: azul-petróleo profundo, un paso distinto del de Kairós */
+  --abismo: #0A1A24;
+  --riel-fondo: #071219;
+  --plano: #10262F;
+  --relieve: #163541;
+  --relieve-alto: #1D4351;
+  --velo: rgba(232, 244, 244, 0.035);
+  --velo-fuerte: rgba(232, 244, 244, 0.07);
+  --hondo: rgba(7, 18, 25, 0.55);
+
+  /* Texto */
+  --texto: #E8F4F4;
+  --texto-2: #A6C4C4;
+  --texto-3: #7EA0A2;
+
+  /* Par de significado de ELECTRE: argos (concordancia) y veto (discordancia) */
+  --argos: #F2B441;
+  --argos-rgb: 242, 180, 65;
+  --veto: #5BC8C2;
+  --veto-rgb: 91, 200, 194;
+
+  /* Estados */
+  --exito: #74D6A0;
+  --exito-rgb: 116, 214, 160;
+  --advertencia: #FF9E4A;
+  --advertencia-rgb: 255, 158, 74;
+  --error: #FF7A89;
+  --error-rgb: 255, 122, 137;
+  --info: #5BC8C2;
+  --info-rgb: 91, 200, 194;
+
+  /* Tipografía (Opción A) */
+  --fuente-titulos: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --fuente-cuerpo: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Opción B:
+  --fuente-titulos: "MiFuenteTitulos", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --fuente-cuerpo: "MiFuenteCuerpo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  */
+
+  /* Forma, profundidad y movimiento */
+  --r-panel: 28px;
+  --r-bloque: 18px;
+  --r-control: 12px;
+  --r-celda: 10px;
+  --sombra-panel: 0 1px 0 rgba(232, 244, 244, 0.03) inset, 0 48px 90px -56px rgba(0, 0, 0, 0.75);
+  --sombra-flotante: 0 28px 60px -20px rgba(0, 0, 0, 0.7);
+  --curva: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --t-rapida: 160ms;
+  --t-media: 280ms;
+  --ancho-riel: 256px;
+  --sangria: 5.75rem;
+}
+
+/* =========================================================================
+   BASE
+   ========================================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: var(--fuente-cuerpo);
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--texto);
+  background: var(--abismo);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  scrollbar-color: var(--relieve-alto) transparent;
+}
+[hidden] { display: none !important; }
+h1, h2, h3, h4 { font-family: var(--fuente-titulos); color: var(--texto); line-height: 1.2; }
+h4 { font-size: 0.95rem; font-weight: 650; margin: 1.5rem 0 0.5rem; }
+p { margin: 0.4rem 0 0.9rem; }
+strong { font-weight: 650; }
+a { color: var(--veto); text-underline-offset: 3px; transition: color var(--t-rapida) var(--curva); }
+a:hover { color: var(--texto); }
+code {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.86em; background: var(--velo-fuerte); padding: 0.1rem 0.4rem; border-radius: 6px; color: var(--texto);
+}
+em { color: var(--texto-2); }
+::selection { background: rgba(var(--argos-rgb), 0.35); color: var(--texto); }
+:focus-visible { outline: 2px solid var(--veto); outline-offset: 3px; }
+
+/* =========================================================================
+   ESTRUCTURA: RIEL LATERAL Y LIENZO
+   ========================================================================= */
+.app { display: grid; grid-template-columns: var(--ancho-riel) minmax(0, 1fr); min-height: 100vh; }
+
+.riel {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 2.25rem;
+  padding: 2rem 1.1rem 1.5rem; background: var(--riel-fondo);
+}
+.marca {
+  display: flex; align-items: center; gap: 0.8rem; padding: 0 0.6rem;
+  color: var(--texto); text-decoration: none; font-family: var(--fuente-titulos);
+  font-weight: 800; font-size: 1.08rem; letter-spacing: -0.02em;
+}
+.marca:hover { color: var(--texto); }
+.marca__glifo { display: grid; grid-template-columns: repeat(3, 9px); gap: 2px; flex: none; }
+.marca__glifo span { width: 9px; height: 9px; border-radius: 2px; background: var(--relieve-alto); }
+.marca__glifo span:nth-child(2), .marca__glifo span:nth-child(3), .marca__glifo span:nth-child(6) { background: var(--argos); }
+.marca__glifo span:nth-child(3) { opacity: 0.55; }
+.marca__glifo span:nth-child(4), .marca__glifo span:nth-child(7), .marca__glifo span:nth-child(8) { background: var(--veto); }
+.marca__glifo span:nth-child(7) { opacity: 0.55; }
+
+.riel__pasos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.riel__pasos a {
+  position: relative; display: grid; grid-template-columns: 1.9rem minmax(0, 1fr) 0.55rem; align-items: center; gap: 0.35rem;
+  padding: 0.62rem 0.75rem; border-radius: var(--r-control);
+  color: var(--texto-2); text-decoration: none; font-size: 0.93rem;
+  transition: background-color var(--t-rapida) var(--curva), color var(--t-rapida) var(--curva);
+}
+.riel__pasos a:hover { background: var(--velo); color: var(--texto); }
+.riel__pasos a[aria-current="location"] { background: var(--relieve); color: var(--texto); }
+.riel__num { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--texto-3); transition: color var(--t-rapida) var(--curva); }
+.riel__pasos a[aria-current="location"] .riel__num { color: var(--argos); }
+.riel__estado {
+  width: 0.55rem; height: 0.55rem; border-radius: 50%;
+  background: var(--relieve-alto);
+  transition: background-color var(--t-media) var(--curva), box-shadow var(--t-media) var(--curva), transform var(--t-media) var(--curva);
+}
+.riel__estado.listo { background: var(--exito); box-shadow: 0 0 0 4px rgba(var(--exito-rgb), 0.14); }
+.riel__estado.alerta { background: var(--advertencia); box-shadow: 0 0 0 4px rgba(var(--advertencia-rgb), 0.16); }
+.riel__pasos .riel__aux { margin-top: 1.25rem; }
+.riel__nota { margin-top: auto; padding: 0 0.75rem; font-size: 0.76rem; color: var(--texto-3); line-height: 1.55; }
+.riel__nota a { color: var(--veto); overflow-wrap: anywhere; }
+
+.lienzo { min-width: 0; padding: 0 clamp(1rem, 4.5vw, 5rem) 6rem; }
+.lienzo__contenido { max-width: 1120px; }
+
+/* =========================================================================
+   PORTADA CON LA ESCALA DE SAATY
+   ========================================================================= */
+.portada {
+  display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: center; padding: clamp(3rem, 8vw, 6.5rem) 0 clamp(1rem, 3vw, 2rem);
+}
+.portada__titulo {
+  margin: 0 0 1.25rem; font-size: clamp(2.8rem, 6.4vw, 5.2rem); font-weight: 800;
+  letter-spacing: -0.05em; line-height: 0.92;
+}
+.portada__lema { margin: 0; max-width: 36ch; font-size: clamp(1.05rem, 1.5vw, 1.22rem); line-height: 1.55; color: var(--texto-2); }
+.portada__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 2.25rem; }
+.chip-origen {
+  display: inline-flex; align-items: center; gap: 0.6rem; max-width: 100%;
+  padding: 0.55rem 1rem; border-radius: 999px; background: var(--relieve);
+  color: var(--texto-2); font-size: 0.85rem; line-height: 1.35; overflow-wrap: anywhere;
+}
+.chip-origen::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--veto); box-shadow: 0 0 0 4px rgba(var(--veto-rgb), 0.15); }
+
+/* Ejemplo interactivo de comparación por pares */
+.comparador {
+  margin: 0; padding: clamp(1.25rem, 2.6vw, 2rem); border-radius: var(--r-panel);
+  background: var(--plano); box-shadow: var(--sombra-panel);
+}
+.comparador__titulo { margin: 0 0 1.1rem; font-size: 0.95rem; font-weight: 650; color: var(--texto); line-height: 1.4; }
+.comparador__par { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.8rem; }
+.comparador__elemento { padding: 0.4rem 0.95rem; border-radius: 999px; font-weight: 700; font-size: 0.95rem; }
+.comparador__elemento--fila { background: rgba(var(--argos-rgb), 0.16); color: var(--argos); }
+.comparador__elemento--columna { background: rgba(var(--veto-rgb), 0.16); color: var(--veto); }
+.comparador__frente { font-size: 0.82rem; color: var(--texto-3); }
+
+.escala__banda { display: grid; grid-template-columns: repeat(17, minmax(0, 1fr)); gap: 4px; }
+.escala__celda {
+  display: grid; place-items: center; height: 2.9rem; padding: 0; border: 0; border-radius: 8px; cursor: pointer;
+  font: inherit; font-weight: 750; font-variant-numeric: tabular-nums; font-size: clamp(0.7rem, 1.05vw, 0.95rem);
+  color: var(--texto);
+  animation: aparecerEscala 520ms var(--curva) both; animation-delay: calc(var(--d) * 38ms + 100ms);
+  transition: transform var(--t-rapida) var(--curva), box-shadow var(--t-rapida) var(--curva), filter var(--t-rapida) var(--curva);
+}
+.escala__celda:hover { transform: translateY(-3px); filter: brightness(1.12); }
+.escala__celda { position: relative; }
+.escala__celda[aria-checked="true"] { transform: translateY(-6px) scale(1.14); box-shadow: 0 0 0 2px var(--plano), 0 0 0 4px var(--texto), 0 14px 26px -10px rgba(0, 0, 0, 0.85); z-index: 1; }
+.escala__celda[aria-checked="true"]::after {
+  content: ""; position: absolute; left: 50%; bottom: -13px; width: 6px; height: 6px; margin-left: -3px;
+  border-radius: 50%; background: var(--texto);
+}
+.escala__celda:focus-visible { outline: 2px solid var(--texto); outline-offset: 3px; }
+.escala__celda--fila { background: rgba(var(--argos-rgb), calc(0.14 + var(--t) * 0.86)); }
+.escala__celda--columna { background: rgba(var(--veto-rgb), calc(0.14 + var(--t) * 0.86)); }
+.escala__celda--centro { background: var(--relieve-alto); }
+.escala__celda--fuerte { color: var(--abismo); }
+.escala__leyenda { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.1rem; font-size: 0.8rem; color: var(--texto-3); }
+.escala__leyenda span:first-child { color: var(--argos); }
+.escala__leyenda span:last-child { color: var(--veto); text-align: right; }
+@keyframes aparecerEscala { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.comparador__lectura { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1.25rem; margin-top: 1.4rem; }
+.comparador__frase { margin: 0; font-size: clamp(1.05rem, 1.6vw, 1.25rem); line-height: 1.45; color: var(--texto-2); min-height: 3.6em; }
+.comparador__frase strong { color: var(--texto); font-weight: 700; }
+.comparador__mini { width: auto; border-collapse: separate; border-spacing: 4px; font-size: 0.8rem; }
+.comparador__mini th { padding: 0.15rem 0.4rem; color: var(--texto-3); font-weight: 600; text-align: center; background: transparent; position: static; }
+.comparador__mini th[scope="row"] { text-align: right; color: var(--texto-2); }
+.comparador__mini td { width: 3.4rem; height: 2.3rem; padding: 0; text-align: center; border-radius: 8px; font-weight: 700; }
+.comparador__mini tbody tr, .comparador__mini tbody tr:nth-child(even), .comparador__mini tbody tr:hover { background: transparent; }
+.comparador__diagonal { color: var(--texto-3); background: repeating-linear-gradient(135deg, rgba(233, 243, 241, 0.06) 0 2px, transparent 2px 7px); }
+.comparador__celda { background-color: var(--tinte, var(--relieve)); color: var(--texto); transition: background-color var(--t-media) var(--curva), color var(--t-media) var(--curva); }
+.comparador__celda.tinte-fuerte { color: var(--abismo); }
+.comparador__explicacion { margin: 0.9rem 0 0; }
+
+/* Explicación del método */
+.metodo__pasos { list-style: none; margin: 0; padding: 0; display: grid; gap: 2rem 2.5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.metodo__pasos p { max-width: 46ch; }
+.metodo__pasos li { position: relative; }
+.metodo__num { display: block; margin-bottom: 0.4rem; font-family: var(--fuente-titulos); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.04em; color: var(--argos); }
+.metodo__pasos h3 { margin: 0 0 0.45rem; font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; }
+.metodo__pasos p { margin: 0; font-size: 0.9rem; color: var(--texto-2); }
+.jerarquia { margin: 2.25rem 0 0; padding: 1.25rem 1.25rem 0.75rem; border-radius: var(--r-bloque); background: var(--hondo); }
+.jerarquia svg { display: block; width: 100%; max-width: 680px; height: auto; margin: 0 auto; }
+.jerarquia figcaption { margin-top: 0.6rem; text-align: center; }
+.j-lineas line { stroke: rgba(233, 243, 241, 0.2); stroke-width: 1.2; }
+.j-objetivo { fill: var(--argos); }
+.j-criterio { fill: var(--relieve-alto); }
+.j-alternativa { fill: rgba(var(--veto-rgb), 0.22); }
+.j-texto { fill: var(--texto); font-family: var(--fuente-cuerpo); font-size: 13px; font-weight: 600; text-anchor: middle; }
+.j-texto--oscuro { fill: var(--abismo); font-weight: 750; }
+
+.nota-indicadores { margin-top: 1.75rem; padding: 1.15rem 1.35rem; border-radius: var(--r-bloque); background: var(--hondo); }
+.nota-indicadores h3 { margin: 0 0 0.5rem; font-size: 0.98rem; font-weight: 700; }
+.nota-indicadores p { margin: 0.35rem 0 0; max-width: 90ch; font-size: 0.88rem; color: var(--texto-2); }
+.nota-indicadores strong { color: var(--texto); }
+
+/* =========================================================================
+   SECCIONES Y PANELES
+   ========================================================================= */
+.seccion { margin-top: clamp(3.5rem, 7vw, 6rem); scroll-margin-top: 1.5rem; }
+.seccion__cabeza { display: grid; grid-template-columns: var(--sangria) minmax(0, 1fr); align-items: start; margin-bottom: 1.5rem; }
+.seccion__num {
+  font-family: var(--fuente-titulos); font-size: 3.6rem; font-weight: 800; line-height: 0.85; letter-spacing: -0.05em;
+  color: transparent; -webkit-text-stroke: 1.5px var(--relieve-alto);
+  transition: color var(--t-media) var(--curva), -webkit-text-stroke-color var(--t-media) var(--curva);
+}
+.seccion.activa .seccion__num { color: var(--argos); -webkit-text-stroke-color: var(--argos); }
+.seccion__titulo { margin: 0.1rem 0 0.55rem; font-size: clamp(1.55rem, 2.6vw, 2.15rem); font-weight: 750; letter-spacing: -0.03em; }
+.seccion__texto { margin: 0; max-width: 68ch; color: var(--texto-2); }
+
+.panel {
+  margin-left: var(--sangria); padding: clamp(1.25rem, 3vw, 2.5rem);
+  background: var(--plano); border-radius: var(--r-panel); box-shadow: var(--sombra-panel);
+}
+.panel > :first-child { margin-top: 0; }
+.bloque { margin-top: 2rem; }
+.bloque__titulo { margin: 0 0 1rem; font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; }
+
+.subtitulo { margin: 2.5rem 0 0.85rem; font-size: 1.06rem; font-weight: 700; letter-spacing: -0.015em; }
+.ayuda { font-size: 0.82rem; color: var(--texto-3); }
+.marcador-vacio {
+  padding: 1.6rem 1.5rem; border-radius: var(--r-bloque); background: var(--hondo);
+  color: var(--texto-3); text-align: left;
+}
+
+/* =========================================================================
+   FORMULARIOS
+   ========================================================================= */
+.rejilla { display: grid; gap: 1.25rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); }
+.rejilla--nombres { grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 1rem 1.25rem; }
+.rejilla--separada { margin-top: 1rem; }
+.campo { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; }
+.campo--ancho { grid-column: 1 / -1; }
+.campo label { font-size: 0.86rem; font-weight: 600; color: var(--texto-2); }
+
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%; font: inherit; color: var(--texto);
+  background: var(--relieve); border: 0; border-radius: var(--r-control);
+  padding: 0.72rem 0.95rem; box-shadow: inset 0 0 0 1px transparent;
+  transition: background-color var(--t-rapida) var(--curva), box-shadow var(--t-rapida) var(--curva);
+}
+input[type="text"]:hover, input[type="number"]:hover, select:hover, textarea:hover { background: var(--relieve-alto); }
+input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+  outline: none; background: var(--relieve-alto); box-shadow: 0 0 0 2px var(--veto), 0 0 0 7px rgba(var(--veto-rgb), 0.12);
+}
+input::placeholder, textarea::placeholder { color: var(--texto-3); opacity: 1; }
+textarea { min-height: 5rem; resize: vertical; }
+select {
+  appearance: none; -webkit-appearance: none; padding-right: 2.6rem; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%235ED3E0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 1rem center;
+}
+select option { background: var(--relieve); color: var(--texto); }
+input[readonly] { background: var(--hondo); color: var(--texto-2); cursor: default; }
+input[readonly]:hover { background: var(--hondo); }
+input[type="number"] { font-variant-numeric: tabular-nums; }
+input[type="file"] { font: inherit; color: var(--texto-2); max-width: 100%; padding: 0.35rem 0; }
+input[type="file"]::file-selector-button {
+  font: inherit; font-weight: 650; margin-right: 1rem; padding: 0.6rem 1.1rem; border: 0; border-radius: 999px;
+  background: var(--relieve-alto); color: var(--texto); cursor: pointer;
+  transition: background-color var(--t-rapida) var(--curva), transform var(--t-rapida) var(--curva);
+}
+input[type="file"]::file-selector-button:hover { background: #1F4D57; transform: translateY(-1px); }
+input:disabled, select:disabled { opacity: 0.45; cursor: not-allowed; }
+.campo-invalido, input.campo-invalido, textarea.campo-invalido {
+  background: rgba(var(--error-rgb), 0.14) !important;
+  box-shadow: 0 0 0 2px var(--error) !important;
+}
+fieldset { border: 0; padding: 0; margin: 2.25rem 0 0; min-width: 0; }
+legend { padding: 0; margin-bottom: 1rem; font-family: var(--fuente-titulos); font-size: 1.02rem; font-weight: 700; color: var(--texto); }
+
+/* =========================================================================
+   BOTONES
+   ========================================================================= */
+.acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 1.9rem; }
+.acciones--junto { margin-top: 0.25rem; }
+.boton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 0.74rem 1.35rem; border: 0; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: 0.92rem; font-weight: 650; line-height: 1.2; letter-spacing: -0.005em; text-decoration: none;
+  transition: transform var(--t-rapida) var(--curva), background-color var(--t-rapida) var(--curva), box-shadow var(--t-media) var(--curva), color var(--t-rapida) var(--curva);
+}
+.boton:hover:not(:disabled) { transform: translateY(-2px); }
+.boton:active:not(:disabled) { transform: translateY(0) scale(0.97); transition-duration: 60ms; }
+.boton:disabled { opacity: 0.38; cursor: not-allowed; }
+.boton--primario { background: var(--argos); color: var(--abismo); }
+.boton--primario:hover:not(:disabled) { background: #FFD172; color: var(--abismo); box-shadow: 0 14px 30px -12px rgba(var(--argos-rgb), 0.65); }
+.boton--secundario { background: var(--relieve-alto); color: var(--texto); }
+.boton--secundario:hover:not(:disabled) { background: #1F4D57; color: var(--texto); box-shadow: 0 14px 30px -16px rgba(0, 0, 0, 0.7); }
+.boton--exito { background: var(--exito); color: var(--abismo); }
+.boton--exito:hover:not(:disabled) { background: #98E9B7; color: var(--abismo); box-shadow: 0 14px 30px -12px rgba(var(--exito-rgb), 0.55); }
+.boton--peligro { background: rgba(var(--error-rgb), 0.1); color: var(--error); }
+.boton--peligro:hover:not(:disabled) { background: rgba(var(--error-rgb), 0.2); color: #FFA3AE; }
+.boton--pequeno { padding: 0.48rem 0.95rem; font-size: 0.84rem; }
+
+/* =========================================================================
+   TABLAS
+   ========================================================================= */
+.tabla-contenedor {
+  max-width: 100%; overflow-x: auto; margin: 0.9rem 0 1.5rem;
+  background: var(--hondo); border-radius: var(--r-bloque);
+  scrollbar-width: thin;
+}
+table { width: 100%; border-collapse: collapse; font-size: 0.89rem; font-variant-numeric: tabular-nums; }
+caption { caption-side: top; text-align: left; padding: 1rem 1.1rem 0.6rem; font-weight: 650; color: var(--texto); }
+th, td { padding: 0.66rem 1.05rem; text-align: left; vertical-align: middle; border: 0; }
+thead th { position: sticky; top: 0; z-index: 1; background: var(--relieve); color: var(--texto-2); font-size: 0.8rem; font-weight: 650; white-space: nowrap; }
+tbody tr { transition: background-color var(--t-rapida) var(--curva); }
+tbody tr:nth-child(even) { background: var(--velo); }
+tbody tr:hover { background: rgba(var(--veto-rgb), 0.07); }
+th[scope="row"] { font-weight: 600; color: var(--texto); white-space: nowrap; }
+tfoot th, tfoot td { background: var(--relieve); font-weight: 700; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+tr.fila-destacada, tbody tr.fila-destacada:hover { background: rgba(var(--argos-rgb), 0.13); }
+tr.fila-destacada th, tr.fila-destacada td strong { color: var(--argos); }
+td.texto-largo { min-width: 16rem; color: var(--texto-2); }
+.tabla-contenedor td.celda-tintada { background-color: var(--tinte, transparent); text-align: center; border-radius: 0; }
+.tabla-contenedor td.tinte-fuerte { color: var(--abismo); font-weight: 650; }
+.matriz-resultado thead th { text-align: center; }
+.matriz-resultado td:last-child.num:not(.celda-tintada) { text-align: right; }
+
+/* Matrices de entrada: celdas separadas como piezas */
+.tabla-contenedor:has(.matriz-entrada) { background: transparent; border-radius: 0; }
+.matriz-entrada { width: auto; border-collapse: separate; border-spacing: 6px; }
+.matriz-entrada caption { padding-left: 0.4rem; }
+.matriz-entrada thead th { position: static; background: transparent; text-align: center; padding: 0.35rem 0.5rem; }
+.matriz-entrada thead th:first-child { color: var(--texto-3); text-align: left; }
+.matriz-entrada tbody tr, .matriz-entrada tbody tr:nth-child(even), .matriz-entrada tbody tr:hover { background: transparent; }
+.matriz-entrada th[scope="row"] { position: sticky; left: 0; z-index: 2; background: var(--plano); padding: 0 1rem 0 0.4rem; }
+.matriz-entrada td { padding: 0; text-align: center; }
+.celda-juicio {
+  width: 5.6rem; height: 2.85rem; padding: 0 0.3rem !important; text-align: center;
+  font-weight: 650; font-size: 0.98rem; font-variant-numeric: tabular-nums;
+  border-radius: var(--r-celda) !important; background-color: var(--tinte, var(--relieve)) !important;
+  transition: background-color var(--t-media) var(--curva), box-shadow var(--t-rapida) var(--curva), color var(--t-rapida) var(--curva) !important;
+}
+.celda-juicio.tinte-fuerte { color: var(--abismo); }
+.celda-juicio:focus { box-shadow: 0 0 0 2px var(--texto), 0 0 0 7px rgba(233, 243, 241, 0.12) !important; }
+.celda-diagonal, .celda-reciproca { height: 2.85rem; min-width: 5.6rem; border-radius: var(--r-celda); font-variant-numeric: tabular-nums; }
+.celda-diagonal { color: var(--texto-3); background: repeating-linear-gradient(135deg, rgba(233, 243, 241, 0.05) 0 2px, transparent 2px 8px); }
+.celda-reciproca {
+  color: var(--texto-2); background-color: var(--tinte, var(--velo));
+  transition: background-color var(--t-media) var(--curva), color var(--t-media) var(--curva);
+}
+.celda-reciproca.tinte-fuerte { color: var(--abismo); }
+.celda-reciproca.celda-pendiente { color: var(--texto-3); background-color: var(--velo); }
+
+/* Barras de magnitud */
+.barra { position: relative; height: 0.45rem; min-width: 110px; border-radius: 999px; background: var(--velo-fuerte); overflow: hidden; }
+.barra > span { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--veto); transition: width 600ms var(--curva); }
+.barra--ganadora > span { background: var(--argos); }
+
+/* =========================================================================
+   ESTADOS, AVISOS Y MENSAJES
+   ========================================================================= */
+.insignia {
+  display: inline-block; padding: 0.22rem 0.72rem; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 650; line-height: 1.4; white-space: nowrap;
+}
+.insignia--exito { background: rgba(var(--exito-rgb), 0.14); color: var(--exito); }
+.insignia--advertencia { background: rgba(var(--advertencia-rgb), 0.15); color: var(--advertencia); }
+.insignia--error { background: rgba(var(--error-rgb), 0.15); color: var(--error); }
+.insignia--info { background: rgba(var(--info-rgb), 0.14); color: var(--info); }
+.insignia--neutra { background: var(--velo-fuerte); color: var(--texto-2); }
+
+.aviso { margin: 1rem 0; padding: 1rem 1.25rem; border-radius: var(--r-bloque); font-size: 0.92rem; color: var(--texto); overflow-wrap: anywhere; }
+.aviso strong { display: block; margin-bottom: 0.2rem; }
+.aviso ul { margin: 0.4rem 0 0; padding-left: 1.2rem; color: var(--texto-2); }
+.aviso li { margin: 0.2rem 0; }
+.aviso--exito { background: rgba(var(--exito-rgb), 0.09); box-shadow: inset 3px 0 0 var(--exito); }
+.aviso--exito strong { color: var(--exito); }
+.aviso--advertencia { background: rgba(var(--advertencia-rgb), 0.1); box-shadow: inset 3px 0 0 var(--advertencia); }
+.aviso--advertencia strong { color: var(--advertencia); }
+.aviso--error { background: rgba(var(--error-rgb), 0.1); box-shadow: inset 3px 0 0 var(--error); }
+.aviso--error strong { color: var(--error); }
+.aviso--informacion { background: rgba(var(--info-rgb), 0.08); box-shadow: inset 3px 0 0 var(--info); }
+.aviso--informacion strong { color: var(--info); }
+.aviso .acciones { margin-top: 0.75rem; }
+
+.estado-matriz { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0.25rem 0 0.5rem; font-size: 0.86rem; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+
+#mensajes {
+  position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 100; width: min(420px, calc(100vw - 2.5rem));
+  display: flex; flex-direction: column-reverse; gap: 0.6rem; pointer-events: none;
+}
+.mensaje {
+  position: relative; pointer-events: auto; max-height: 42vh; overflow-y: auto; overflow-wrap: anywhere;
+  padding: 0.95rem 2.8rem 0.95rem 1.2rem; border-radius: var(--r-bloque);
+  background: rgba(23, 62, 71, 0.94); color: var(--texto); font-size: 0.87rem;
+  box-shadow: var(--sombra-flotante); animation: entrarMensaje var(--t-media) var(--curva) both;
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .mensaje { background: rgba(23, 62, 71, 0.82); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); }
+}
+.mensaje__tipo { font-size: 0.76rem; font-weight: 700; }
+.mensaje__titulo { margin: 0.1rem 0 0.25rem; font-weight: 650; }
+.mensaje ul { margin: 0.3rem 0 0; padding-left: 1.1rem; color: var(--texto-2); }
+.mensaje li { margin: 0.15rem 0; }
+.mensaje__cerrar {
+  position: absolute; top: 0.55rem; right: 0.55rem; width: 1.9rem; height: 1.9rem; border: 0; border-radius: 50%;
+  background: transparent; color: var(--texto-2); font-size: 1.15rem; line-height: 1; cursor: pointer;
+  transition: background-color var(--t-rapida) var(--curva), color var(--t-rapida) var(--curva), transform var(--t-rapida) var(--curva);
+}
+.mensaje__cerrar:hover { background: var(--velo-fuerte); color: var(--texto); transform: rotate(90deg); }
+.mensaje--error { box-shadow: var(--sombra-flotante), inset 3px 0 0 var(--error); }
+.mensaje--error .mensaje__tipo { color: var(--error); }
+.mensaje--advertencia { box-shadow: var(--sombra-flotante), inset 3px 0 0 var(--advertencia); }
+.mensaje--advertencia .mensaje__tipo { color: var(--advertencia); }
+.mensaje--informacion { box-shadow: var(--sombra-flotante), inset 3px 0 0 var(--info); }
+.mensaje--informacion .mensaje__tipo { color: var(--info); }
+.mensaje--exito { box-shadow: var(--sombra-flotante), inset 3px 0 0 var(--exito); }
+.mensaje--exito .mensaje__tipo { color: var(--exito); }
+@keyframes entrarMensaje { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* =========================================================================
+   PESTAÑAS, DESPLEGABLES, CIFRAS Y GANADORA
+   ========================================================================= */
+.pestanas { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.5rem; }
+.pestana {
+  display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.55rem 1.05rem; border: 0; border-radius: 999px;
+  background: var(--relieve); color: var(--texto-2); font: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  transition: background-color var(--t-rapida) var(--curva), color var(--t-rapida) var(--curva), transform var(--t-rapida) var(--curva);
+}
+.pestana:hover { background: var(--relieve-alto); color: var(--texto); transform: translateY(-1px); }
+.pestana[aria-selected="true"] { background: var(--texto); color: var(--abismo); }
+.punto { flex: none; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--texto-3); transition: background-color var(--t-media) var(--curva); }
+.punto--valida { background: var(--exito); }
+.punto--inconsistente { background: var(--advertencia); }
+.punto--error { background: var(--error); }
+.pestana[aria-selected="true"] .punto:not(.punto--valida):not(.punto--inconsistente):not(.punto--error) { background: var(--texto-3); }
+
+details.desplegable { margin: 0.75rem 0; border-radius: var(--r-bloque); background: var(--hondo); transition: background-color var(--t-rapida) var(--curva); }
+details.desplegable:hover { background: rgba(4, 19, 23, 0.75); }
+details.desplegable > summary {
+  display: block; padding: 0.95rem 1.2rem 0.95rem 2.6rem; position: relative; line-height: 1.9;
+  cursor: pointer; list-style: none; font-weight: 650; color: var(--texto); border-radius: var(--r-bloque);
+}
+details.desplegable > summary > * { margin-right: 0.6rem; }
+details.desplegable > summary::-webkit-details-marker { display: none; }
+details.desplegable > summary::before {
+  content: ""; position: absolute; left: 1.25rem; top: 1.62rem; width: 0.5rem; height: 0.5rem; margin-top: -0.3rem;
+  border-right: 2px solid var(--veto); border-bottom: 2px solid var(--veto);
+  transform: rotate(-45deg); transition: transform var(--t-media) var(--curva);
+}
+details.desplegable[open] > summary::before { transform: rotate(45deg); }
+details.desplegable > .desplegable__cuerpo { padding: 0 1.2rem 1.2rem; animation: abrirDesplegable var(--t-media) var(--curva); }
+details.desplegable.desplegable--separado { margin-top: 2rem; }
+.resumen-cr { font-weight: 500; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+@keyframes abrirDesplegable { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+.resumen-cifras { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); margin: 1rem 0 1.5rem; }
+.cifra { padding: 1.05rem 1.2rem; border-radius: var(--r-bloque); background: var(--relieve); }
+.cifra__valor { font-family: var(--fuente-titulos); font-size: 1.65rem; font-weight: 750; letter-spacing: -0.03em; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.cifra__valor--texto { font-size: 1.05rem; letter-spacing: -0.01em; }
+.cifra__etiqueta { margin-top: 0.3rem; font-size: 0.8rem; color: var(--texto-3); }
+
+.ganadora {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 0.5rem 2rem;
+  margin: 1rem 0 2rem; padding: clamp(1.25rem, 3vw, 2rem); border-radius: 22px;
+  background: rgba(var(--argos-rgb), 0.1); box-shadow: inset 0 0 0 1px rgba(var(--argos-rgb), 0.08);
+}
+.ganadora .ayuda { color: var(--texto-2); margin-bottom: 0.35rem; }
+.ganadora__nombre { font-family: var(--fuente-titulos); font-size: clamp(1.7rem, 3.4vw, 2.6rem); font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; overflow-wrap: anywhere; }
+.ganadora__valor { text-align: right; font-variant-numeric: tabular-nums; }
+.ganadora__valor b { display: block; font-size: clamp(1.7rem, 3.4vw, 2.6rem); font-weight: 800; letter-spacing: -0.035em; color: var(--argos); line-height: 1.05; }
+.ganadora__valor span { font-size: 0.85rem; color: var(--texto-2); }
+
+.dos-columnas { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); align-items: start; }
+.escala-saaty td:first-child { width: 6rem; font-weight: 800; color: var(--argos); }
+
+/* =========================================================================
+   GRÁFICO DE SENSIBILIDAD
+   ========================================================================= */
+.grafico { position: relative; margin: 1rem 0 1.75rem; padding: 1rem 1rem 0.5rem; border-radius: var(--r-bloque); background: var(--hondo); }
+.grafico svg { display: block; width: 100%; max-width: 100%; height: auto; }
+.grafico__leyenda { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; padding: 0.2rem 0.4rem 0.6rem; font-size: 0.84rem; color: var(--texto-2); }
+.grafico__leyenda span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.grafico__leyenda i { display: inline-block; width: 16px; height: 3px; border-radius: 2px; }
+.grafico__tooltip {
+  position: absolute; z-index: 5; min-width: 190px; pointer-events: none;
+  padding: 0.65rem 0.8rem; border-radius: 12px; background: var(--relieve-alto); color: var(--texto);
+  font-size: 0.8rem; box-shadow: var(--sombra-flotante);
+}
+.grafico__tooltip div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.08rem 0; }
+.grafico__tooltip b { font-variant-numeric: tabular-nums; }
+.grafico__muestra { display: inline-block; width: 10px; height: 3px; margin-right: 6px; border-radius: 2px; vertical-align: middle; }
+#capaSensibilidad { cursor: crosshair; }
+.g-rejilla { stroke: rgba(233, 243, 241, 0.07); stroke-width: 1; }
+.g-base { stroke: rgba(233, 243, 241, 0.22); stroke-width: 1; }
+.g-eje { fill: var(--texto-3); font-size: 11px; font-family: var(--fuente-cuerpo); }
+.g-titulo { fill: var(--texto-2); font-size: 12px; font-family: var(--fuente-cuerpo); }
+.g-marca { stroke: rgba(233, 243, 241, 0.45); stroke-width: 1; stroke-dasharray: 4 4; }
+.g-marca-texto { fill: var(--texto-2); font-size: 11px; font-family: var(--fuente-cuerpo); }
+.g-critico { fill: var(--plano); stroke: var(--texto); stroke-width: 2; }
+.g-etiqueta { fill: var(--texto); font-size: 11.5px; font-family: var(--fuente-cuerpo); }
+.g-cruz { stroke: var(--texto); stroke-width: 1; }
+
+/* =========================================================================
+   REFERENCIAS
+   ========================================================================= */
+.referencias { margin: clamp(4rem, 8vw, 6.5rem) 0 0 var(--sangria); max-width: 90ch; color: var(--texto-3); font-size: 0.82rem; }
+.referencias h2 { margin: 0 0 1rem; font-size: 0.98rem; font-weight: 700; color: var(--texto-2); }
+.referencias p { margin: 0 0 0.7rem; padding-left: 1.6rem; text-indent: -1.6rem; overflow-wrap: anywhere; }
+.referencias .autoria { margin-bottom: 2.5rem; padding: 1.25rem 1.4rem; border-radius: var(--r-bloque); background: var(--plano); }
+.referencias .autoria h2 { margin-bottom: 0.4rem; color: var(--texto); }
+.referencias .autoria p { padding-left: 0; text-indent: 0; margin: 0; font-size: 0.88rem; color: var(--texto-2); }
+.referencias em { color: var(--texto-3); }
+
+/* =========================================================================
+   ADAPTACIÓN A TABLETAS Y TELÉFONOS
+   ========================================================================= */
+@media (max-width: 1100px) {
+  .portada { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .portada__lema { max-width: 52ch; }
+}
+@media (max-width: 960px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .riel {
+    position: sticky; top: 0; z-index: 60; height: auto; overflow: visible;
+    flex-direction: row; align-items: center; gap: 0.75rem; padding: 0.55rem clamp(1rem, 4.5vw, 5rem);
+    background: rgba(4, 19, 23, 0.92);
+  }
+  @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .riel { background: rgba(4, 19, 23, 0.78); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+  }
+  .marca { padding: 0; }
+  .marca__texto, .riel__nota { display: none; }
+  .riel__pasos { flex-direction: row; gap: 0.15rem; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .riel__pasos::-webkit-scrollbar { display: none; }
+  .riel__pasos a { grid-template-columns: auto auto auto; padding: 0.45rem 0.7rem; white-space: nowrap; font-size: 0.86rem; }
+  .riel__pasos .riel__aux { margin-top: 0; }
+  .seccion { scroll-margin-top: 4.5rem; }
+  :root { --sangria: 0rem; }
+  .seccion__cabeza { grid-template-columns: minmax(0, 1fr); }
+  .seccion__num { font-size: 2.6rem; margin-bottom: 0.5rem; }
+  .panel { margin-left: 0; }
+  .referencias { margin-left: 0; }
+}
+@media (max-width: 600px) {
+  body { font-size: 14.5px; }
+  .panel { border-radius: 22px; padding: 1.1rem; }
+  .celda-juicio { width: 4.6rem; height: 2.6rem; }
+  .celda-diagonal, .celda-reciproca { min-width: 4.6rem; height: 2.6rem; }
+  .escala__banda { gap: 2px; }
+  .escala__celda { border-radius: 5px; height: 2.4rem; }
+  .comparador__lectura { grid-template-columns: minmax(0, 1fr); }
+  .comparador__frase { min-height: 0; }
+  .metodo__pasos { grid-template-columns: minmax(0, 1fr); }
+  .comparador__mini { justify-self: start; }
+  .ganadora { grid-template-columns: minmax(0, 1fr); }
+  .ganadora__valor { text-align: left; }
+  #mensajes { left: 0.75rem; right: 0.75rem; bottom: 0.75rem; width: auto; }
+  .mensaje { max-height: 30vh; font-size: 0.83rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
+}
+
+@media print {
+  :root { color-scheme: light; }
+  body { background: #fff; color: #000; }
+  .riel, #mensajes, .acciones, .portada__acciones, .comparador { display: none !important; }
+  .app { display: block; }
+  .panel, .tabla-contenedor, .cifra, .ganadora, details.desplegable { background: #fff !important; box-shadow: none !important; }
+  h1, h2, h3, h4, th, td, .seccion__texto, .ayuda { color: #000 !important; }
+  .seccion__num { color: #000; -webkit-text-stroke: 0; }
+
+/* =========================================================================
+   ESTILOS PROPIOS DE ELECTRE
+   ========================================================================= */
+
+/* Matriz de decisión: alternativas en filas, criterios en columnas */
+.matriz-decision { width: 100%; border-collapse: separate; border-spacing: 3px; }
+.matriz-decision th, .matriz-decision td { padding: 0; }
+.matriz-decision thead th {
+  font-size: 0.78rem; font-weight: 650; color: var(--texto-2);
+  text-align: center; padding: 0.35rem 0.4rem; vertical-align: bottom;
+}
+.matriz-decision .esquina { text-align: left; color: var(--texto-3); font-weight: 600; }
+.matriz-decision .etiqueta-fila {
+  text-align: left; padding: 0.3rem 0.6rem 0.3rem 0.2rem;
+  font-size: 0.85rem; font-weight: 600; color: var(--texto); white-space: nowrap;
+}
+.matriz-decision input {
+  width: 100%; min-width: 68px; text-align: center;
+  background: var(--relieve); color: var(--texto);
+  border: none; border-radius: var(--r-celda);
+  padding: 0.5rem 0.4rem; font-size: 0.92rem; font-family: var(--fuente-cuerpo);
+  transition: box-shadow var(--t-rapida) var(--curva), background var(--t-rapida) var(--curva);
+}
+.matriz-decision input:focus-visible { background: var(--relieve-alto); box-shadow: 0 0 0 2px var(--veto); outline: none; }
+.matriz-decision input.invalido { box-shadow: 0 0 0 2px var(--error); }
+
+/* Cabecera de criterio con sentido y peso */
+.crit-cab { display: flex; flex-direction: column; gap: 0.15rem; align-items: center; }
+.crit-cab .crit-nombre { font-weight: 650; color: var(--texto); }
+.crit-cab .crit-meta { font-size: 0.68rem; color: var(--texto-3); font-weight: 500; }
+.crit-cab .crit-sentido-max { color: var(--argos); }
+.crit-cab .crit-sentido-min { color: var(--veto); }
+
+/* Celdas de concordancia y discordancia con tinte proporcional */
+.matriz-indice { width: 100%; border-collapse: separate; border-spacing: 3px; }
+.matriz-indice th { font-size: 0.78rem; color: var(--texto-2); padding: 0.3rem 0.4rem; text-align: center; }
+.matriz-indice td.celda-indice {
+  text-align: center; padding: 0.5rem 0.4rem; border-radius: var(--r-celda);
+  background: var(--relieve); font-variant-numeric: tabular-nums; font-size: 0.9rem;
+}
+.matriz-indice td.diagonal { background: transparent; color: var(--texto-3); }
+.matriz-indice td.etiqueta-fila { text-align: left; font-weight: 600; color: var(--texto); padding-left: 0.2rem; }
+
+/* Celda que marca superación en la relación S */
+.celda-supera { background: rgba(var(--argos-rgb), 0.28); color: var(--texto); font-weight: 650; }
+.celda-nosupera { background: var(--relieve); color: var(--texto-3); }
+.celda-veto { box-shadow: inset 0 0 0 2px rgba(var(--veto-rgb), 0.7); }
+
+/* Grafo de superación en SVG */
+.grafo-superacion { width: 100%; height: auto; display: block; }
+.grafo-superacion .nodo { fill: var(--relieve-alto); transition: fill var(--t-media) var(--curva); }
+.grafo-superacion .nodo-nucleo { fill: var(--argos); }
+.grafo-superacion .nodo-texto { fill: var(--texto); font-size: 13px; font-weight: 650; font-family: var(--fuente-titulos); }
+.grafo-superacion .nodo-nucleo + .nodo-texto, .grafo-superacion text.texto-nucleo { fill: #0A1A24; }
+.grafo-superacion .arista { stroke: var(--veto); stroke-width: 1.8; fill: none; marker-end: url(#punta); }
+
+/* Insignia de núcleo */
+.chip-nucleo {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: rgba(var(--argos-rgb), 0.16); color: var(--argos);
+  padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.82rem; font-weight: 650;
+}
+
+/* Ejemplo interactivo de la portada: superación entre dos alternativas */
+.demo-superacion { display: grid; gap: 1.1rem; }
+.demo-barras { display: grid; gap: 0.7rem; }
+.demo-criterio { display: grid; grid-template-columns: 7rem 1fr; gap: 0.7rem; align-items: center; }
+.demo-criterio .demo-nombre { font-size: 0.85rem; color: var(--texto-2); }
+.demo-par { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; height: 26px; }
+.demo-par .barra { border-radius: 6px; position: relative; overflow: hidden; background: var(--relieve); }
+.demo-par .barra span { position: absolute; inset: 0; border-radius: 6px; transition: width var(--t-media) var(--curva); }
+.demo-par .barra.gana span { background: var(--argos); }
+.demo-par .barra.pierde span { background: rgba(var(--veto-rgb), 0.5); }
+.demo-controles { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.demo-resultado {
+  padding: 0.9rem 1.1rem; border-radius: var(--r-bloque); background: var(--plano);
+  font-size: 0.95rem; line-height: 1.5;
+}
+.demo-resultado strong { color: var(--argos); }
+
+/* Selector de sentido max/min en configuración */
+.sentido-toggle { display: inline-flex; background: var(--relieve); border-radius: 999px; padding: 2px; }
+.sentido-toggle button {
+  border: none; background: transparent; color: var(--texto-2);
+  padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.78rem; cursor: pointer;
+  transition: all var(--t-rapida) var(--curva);
+}
+.sentido-toggle button.activo-max { background: var(--argos); color: #0A1A24; font-weight: 650; }
+.sentido-toggle button.activo-min { background: var(--veto); color: #0A1A24; font-weight: 650; }
+
+
+/* Estilos de estructura que complementan el base heredado */
+.salto-contenido {
+  position: absolute; left: -999px; top: 0; z-index: 100;
+  background: var(--argos); color: #0A1A24; padding: 0.6rem 1rem;
+  border-radius: 0 0 var(--r-control) 0; font-weight: 650;
+}
+.salto-contenido:focus { left: 0; }
+
+.rejilla-config { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.3rem; }
+
+.campo label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--texto); margin-bottom: 0.4rem; }
+.campo input, .campo select {
+  width: 100%; background: var(--relieve); color: var(--texto);
+  border: none; border-radius: var(--r-control); padding: 0.65rem 0.8rem;
+  font-size: 0.95rem; font-family: var(--fuente-cuerpo);
+  transition: box-shadow var(--t-rapida) var(--curva), background var(--t-rapida) var(--curva);
+}
+.campo input:focus-visible, .campo select:focus-visible { background: var(--relieve-alto); box-shadow: 0 0 0 2px var(--veto); outline: none; }
+
+.titulo-menor { font-size: 1.05rem; font-weight: 650; color: var(--texto); margin: 0 0 0.9rem; }
+.separador { height: 1px; background: var(--velo-fuerte); margin: 1.6rem 0; }
+.bloque-umbrales { margin-top: 0.4rem; }
+.ayuda--bloque { margin: 0 0 1rem; max-width: 62ch; }
+
+.acciones-seccion { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.6rem; }
+
+.tabla-criterios { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+.tabla-criterios td { padding: 0.3rem 0.5rem; vertical-align: middle; }
+.tabla-criterios td:first-child { padding-left: 0; }
+.tabla-criterios .cc-nombre input { min-width: 160px; }
+.tabla-criterios .cc-peso input { max-width: 110px; text-align: center; }
+.tabla-criterios .cc-etq { font-size: 0.78rem; color: var(--texto-3); }
+
+
+/* Complementos de resultados */
+.tabla-titulo { text-align: left; font-size: 0.92rem; font-weight: 650; color: var(--texto-2); padding: 0 0 0.6rem; caption-side: top; }
+.doble-columna { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.4rem; }
+.lista-preorden { margin: 0.5rem 0 0; padding-left: 1.3rem; }
+.lista-preorden li { padding: 0.2rem 0; color: var(--texto); }
+.bloque-resultado { margin-top: 0.4rem; }
+.chip-origen--prueba { background: rgba(var(--advertencia-rgb), 0.18); color: var(--advertencia); }
+.campo--demo input[type=range] { accent-color: var(--argos); }
+
+</style>
+</head>
+<body>
+<a class="salto-contenido" href="#inicio">Saltar al contenido</a>
+
+<div class="app">
+
+<!-- =====================================================================
+     RIEL LATERAL DE NAVEGACIÓN POR PASOS
+     ===================================================================== -->
+<nav class="riel" id="riel" aria-label="Pasos del método">
+  <a class="marca" href="#inicio" aria-label="Ir al inicio">
+    <span class="marca__glifo" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+    <span class="marca__texto" data-app="nombre">Áristos ELECTRE</span>
+  </a>
+  <ol class="riel__pasos">
+    <li><a href="#seccionConfiguracion" data-paso="configuracion"><span class="riel__num">1</span><span>Configuración</span><span class="riel__estado" aria-hidden="true"></span></a></li>
+    <li><a href="#seccionDatos" data-paso="datos"><span class="riel__num">2</span><span>Matriz de decisión</span><span class="riel__estado" aria-hidden="true"></span></a></li>
+    <li><a href="#seccionResultados" data-paso="resultados"><span class="riel__num">3</span><span>Resultados</span><span class="riel__estado" aria-hidden="true"></span></a></li>
+    <li><a href="#seccionSensibilidad" data-paso="sensibilidad"><span class="riel__num">4</span><span>Sensibilidad</span><span class="riel__estado" aria-hidden="true"></span></a></li>
+    <li><a href="#seccionExportacion" data-paso="exportacion"><span class="riel__num">5</span><span>Exportación</span><span class="riel__estado" aria-hidden="true"></span></a></li>
+  </ol>
+  <p class="riel__nota">Desarrollado por <span data-app="autor">Mario Sergio Gómez Rueda</span>. Uso de carácter académico; cualquier otro uso se regirá por el derecho de la propiedad intelectual. Sugerencias o dudas: <a data-app="correo" href="mailto:mgomezr1@gmail.com">mgomezr1@gmail.com</a></p>
+</nav>
+
+<div class="lienzo">
+<div class="lienzo__contenido">
+
+<!-- =====================================================================
+     PORTADA
+     ===================================================================== -->
+<header class="portada" id="inicio">
+  <div class="portada__intro">
+    <h1 class="portada__titulo" data-app="nombre">Áristos ELECTRE</h1>
+    <p class="portada__lema">Compare alternativas criterio por criterio y descubra cuáles no son superadas por ninguna otra. ELECTRE no fuerza un orden: revela el núcleo de opciones defendibles.</p>
+    <div class="portada__acciones">
+      <span id="insigniaOrigen" class="chip-origen">Origen de los datos: sin datos cargados</span>
+      <button type="button" id="limpiarAplicacion" class="boton boton--peligro boton--pequeno">Limpiar aplicación</button>
+    </div>
+  </div>
+
+  <!-- Ejemplo interactivo: ¿una alternativa supera a otra? -->
+  <figure class="comparador" aria-labelledby="demoTitulo">
+    <figcaption id="demoTitulo" class="comparador__titulo">Vea el concepto central: ¿la alternativa A supera a la B?</figcaption>
+    <div class="demo-superacion">
+      <div class="demo-barras" id="demoBarras" aria-hidden="true"></div>
+      <div class="demo-controles" id="demoControles"></div>
+      <p class="demo-resultado" id="demoResultado" role="status" aria-live="polite"></p>
+    </div>
+  </figure>
+</header>
+
+<main>
+
+<!-- =====================================================================
+     PASO 1: CONFIGURACIÓN DEL MODELO
+     ===================================================================== -->
+<section class="seccion" id="seccionConfiguracion" aria-labelledby="tituloConfiguracion">
+  <div class="seccion__cabecera">
+    <span class="seccion__num" aria-hidden="true">1</span>
+    <div>
+      <h2 id="tituloConfiguracion">Configuración del modelo</h2>
+      <p class="seccion__texto">Defina cuántas alternativas y criterios tiene su decisión, la variante de ELECTRE y los umbrales. Todo es editable después.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="rejilla-config">
+      <div class="campo">
+        <label for="numAlternativas">Número de alternativas</label>
+        <input type="number" id="numAlternativas" min="2" max="20" value="4" inputmode="numeric">
+        <p class="ayuda">Las opciones entre las que decide. Mínimo 2.</p>
+      </div>
+      <div class="campo">
+        <label for="numCriterios">Número de criterios</label>
+        <input type="number" id="numCriterios" min="2" max="15" value="4" inputmode="numeric">
+        <p class="ayuda">Los aspectos con que evalúa. Mínimo 2.</p>
+      </div>
+      <div class="campo">
+        <label for="variante">Variante del método</label>
+        <select id="variante">
+          <option value="I">ELECTRE I: núcleo de no superadas</option>
+          <option value="II">ELECTRE II: ranking completo</option>
+        </select>
+        <p class="ayuda">ELECTRE I selecciona un subconjunto; ELECTRE II ordena todas.</p>
+      </div>
+      <div class="campo">
+        <label for="normalizacion">Normalización</label>
+        <select id="normalizacion">
+          <option value="minmax">Mínimo a máximo (recomendada)</option>
+          <option value="ninguno">Ninguna (usar valores tal cual)</option>
+        </select>
+        <p class="ayuda">Reescala cada criterio a un rango comparable de 0 a 1.</p>
+      </div>
+    </div>
+
+    <div class="separador" role="presentation"></div>
+
+    <!-- Umbrales, dependientes de la variante -->
+    <div id="umbralesI" class="bloque-umbrales">
+      <h3 class="titulo-menor">Umbrales de ELECTRE I</h3>
+      <div class="rejilla-config">
+        <div class="campo">
+          <label for="cEstrella">Umbral de concordancia c*</label>
+          <input type="number" id="cEstrella" min="0" max="1" step="0.01" value="0.60" inputmode="decimal">
+          <p class="ayuda">Acuerdo mínimo para aceptar una superación. Valor de partida sugerido, no una constante publicada.</p>
+        </div>
+        <div class="campo" id="campoDEstrella">
+          <label for="dEstrella">Umbral de discordancia d*</label>
+          <input type="number" id="dEstrella" min="0" max="1" step="0.01" value="0.40" inputmode="decimal">
+          <p class="ayuda">Oposición máxima tolerada. Valor de partida sugerido, no una constante publicada.</p>
+        </div>
+        <div class="campo">
+          <label for="modoVeto">Modo de veto</label>
+          <select id="modoVeto">
+            <option value="global">Global: un solo umbral d*</option>
+            <option value="criterio">Por criterio: un veto en cada criterio</option>
+          </select>
+          <p class="ayuda">El modo por criterio se define en la matriz, en las unidades de cada criterio.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="umbralesII" class="bloque-umbrales" hidden>
+      <h3 class="titulo-menor">Umbrales de ELECTRE II</h3>
+      <p class="ayuda ayuda--bloque">ELECTRE II usa dos niveles: una superación fuerte y una débil. El nivel fuerte exige más concordancia y tolera menos discordancia que el débil.</p>
+      <div class="rejilla-config">
+        <div class="campo">
+          <label for="c1">Concordancia fuerte c1</label>
+          <input type="number" id="c1" min="0" max="1" step="0.01" value="0.65" inputmode="decimal">
+        </div>
+        <div class="campo">
+          <label for="c2">Concordancia débil c2</label>
+          <input type="number" id="c2" min="0" max="1" step="0.01" value="0.50" inputmode="decimal">
+        </div>
+        <div class="campo">
+          <label for="d1">Discordancia fuerte d1</label>
+          <input type="number" id="d1" min="0" max="1" step="0.01" value="0.40" inputmode="decimal">
+        </div>
+        <div class="campo">
+          <label for="d2">Discordancia débil d2</label>
+          <input type="number" id="d2" min="0" max="1" step="0.01" value="0.70" inputmode="decimal">
+        </div>
+      </div>
+    </div>
+
+    <div class="mensaje mensaje--advertencia" id="avisoEscalas" role="note">
+      En ELECTRE I clásico, la discordancia global supone escalas comparables entre criterios. Si sus criterios están en unidades muy distintas, prefiera el modo de veto por criterio, más defendible.
+    </div>
+
+    <div class="acciones-seccion">
+      <button type="button" id="aplicarConfiguracion" class="boton boton--principal">Confirmar y construir la matriz</button>
+    </div>
+    <div class="mensaje" id="mensajeConfiguracion" role="status" aria-live="polite" hidden></div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     PASO 2: MATRIZ DE DECISIÓN
+     ===================================================================== -->
+<section class="seccion" id="seccionDatos" aria-labelledby="tituloDatos" hidden>
+  <div class="seccion__cabecera">
+    <span class="seccion__num" aria-hidden="true">2</span>
+    <div>
+      <h2 id="tituloDatos">Matriz de decisión</h2>
+      <p class="seccion__texto">Nombre cada criterio, indique si se maximiza o minimiza, asigne su peso y escriba el desempeño de cada alternativa. Los pesos se normalizan solos.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3 class="titulo-menor">Criterios: nombre, sentido y peso</h3>
+    <div class="tabla-contenedor">
+      <table class="tabla-criterios" id="tablaCriterios"><tbody></tbody></table>
+    </div>
+    <p class="ayuda" id="avisoPesos"></p>
+
+    <div class="separador" role="presentation"></div>
+
+    <h3 class="titulo-menor">Desempeño de cada alternativa</h3>
+    <div class="tabla-contenedor">
+      <table class="matriz-decision" id="tablaDecision">
+        <thead><tr id="cabeceraDecision"></tr></thead>
+        <tbody id="cuerpoDecision"></tbody>
+      </table>
+    </div>
+
+    <div id="filaVetos" hidden>
+      <div class="separador" role="presentation"></div>
+      <h3 class="titulo-menor">Umbrales de veto por criterio</h3>
+      <p class="ayuda ayuda--bloque">Deje una casilla vacía si ese criterio no veta. Si la desventaja de una alternativa en ese criterio supera el veto, no podrá superar a la otra, en las unidades propias del criterio.</p>
+      <div class="tabla-contenedor">
+        <table class="matriz-decision" id="tablaVetos"><thead><tr id="cabeceraVetos"></tr></thead><tbody><tr id="cuerpoVetos"></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="acciones-seccion">
+      <button type="button" id="cargarEjemplo" class="boton boton--suave">Cargar datos de prueba</button>
+      <button type="button" id="calcularResultados" class="boton boton--principal">Calcular</button>
+    </div>
+    <div class="mensaje" id="mensajeDatos" role="status" aria-live="polite" hidden></div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     PASO 3: RESULTADOS
+     ===================================================================== -->
+<section class="seccion" id="seccionResultados" aria-labelledby="tituloResultados" hidden>
+  <div class="seccion__cabecera">
+    <span class="seccion__num" aria-hidden="true">3</span>
+    <div>
+      <h2 id="tituloResultados">Resultados</h2>
+      <p class="seccion__texto">Las matrices de concordancia y discordancia, la relación de superación y el resultado: el núcleo en ELECTRE I o el ranking en ELECTRE II.</p>
+    </div>
+  </div>
+
+  <div id="contenedorResultados"></div>
+</section>
+
+
+<!-- =====================================================================
+     PASO 4: SENSIBILIDAD Y ROBUSTEZ
+     ===================================================================== -->
+<section class="seccion" id="seccionSensibilidad" aria-labelledby="tituloSensibilidad" hidden>
+  <div class="seccion__cabecera">
+    <span class="seccion__num" aria-hidden="true">4</span>
+    <div>
+      <h2 id="tituloSensibilidad">Sensibilidad y robustez</h2>
+      <p class="seccion__texto">La pregunta central: ¿qué tendría que cambiar para que la recomendación fuera otra? Mueva los umbrales y observe cómo se transforma el núcleo o el ranking.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div id="sensibilidadI">
+      <h3 class="titulo-menor">Barrido de umbrales de ELECTRE I</h3>
+      <p class="ayuda ayuda--bloque">Cada fila recalcula el núcleo con un par de umbrales distinto. Así ve en qué rango la recomendación se mantiene estable y a partir de qué punto cambia.</p>
+      <div class="rejilla-config">
+        <div class="campo">
+          <label for="barridoCMin">Concordancia c* desde</label>
+          <input type="number" id="barridoCMin" min="0" max="1" step="0.05" value="0.50" inputmode="decimal">
+        </div>
+        <div class="campo">
+          <label for="barridoCMax">c* hasta</label>
+          <input type="number" id="barridoCMax" min="0" max="1" step="0.05" value="0.80" inputmode="decimal">
+        </div>
+        <div class="campo">
+          <label for="barridoDFijo">Discordancia d* fija</label>
+          <input type="number" id="barridoDFijo" min="0" max="1" step="0.05" value="0.40" inputmode="decimal">
+        </div>
+        <div class="campo">
+          <label for="barridoPaso">Paso</label>
+          <input type="number" id="barridoPaso" min="0.01" max="0.5" step="0.01" value="0.05" inputmode="decimal">
+        </div>
+      </div>
+      <div class="acciones-seccion">
+        <button type="button" id="ejecutarBarridoI" class="boton boton--principal">Ejecutar barrido</button>
+      </div>
+    </div>
+
+    <div id="sensibilidadII" hidden>
+      <h3 class="titulo-menor">Robustez del ranking de ELECTRE II</h3>
+      <p class="ayuda ayuda--bloque">Se perturban los cuatro umbrales alrededor de sus valores actuales y se observa con qué frecuencia cada alternativa conserva el primer puesto.</p>
+      <div class="rejilla-config">
+        <div class="campo">
+          <label for="perturbacion">Amplitud de la perturbación</label>
+          <input type="number" id="perturbacion" min="0.01" max="0.3" step="0.01" value="0.05" inputmode="decimal">
+        </div>
+        <div class="campo">
+          <label for="repeticiones">Número de escenarios</label>
+          <input type="number" id="repeticiones" min="10" max="500" step="10" value="100" inputmode="numeric">
+        </div>
+      </div>
+      <div class="acciones-seccion">
+        <button type="button" id="ejecutarRobustezII" class="boton boton--principal">Evaluar robustez</button>
+      </div>
+    </div>
+
+    <div id="contenedorSensibilidad"></div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     PASO 5: EXPORTACIÓN
+     ===================================================================== -->
+<section class="seccion" id="seccionExportacion" aria-labelledby="tituloExportacion" hidden>
+  <div class="seccion__cabecera">
+    <span class="seccion__num" aria-hidden="true">5</span>
+    <div>
+      <h2 id="tituloExportacion">Exportación</h2>
+      <p class="seccion__texto">Descargue el libro de Excel con las fórmulas escritas celda por celda, o el informe ejecutivo en PDF. Los archivos con datos de prueba se marcan como tales.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="rejilla-exportacion">
+      <div class="tarjeta-exportacion">
+        <h3 class="titulo-menor">Libro de Excel</h3>
+        <p class="ayuda ayuda--bloque">Incluye una hoja menú con índice, una hoja por bloque de cálculo con fórmulas reales de Excel, y una hoja de resultado. El estudiante puede seguir cada cálculo.</p>
+        <button type="button" id="exportarExcel" class="boton boton--principal">Descargar Excel</button>
+      </div>
+      <div class="tarjeta-exportacion">
+        <h3 class="titulo-menor">Informe en PDF</h3>
+        <p class="ayuda ayuda--bloque">Informe ejecutivo con la recomendación, los resultados, la estructura del modelo, la robustez, la nota metodológica y las referencias. Con marca de agua y pie en cada página.</p>
+        <button type="button" id="exportarPDF" class="boton boton--principal">Descargar PDF</button>
+      </div>
+    </div>
+    <div class="mensaje" id="mensajeExportacion" role="status" aria-live="polite" hidden></div>
+  </div>
+
+  <!-- Modo de prueba y verificación -->
+  <div class="seccion__cabecera" style="margin-top:2.5rem;">
+    <span class="seccion__num" aria-hidden="true" style="opacity:0.5;">✓</span>
+    <div>
+      <h2 id="tituloPruebas">Modo de prueba y verificación</h2>
+      <p class="seccion__texto">Ejecute las pruebas automáticas que comprueban los cálculos, los casos límite, los tamaños dinámicos y la estructura de las exportaciones.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="acciones-seccion" style="margin-top:0;">
+      <button type="button" id="ejecutarPruebas" class="boton boton--principal">Ejecutar pruebas</button>
+    </div>
+    <div id="contenedorPruebas"></div>
+  </div>
+</section>
+
+</main>
+</div>
+</div>
+</div>
+<script>
+"use strict";
+/* =========================================================================
+   ÁRISTOS ELECTRE
+   Aplicación académica autocontenida para decisiones multicriterio con el
+   método de superación ELECTRE (variantes I y II).
+   Autor: Mario Sergio Gómez Rueda.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   0. IDENTIDAD DEL APLICATIVO (fuente única de nombre, versión y autoría)
+   ------------------------------------------------------------------------- */
+const APLICATIVO = {
+  nombre: "Áristos ELECTRE",
+  version: "1.0",
+  autor: "Mario Sergio Gómez Rueda",
+  correo: "mgomezr1@gmail.com",
+  nota: "Este aplicativo fue desarrollado por Mario Sergio Gómez Rueda, su uso es de carácter académico y cualquier otro uso se regirá por el derecho de la propiedad intelectual."
+};
+
+/* -------------------------------------------------------------------------
+   1. ESTADO DE LA APLICACIÓN
+   ------------------------------------------------------------------------- */
+const estado = {
+  numAlternativas: 4,
+  numCriterios: 4,
+  variante: "I",
+  normalizacion: "minmax",
+  modoVeto: "global",
+  umbrales: { cEstrella: 0.60, dEstrella: 0.40, c1: 0.65, c2: 0.50, d1: 0.40, d2: 0.70 },
+  nombresAlternativas: [],
+  nombresCriterios: [],
+  sentidos: [],
+  pesos: [],
+  vetos: [],
+  matriz: [],
+  origen: "vacio",   // vacio | usuario | prueba
+  resultados: null,
+  configurado: false
+};
+
+/* Atajo para seleccionar por id */
+function $(id) { return document.getElementById(id); }
+
+/* -------------------------------------------------------------------------
+   2. MOTOR DE CÁLCULO ELECTRE (verificado contra cálculo independiente)
+   ------------------------------------------------------------------------- */
+
+/** Suma de un vector. */
+function sumar(vector) { return vector.reduce((s, v) => s + v, 0); }
+
+/** Normaliza la matriz de decisión por criterio; 1 es siempre lo mejor. */
+function normalizarDecision(matriz, sentidos, metodo) {
+  const m = matriz.length, k = matriz[0].length;
+  const salida = matriz.map((f) => f.slice());
+  if (metodo === "ninguno") return salida;
+  for (let j = 0; j < k; j++) {
+    const columna = matriz.map((f) => f[j]);
+    const min = Math.min(...columna), max = Math.max(...columna), rango = max - min;
+    for (let i = 0; i < m; i++) {
+      if (rango === 0) { salida[i][j] = 1; continue; }
+      const r = (matriz[i][j] - min) / rango;
+      salida[i][j] = sentidos[j] === "min" ? 1 - r : r;
+    }
+  }
+  return salida;
+}
+
+/** Índice de concordancia C(a,b): peso de los criterios en que a iguala o supera a b. */
+function matrizConcordancia(orientada, pesos) {
+  const m = orientada.length, k = pesos.length, sp = sumar(pesos);
+  const C = Array.from({ length: m }, () => Array(m).fill(null));
+  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
+    if (a === b) continue;
+    let acuerdo = 0;
+    for (let j = 0; j < k; j++) if (orientada[a][j] >= orientada[b][j]) acuerdo += pesos[j];
+    C[a][b] = acuerdo / sp;
+  }
+  return C;
+}
+
+/** Índice de discordancia global D(a,b): peor desventaja de a sobre el rango máximo. */
+function matrizDiscordanciaGlobal(orientada) {
+  const m = orientada.length, k = orientada[0].length;
+  let rangoMaximo = 0;
+  for (let j = 0; j < k; j++) {
+    const c = orientada.map((f) => f[j]);
+    rangoMaximo = Math.max(rangoMaximo, Math.max(...c) - Math.min(...c));
+  }
+  const D = Array.from({ length: m }, () => Array(m).fill(null));
+  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
+    if (a === b) continue;
+    if (rangoMaximo === 0) { D[a][b] = 0; continue; }
+    let peor = 0;
+    for (let j = 0; j < k; j++) { const dv = orientada[b][j] - orientada[a][j]; if (dv > peor) peor = dv; }
+    D[a][b] = peor / rangoMaximo;
+  }
+  return D;
+}
+
+/** Veto por criterio en unidades originales. Devuelve matriz booleana: true = veta. */
+function matrizVetoPorCriterio(matrizOriginal, sentidos, vetos) {
+  const m = matrizOriginal.length, k = matrizOriginal[0].length;
+  const V = Array.from({ length: m }, () => Array(m).fill(false));
+  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
+    if (a === b) continue;
+    for (let j = 0; j < k; j++) {
+      if (vetos[j] === null || vetos[j] === undefined || vetos[j] === "") continue;
+      const desventaja = sentidos[j] === "min"
+        ? matrizOriginal[a][j] - matrizOriginal[b][j]
+        : matrizOriginal[b][j] - matrizOriginal[a][j];
+      if (desventaja > vetos[j]) { V[a][b] = true; break; }
+    }
+  }
+  return V;
+}
+
+/** Relación de superación de ELECTRE I. */
+function relacionSuperacionI(C, D, veto, cEstrella, dEstrella, modoVeto) {
+  const m = C.length;
+  const S = Array.from({ length: m }, () => Array(m).fill(false));
+  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
+    if (a === b) continue;
+    const concuerda = C[a][b] >= cEstrella - 1e-12;
+    const noVetado = modoVeto === "criterio" ? !veto[a][b] : D[a][b] <= dEstrella + 1e-12;
+    S[a][b] = concuerda && noVetado;
+  }
+  return S;
+}
+
+/** Núcleo de ELECTRE I: alternativas no superadas por otra del núcleo. */
+function calcularNucleo(S) {
+  const m = S.length, enNucleo = Array(m).fill(true);
+  let cambio = true, guarda = 0;
+  while (cambio && guarda < m * m + 5) {
+    cambio = false; guarda++;
+    for (let b = 0; b < m; b++) {
+      if (!enNucleo[b]) continue;
+      for (let a = 0; a < m; a++) {
+        if (a === b || !enNucleo[a]) continue;
+        if (S[a][b] && !S[b][a]) { enNucleo[b] = false; cambio = true; break; }
+      }
+    }
+  }
+  const nucleo = [];
+  for (let i = 0; i < m; i++) if (enNucleo[i]) nucleo.push(i);
+  return nucleo;
+}
+
+/** ELECTRE I completo. */
+function electreI(d) {
+  const orientada = normalizarDecision(d.matriz, d.sentidos, d.normalizacion);
+  const C = matrizConcordancia(orientada, d.pesos);
+  const D = matrizDiscordanciaGlobal(orientada);
+  const veto = d.modoVeto === "criterio" ? matrizVetoPorCriterio(d.matriz, d.sentidos, d.vetos) : null;
+  const S = relacionSuperacionI(C, D, veto, d.umbrales.cEstrella, d.umbrales.dEstrella, d.modoVeto);
+  const nucleo = calcularNucleo(S);
+  return { variante: "I", orientada, C, D, veto, S, nucleo };
+}
+
+/** Relaciones fuerte y débil de ELECTRE II. */
+function relacionesII(C, D, c1, c2, d1, d2) {
+  const m = C.length;
+  const fuerte = Array.from({ length: m }, () => Array(m).fill(false));
+  const debil = Array.from({ length: m }, () => Array(m).fill(false));
+  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
+    if (a === b) continue;
+    const c = C[a][b], dd = D[a][b];
+    if (c >= c1 - 1e-12 && dd <= d1 + 1e-12) fuerte[a][b] = true;
+    else if (c >= c2 - 1e-12 && dd <= d2 + 1e-12) debil[a][b] = true;
+  }
+  return { fuerte, debil };
+}
+
+/** Destilación didáctica sobre el grafo de superación. */
+function destilar(fuerte, debil, ascendente) {
+  const m = fuerte.length;
+  const restantes = new Set(Array.from({ length: m }, (_, i) => i));
+  const niveles = [];
+  let guarda = 0;
+  while (restantes.size > 0 && guarda < m + 5) {
+    guarda++;
+    const candidatos = [];
+    for (const b of restantes) {
+      let superada = false;
+      for (const a of restantes) {
+        if (a === b) continue;
+        const rel = ascendente ? fuerte[b][a] : fuerte[a][b];
+        if (rel) { superada = true; break; }
+      }
+      if (!superada) candidatos.push(b);
+    }
+    let nivel = candidatos.slice();
+    if (candidatos.length > 1) {
+      nivel = candidatos.filter((b) => !candidatos.some((a) => a !== b && (ascendente ? debil[b][a] : debil[a][b])));
+      if (nivel.length === 0) nivel = candidatos.slice();
+    }
+    if (nivel.length === 0) nivel = Array.from(restantes);
+    niveles.push(nivel);
+    nivel.forEach((i) => restantes.delete(i));
+  }
+  return niveles;
+}
+
+/** ELECTRE II completo. */
+function electreII(d) {
+  const orientada = normalizarDecision(d.matriz, d.sentidos, d.normalizacion);
+  const C = matrizConcordancia(orientada, d.pesos);
+  const D = matrizDiscordanciaGlobal(orientada);
+  const u = d.umbrales;
+  const { fuerte, debil } = relacionesII(C, D, u.c1, u.c2, u.d1, u.d2);
+  const descendente = destilar(fuerte, debil, false);
+  const ascendente = destilar(fuerte, debil, true);
+  const m = d.matriz.length;
+  const posDesc = Array(m).fill(0), posAsc = Array(m).fill(0);
+  descendente.forEach((nivel, r) => nivel.forEach((i) => { posDesc[i] = r + 1; }));
+  const totalAsc = ascendente.length;
+  ascendente.forEach((nivel, r) => nivel.forEach((i) => { posAsc[i] = totalAsc - r; }));
+  const promedio = Array.from({ length: m }, (_, i) => (posDesc[i] + posAsc[i]) / 2);
+  const orden = Array.from({ length: m }, (_, i) => i).sort((a, b) => promedio[a] - promedio[b] || posDesc[a] - posDesc[b]);
+  return { variante: "II", orientada, C, D, fuerte, debil, descendente, ascendente, posDesc, posAsc, promedio, orden };
+}
+
+/** Punto de entrada del cálculo según la variante configurada. */
+function calcularElectre(d) { return d.variante === "II" ? electreII(d) : electreI(d); }
+
+/* -------------------------------------------------------------------------
+   3. UTILIDADES DE FORMATO Y MENSAJES
+   ------------------------------------------------------------------------- */
+function comoPorcentaje(x) { return (x * 100).toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %"; }
+function conDecimales(x, n = 4) { return Number(x).toLocaleString("es-CO", { minimumFractionDigits: n, maximumFractionDigits: n }); }
+function escaparHtml(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+
+function mostrarMensaje(id, texto, tipo) {
+  const el = $(id);
+  el.textContent = texto;
+  el.className = "mensaje" + (tipo ? " mensaje--" + tipo : "");
+  el.hidden = false;
+}
+function ocultarMensaje(id) { const el = $(id); if (el) el.hidden = true; }
+
+/** Actualiza la insignia de origen de los datos en la portada. */
+function actualizarOrigen() {
+  const chip = $("insigniaOrigen");
+  const textos = {
+    vacio: "Origen de los datos: sin datos cargados",
+    usuario: "Origen de los datos: digitados por usted",
+    prueba: "Origen de los datos: datos de prueba generados por la aplicación"
+  };
+  chip.textContent = textos[estado.origen] || textos.vacio;
+  chip.classList.toggle("chip-origen--prueba", estado.origen === "prueba");
+}
+
+/* -------------------------------------------------------------------------
+   4. PORTADA INTERACTIVA: ¿A supera a B?
+   Ejemplo con tres criterios y dos alternativas que el usuario ajusta.
+   ------------------------------------------------------------------------- */
+const demo = {
+  criterios: ["Costo", "Calidad", "Plazo"],
+  pesos: [0.4, 0.35, 0.25],
+  A: [70, 80, 60],
+  B: [50, 60, 90]
+};
+
+function pintarDemo() {
+  const cont = $("demoBarras");
+  cont.innerHTML = "";
+  demo.criterios.forEach((nombre, j) => {
+    const fila = document.createElement("div");
+    fila.className = "demo-criterio";
+    const etq = document.createElement("span");
+    etq.className = "demo-nombre";
+    etq.textContent = nombre + " (peso " + comoPorcentaje(demo.pesos[j]) + ")";
+    const par = document.createElement("div");
+    par.className = "demo-par";
+    const ganaA = demo.A[j] >= demo.B[j];
+    const barraA = document.createElement("div");
+    barraA.className = "barra " + (ganaA ? "gana" : "pierde");
+    barraA.innerHTML = '<span style="width:' + demo.A[j] + '%"></span>';
+    barraA.setAttribute("aria-label", "A en " + nombre + ": " + demo.A[j]);
+    const barraB = document.createElement("div");
+    barraB.className = "barra " + (!ganaA ? "gana" : "pierde");
+    barraB.innerHTML = '<span style="width:' + demo.B[j] + '%"></span>';
+    barraB.setAttribute("aria-label", "B en " + nombre + ": " + demo.B[j]);
+    par.appendChild(barraA); par.appendChild(barraB);
+    fila.appendChild(etq); fila.appendChild(par);
+    cont.appendChild(fila);
+  });
+  calcularDemo();
+}
+
+function calcularDemo() {
+  const sp = sumar(demo.pesos);
+  let concordanciaAB = 0, concordanciaBA = 0;
+  demo.criterios.forEach((_, j) => {
+    if (demo.A[j] >= demo.B[j]) concordanciaAB += demo.pesos[j];
+    if (demo.B[j] >= demo.A[j]) concordanciaBA += demo.pesos[j];
+  });
+  concordanciaAB /= sp; concordanciaBA /= sp;
+  const res = $("demoResultado");
+  const cAB = comoPorcentaje(concordanciaAB);
+  const umbral = 0.6;
+  let veredicto;
+  if (concordanciaAB >= umbral && concordanciaAB > concordanciaBA) {
+    veredicto = "Con una concordancia de <strong>" + cAB + "</strong>, A reúne apoyo suficiente para superar a B (umbral 60,00 %).";
+  } else if (concordanciaBA >= umbral && concordanciaBA > concordanciaAB) {
+    veredicto = "Con una concordancia de <strong>" + comoPorcentaje(concordanciaBA) + "</strong> a favor de B, es B quien supera a A (umbral 60,00 %).";
+  } else {
+    veredicto = "La concordancia de A frente a B es <strong>" + cAB + "</strong>. Ninguna reúne apoyo suficiente y claro para superar a la otra: son incomparables. Eso es lo que ELECTRE respeta.";
+  }
+  res.innerHTML = veredicto + " Mueva los valores y observe cómo cambia quién supera a quién.";
+}
+
+function construirControlesDemo() {
+  const cont = $("demoControles");
+  cont.innerHTML = "";
+  ["A", "B"].forEach((alt) => {
+    demo.criterios.forEach((nombre, j) => {
+      const wrap = document.createElement("label");
+      wrap.className = "campo campo--demo";
+      wrap.style.cssText = "display:flex;flex-direction:column;gap:0.2rem;font-size:0.72rem;color:var(--texto-3);min-width:96px;flex:1;";
+      const txt = document.createElement("span");
+      txt.textContent = alt + " · " + nombre;
+      const inp = document.createElement("input");
+      inp.type = "range"; inp.min = "0"; inp.max = "100"; inp.step = "5";
+      inp.value = demo[alt][j];
+      inp.setAttribute("aria-label", "Valor de la alternativa " + alt + " en " + nombre);
+      inp.addEventListener("input", () => { demo[alt][j] = Number(inp.value); pintarDemo(); });
+      wrap.appendChild(txt); wrap.appendChild(inp);
+      cont.appendChild(wrap);
+    });
+  });
+}
+
+/* -------------------------------------------------------------------------
+   5. PASO 1: CONFIGURACIÓN DEL MODELO
+   ------------------------------------------------------------------------- */
+
+/** Muestra u oculta los bloques de umbrales según la variante elegida. */
+function alternarUmbrales() {
+  const v = $("variante").value;
+  $("umbralesI").hidden = v !== "I";
+  $("umbralesII").hidden = v !== "II";
+}
+
+/** Muestra u oculta el campo d* global según el modo de veto. */
+function alternarCampoVeto() {
+  const modo = $("modoVeto").value;
+  $("campoDEstrella").style.opacity = modo === "criterio" ? "0.45" : "1";
+  $("dEstrella").disabled = modo === "criterio";
+}
+
+/** Lee y valida la configuración; construye las estructuras del modelo. */
+function aplicarConfiguracion() {
+  const nA = parseInt($("numAlternativas").value, 10);
+  const nC = parseInt($("numCriterios").value, 10);
+  if (!Number.isInteger(nA) || nA < 2 || nA > 20) {
+    mostrarMensaje("mensajeConfiguracion", "El número de alternativas debe ser un entero entre 2 y 20.", "error"); return;
+  }
+  if (!Number.isInteger(nC) || nC < 2 || nC > 15) {
+    mostrarMensaje("mensajeConfiguracion", "El número de criterios debe ser un entero entre 2 y 15.", "error"); return;
+  }
+
+  const v = $("variante").value;
+  const u = estado.umbrales;
+  if (v === "I") {
+    u.cEstrella = parseFloat($("cEstrella").value);
+    u.dEstrella = parseFloat($("dEstrella").value);
+    if (!(u.cEstrella >= 0 && u.cEstrella <= 1)) { mostrarMensaje("mensajeConfiguracion", "El umbral c* debe estar entre 0 y 1.", "error"); return; }
+    if (!(u.dEstrella >= 0 && u.dEstrella <= 1)) { mostrarMensaje("mensajeConfiguracion", "El umbral d* debe estar entre 0 y 1.", "error"); return; }
+  } else {
+    u.c1 = parseFloat($("c1").value); u.c2 = parseFloat($("c2").value);
+    u.d1 = parseFloat($("d1").value); u.d2 = parseFloat($("d2").value);
+    for (const [k, val] of [["c1", u.c1], ["c2", u.c2], ["d1", u.d1], ["d2", u.d2]]) {
+      if (!(val >= 0 && val <= 1)) { mostrarMensaje("mensajeConfiguracion", "Todos los umbrales deben estar entre 0 y 1.", "error"); return; }
+    }
+    if (u.c2 > u.c1) { mostrarMensaje("mensajeConfiguracion", "La concordancia débil c2 no debe superar a la fuerte c1.", "error"); return; }
+    if (u.d1 > u.d2) { mostrarMensaje("mensajeConfiguracion", "La discordancia fuerte d1 no debe superar a la débil d2.", "error"); return; }
+  }
+
+  // Preservar datos existentes al redimensionar cuando sea posible
+  const previa = estado.matriz;
+  estado.numAlternativas = nA;
+  estado.numCriterios = nC;
+  estado.variante = v;
+  estado.normalizacion = $("normalizacion").value;
+  estado.modoVeto = $("modoVeto").value;
+
+  estado.nombresAlternativas = Array.from({ length: nA }, (_, i) => estado.nombresAlternativas[i] || ("Alternativa " + (i + 1)));
+  estado.nombresCriterios = Array.from({ length: nC }, (_, j) => estado.nombresCriterios[j] || ("Criterio " + (j + 1)));
+  estado.sentidos = Array.from({ length: nC }, (_, j) => estado.sentidos[j] || "max");
+  estado.pesos = Array.from({ length: nC }, (_, j) => (estado.pesos[j] != null ? estado.pesos[j] : 1));
+  estado.vetos = Array.from({ length: nC }, (_, j) => (estado.vetos[j] != null ? estado.vetos[j] : ""));
+  estado.matriz = Array.from({ length: nA }, (_, i) =>
+    Array.from({ length: nC }, (_, j) => (previa[i] && previa[i][j] != null ? previa[i][j] : "")));
+
+  estado.configurado = true;
+  estado.resultados = null;
+  construirTablaCriterios();
+  construirMatrizDecision();
+  $("seccionDatos").hidden = false;
+  $("filaVetos").hidden = estado.modoVeto !== "criterio";
+  ocultarMensaje("mensajeConfiguracion");
+  actualizarEstadosRiel();
+  $("seccionDatos").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* -------------------------------------------------------------------------
+   6. PASO 2: MATRIZ DE DECISIÓN
+   ------------------------------------------------------------------------- */
+
+/** Construye la tabla de criterios: nombre, sentido max/min y peso. */
+function construirTablaCriterios() {
+  const cuerpo = $("tablaCriterios").querySelector("tbody");
+  cuerpo.innerHTML = "";
+  estado.nombresCriterios.forEach((nombre, j) => {
+    const tr = document.createElement("tr");
+
+    const tdNombre = document.createElement("td");
+    tdNombre.className = "cc-nombre";
+    const inpNombre = document.createElement("input");
+    inpNombre.type = "text"; inpNombre.value = nombre;
+    inpNombre.setAttribute("aria-label", "Nombre del criterio " + (j + 1));
+    inpNombre.addEventListener("input", () => { estado.nombresCriterios[j] = inpNombre.value; sincronizarCabecerasDecision(); });
+    tdNombre.appendChild(inpNombre);
+
+    const tdSentido = document.createElement("td");
+    const toggle = document.createElement("div");
+    toggle.className = "sentido-toggle";
+    const bMax = document.createElement("button");
+    bMax.type = "button"; bMax.textContent = "Maximizar";
+    const bMin = document.createElement("button");
+    bMin.type = "button"; bMin.textContent = "Minimizar";
+    function pintarSentido() {
+      const es = estado.sentidos[j];
+      bMax.className = es === "max" ? "activo-max" : "";
+      bMin.className = es === "min" ? "activo-min" : "";
+      bMax.setAttribute("aria-pressed", es === "max");
+      bMin.setAttribute("aria-pressed", es === "min");
+    }
+    bMax.addEventListener("click", () => { estado.sentidos[j] = "max"; pintarSentido(); sincronizarCabecerasDecision(); });
+    bMin.addEventListener("click", () => { estado.sentidos[j] = "min"; pintarSentido(); sincronizarCabecerasDecision(); });
+    pintarSentido();
+    toggle.appendChild(bMax); toggle.appendChild(bMin);
+    tdSentido.appendChild(toggle);
+
+    const tdPeso = document.createElement("td");
+    tdPeso.className = "cc-peso";
+    const inpPeso = document.createElement("input");
+    inpPeso.type = "number"; inpPeso.min = "0"; inpPeso.step = "0.1"; inpPeso.value = estado.pesos[j];
+    inpPeso.setAttribute("aria-label", "Peso del criterio " + (j + 1));
+    inpPeso.addEventListener("input", () => { estado.pesos[j] = inpPeso.value === "" ? "" : Number(inpPeso.value); actualizarAvisoPesos(); });
+    const etqPeso = document.createElement("div");
+    etqPeso.className = "cc-etq"; etqPeso.textContent = "peso relativo";
+    tdPeso.appendChild(inpPeso); tdPeso.appendChild(etqPeso);
+
+    tr.appendChild(tdNombre); tr.appendChild(tdSentido); tr.appendChild(tdPeso);
+    cuerpo.appendChild(tr);
+  });
+  actualizarAvisoPesos();
+}
+
+/** Muestra cómo se normalizan los pesos para que sumen 100 %. */
+function actualizarAvisoPesos() {
+  const pesos = estado.pesos.map((p) => (p === "" || isNaN(p) ? 0 : Number(p)));
+  const total = sumar(pesos);
+  const aviso = $("avisoPesos");
+  if (total <= 0) { aviso.textContent = "Asigne pesos positivos. Al menos un criterio debe pesar más que cero."; return; }
+  const norm = pesos.map((p) => comoPorcentaje(p / total));
+  aviso.textContent = "Pesos normalizados: " + estado.nombresCriterios.map((n, j) => n + " " + norm[j]).join(" · ");
+}
+
+/** Construye la cabecera y el cuerpo de la matriz de decisión. */
+function construirMatrizDecision() {
+  const cab = $("cabeceraDecision");
+  cab.innerHTML = '<th class="esquina">Alternativa \\ Criterio</th>';
+  estado.nombresCriterios.forEach((nombre, j) => {
+    const th = document.createElement("th");
+    th.innerHTML = '<div class="crit-cab"><span class="crit-nombre">' + escaparHtml(nombre) +
+      '</span><span class="crit-meta crit-sentido-' + estado.sentidos[j] + '">' +
+      (estado.sentidos[j] === "max" ? "maximizar" : "minimizar") + "</span></div>";
+    th.dataset.col = j;
+    cab.appendChild(th);
+  });
+
+  const cuerpo = $("cuerpoDecision");
+  cuerpo.innerHTML = "";
+  estado.nombresAlternativas.forEach((nombreAlt, i) => {
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.className = "etiqueta-fila";
+    const inpAlt = document.createElement("input");
+    inpAlt.type = "text"; inpAlt.value = nombreAlt;
+    inpAlt.style.cssText = "background:transparent;font-weight:600;min-width:130px;";
+    inpAlt.setAttribute("aria-label", "Nombre de la alternativa " + (i + 1));
+    inpAlt.addEventListener("input", () => { estado.nombresAlternativas[i] = inpAlt.value; });
+    th.appendChild(inpAlt);
+    tr.appendChild(th);
+    estado.nombresCriterios.forEach((_, j) => {
+      const td = document.createElement("td");
+      const inp = document.createElement("input");
+      inp.type = "number"; inp.step = "any";
+      inp.value = estado.matriz[i][j];
+      inp.setAttribute("aria-label", "Desempeño de " + nombreAlt + " en criterio " + (j + 1));
+      inp.addEventListener("input", () => {
+        estado.matriz[i][j] = inp.value === "" ? "" : Number(inp.value);
+        inp.classList.toggle("invalido", inp.value !== "" && isNaN(Number(inp.value)));
+        estado.origen = "usuario"; actualizarOrigen();
+      });
+      td.appendChild(inp);
+      tr.appendChild(td);
+    });
+    cuerpo.appendChild(tr);
+  });
+
+  if (estado.modoVeto === "criterio") construirTablaVetos();
+}
+
+/** Sincroniza las cabeceras de la matriz cuando cambian nombres o sentidos. */
+function sincronizarCabecerasDecision() {
+  if (!estado.configurado) return;
+  const ths = $("cabeceraDecision").querySelectorAll("th[data-col]");
+  ths.forEach((th) => {
+    const j = Number(th.dataset.col);
+    th.innerHTML = '<div class="crit-cab"><span class="crit-nombre">' + escaparHtml(estado.nombresCriterios[j]) +
+      '</span><span class="crit-meta crit-sentido-' + estado.sentidos[j] + '">' +
+      (estado.sentidos[j] === "max" ? "maximizar" : "minimizar") + "</span></div>";
+  });
+  if (estado.modoVeto === "criterio") construirTablaVetos();
+  actualizarAvisoPesos();
+}
+
+/** Construye la fila de umbrales de veto por criterio. */
+function construirTablaVetos() {
+  const cab = $("cabeceraVetos");
+  cab.innerHTML = "<th class=\"esquina\">Veto por criterio</th>";
+  estado.nombresCriterios.forEach((nombre) => {
+    const th = document.createElement("th");
+    th.textContent = nombre;
+    cab.appendChild(th);
+  });
+  const cuerpo = $("cuerpoVetos");
+  cuerpo.innerHTML = '<th class="etiqueta-fila">Umbral vⱼ</th>';
+  estado.nombresCriterios.forEach((_, j) => {
+    const td = document.createElement("td");
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.step = "any"; inp.value = estado.vetos[j];
+    inp.placeholder = "sin veto";
+    inp.setAttribute("aria-label", "Umbral de veto del criterio " + (j + 1));
+    inp.addEventListener("input", () => { estado.vetos[j] = inp.value === "" ? "" : Number(inp.value); });
+    td.appendChild(inp);
+    cuerpo.appendChild(td);
+  });
+}
+
+/** Datos de prueba coherentes, marcados como tales. */
+function cargarDatosPrueba() {
+  const nA = estado.numAlternativas, nC = estado.numCriterios;
+  estado.nombresAlternativas = Array.from({ length: nA }, (_, i) => "Proveedor " + String.fromCharCode(65 + i));
+  const bancoCrit = ["Costo", "Calidad", "Plazo de entrega", "Servicio posventa", "Riesgo", "Sostenibilidad", "Experiencia", "Flexibilidad"];
+  estado.nombresCriterios = Array.from({ length: nC }, (_, j) => bancoCrit[j] || ("Criterio " + (j + 1)));
+  estado.sentidos = Array.from({ length: nC }, (_, j) => (estado.nombresCriterios[j] === "Costo" || estado.nombresCriterios[j] === "Plazo de entrega" || estado.nombresCriterios[j] === "Riesgo") ? "min" : "max");
+  estado.pesos = Array.from({ length: nC }, (_, j) => [3, 2.5, 2, 1.5, 1, 1, 1, 1][j] || 1);
+  estado.vetos = Array.from({ length: nC }, () => "");
+  // Valores pseudoaleatorios reproducibles
+  let semilla = 20260101;
+  const rnd = () => { semilla = (semilla * 9301 + 49297) % 233280; return semilla / 233280; };
+  estado.matriz = Array.from({ length: nA }, () =>
+    Array.from({ length: nC }, () => Math.round((20 + rnd() * 80) * 10) / 10));
+  estado.origen = "prueba";
+  estado.resultados = null;
+  construirTablaCriterios();
+  construirMatrizDecision();
+  actualizarOrigen();
+  mostrarMensaje("mensajeDatos", "Se cargaron datos de prueba generados por la aplicación. No representan un caso real. Los archivos que exporte llevarán la marca PRUEBA.", "advertencia");
+}
+
+/* -------------------------------------------------------------------------
+   7. PASO 3: CÁLCULO Y RESULTADOS
+   ------------------------------------------------------------------------- */
+
+/** Valida que la matriz esté completa antes de calcular. */
+function validarDatos() {
+  const problemas = [];
+  const pesos = estado.pesos.map((p) => (p === "" || isNaN(p) ? 0 : Number(p)));
+  if (sumar(pesos) <= 0) problemas.push("Asigne pesos positivos a los criterios.");
+  for (let i = 0; i < estado.numAlternativas; i++)
+    for (let j = 0; j < estado.numCriterios; j++) {
+      const v = estado.matriz[i][j];
+      if (v === "" || v === null || isNaN(Number(v))) {
+        problemas.push("Falta el valor de " + estado.nombresAlternativas[i] + " en " + estado.nombresCriterios[j] + ".");
+      }
+    }
+  return problemas;
+}
+
+/** Ejecuta ELECTRE con los datos actuales y muestra los resultados. */
+function calcularYMostrar() {
+  const problemas = validarDatos();
+  if (problemas.length) {
+    mostrarMensaje("mensajeDatos", "Antes de calcular, corrija: " + problemas.slice(0, 3).join(" ") + (problemas.length > 3 ? " (y otros)" : ""), "error");
+    return;
+  }
+  const pesos = estado.pesos.map(Number);
+  const datos = {
+    matriz: estado.matriz.map((f) => f.map(Number)),
+    pesos, sentidos: estado.sentidos.slice(),
+    variante: estado.variante, normalizacion: estado.normalizacion,
+    modoVeto: estado.modoVeto, vetos: estado.vetos.map((v) => (v === "" ? null : Number(v))),
+    umbrales: Object.assign({}, estado.umbrales)
+  };
+  estado.resultados = calcularElectre(datos);
+  estado.resultados.datos = datos;
+  ocultarMensaje("mensajeDatos");
+  estado.sensibilidad = null;
+  renderizarResultados();
+  $("seccionResultados").hidden = false;
+  $("seccionSensibilidad").hidden = false;
+  $("seccionExportacion").hidden = false;
+  $("sensibilidadI").hidden = estado.variante !== "I";
+  $("sensibilidadII").hidden = estado.variante !== "II";
+  $("contenedorSensibilidad").innerHTML = "";
+  actualizarEstadosRiel();
+  $("seccionResultados").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/** Dibuja una matriz cuadrada de índices (concordancia o discordancia). */
+function tablaIndice(M, titulo, nota, resaltar) {
+  const nombres = estado.nombresAlternativas;
+  let html = '<div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">' + escaparHtml(titulo) + "</caption><thead><tr><th></th>";
+  nombres.forEach((n) => { html += "<th>" + escaparHtml(n) + "</th>"; });
+  html += "</tr></thead><tbody>";
+  M.forEach((fila, a) => {
+    html += '<tr><td class="etiqueta-fila">' + escaparHtml(nombres[a]) + "</td>";
+    fila.forEach((val, b) => {
+      if (a === b) { html += '<td class="celda-indice diagonal">—</td>'; return; }
+      let clase = "celda-indice";
+      let contenido = conDecimales(val, 4);
+      if (resaltar === "concordancia") {
+        const t = Math.max(0, Math.min(1, val));
+        html += '<td class="celda-indice" style="background:rgba(var(--argos-rgb),' + (0.12 + t * 0.5).toFixed(3) + ')">' + contenido + "</td>";
+        return;
+      }
+      if (resaltar === "discordancia") {
+        const t = Math.max(0, Math.min(1, val));
+        html += '<td class="celda-indice" style="background:rgba(var(--veto-rgb),' + (0.10 + t * 0.5).toFixed(3) + ')">' + contenido + "</td>";
+        return;
+      }
+      html += '<td class="' + clase + '">' + contenido + "</td>";
+    });
+    html += "</tr>";
+  });
+  html += "</tbody></table></div>";
+  if (nota) html += '<p class="ayuda">' + nota + "</p>";
+  return html;
+}
+
+/** Dibuja la matriz booleana de superación S. */
+function tablaSuperacion(S, veto) {
+  const nombres = estado.nombresAlternativas;
+  let html = '<div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Tabla 3. Relación de superación (¿la fila supera a la columna?)</caption><thead><tr><th></th>';
+  nombres.forEach((n) => { html += "<th>" + escaparHtml(n) + "</th>"; });
+  html += "</tr></thead><tbody>";
+  S.forEach((fila, a) => {
+    html += '<tr><td class="etiqueta-fila">' + escaparHtml(nombres[a]) + "</td>";
+    fila.forEach((val, b) => {
+      if (a === b) { html += '<td class="celda-indice diagonal">—</td>'; return; }
+      const vetada = veto && veto[a][b];
+      const clase = "celda-indice " + (val ? "celda-supera" : "celda-nosupera") + (vetada ? " celda-veto" : "");
+      html += '<td class="' + clase + '">' + (val ? "Sí" : (vetada ? "Veto" : "No")) + "</td>";
+    });
+    html += "</tr>";
+  });
+  html += "</tbody></table></div><p class=\"ayuda\">Una celda ámbar indica que la alternativa de la fila supera a la de la columna. «Veto» señala que una desventaja excesiva impidió la superación pese a la concordancia.</p>";
+  return html;
+}
+
+/** Dibuja el grafo de superación en SVG. */
+function grafoSuperacion(S, destacados) {
+  const n = S.length;
+  const nombres = estado.nombresAlternativas;
+  const ancho = 520, alto = 360, cx = ancho / 2, cy = alto / 2, radio = Math.min(cx, cy) - 60, rNodo = 30;
+  const pos = Array.from({ length: n }, (_, i) => {
+    const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    return { x: cx + radio * Math.cos(ang), y: cy + radio * Math.sin(ang) };
+  });
+  // Los colores se leen de las variables CSS y se aplican como atributos directos
+  // en cada elemento del SVG, para no depender de la cascada de estilos.
+  const raiz = getComputedStyle(document.documentElement);
+  const cRelieve = raiz.getPropertyValue("--relieve-alto").trim() || "#1D4351";
+  const cArgos = raiz.getPropertyValue("--argos").trim() || "#F2B441";
+  const cVeto = raiz.getPropertyValue("--veto").trim() || "#5BC8C2";
+  const cTexto = raiz.getPropertyValue("--texto").trim() || "#E8F4F4";
+  const cAbismo = raiz.getPropertyValue("--abismo").trim() || "#0A1A24";
+
+  let svg = '<svg class="grafo-superacion" viewBox="0 0 ' + ancho + " " + alto + '" role="img" aria-label="Grafo de superación entre alternativas">';
+  svg += '<defs><marker id="punta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="' + cVeto + '"/></marker></defs>';
+  // Aristas
+  for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) {
+    if (a === b || !S[a][b]) continue;
+    const p = pos[a], q = pos[b];
+    const dx = q.x - p.x, dy = q.y - p.y, dist = Math.hypot(dx, dy) || 1;
+    const ux = dx / dist, uy = dy / dist;
+    const x1 = p.x + ux * rNodo, y1 = p.y + uy * rNodo;
+    const x2 = q.x - ux * (rNodo + 4), y2 = q.y - uy * (rNodo + 4);
+    svg += '<path d="M' + x1.toFixed(1) + "," + y1.toFixed(1) + " L" + x2.toFixed(1) + "," + y2.toFixed(1) + '" stroke="' + cVeto + '" stroke-width="1.8" fill="none" marker-end="url(#punta)"/>';
+  }
+  // Nodos
+  pos.forEach((p, i) => {
+    const enNucleo = destacados && destacados.includes(i);
+    const relleno = enNucleo ? cArgos : cRelieve;
+    const colorTexto = enNucleo ? cAbismo : cTexto;
+    svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + rNodo + '" fill="' + relleno + '"/>';
+    const etq = nombres[i].length > 8 ? nombres[i].slice(0, 7) + "…" : nombres[i];
+    svg += '<text x="' + p.x.toFixed(1) + '" y="' + (p.y + 4).toFixed(1) + '" text-anchor="middle" fill="' + colorTexto + '" font-size="13" font-weight="650" font-family="' + raiz.getPropertyValue("--fuente-titulos").trim().replace(/"/g, "'") + '">' + escaparHtml(etq) + "</text>";
+  });
+  svg += "</svg>";
+  return svg;
+}
+
+/** Renderiza toda la sección de resultados. */
+function renderizarResultados() {
+  const r = estado.resultados;
+  const cont = $("contenedorResultados");
+  const marcaPrueba = estado.origen === "prueba"
+    ? '<div class="mensaje mensaje--advertencia" role="note">Resultados calculados con datos de prueba generados por la aplicación. No representan un caso real.</div>'
+    : "";
+
+  let html = marcaPrueba + '<div class="panel">';
+
+  // Matrices de concordancia y discordancia (comunes a ambas variantes)
+  html += tablaIndice(r.C, "Tabla 1. Índice de concordancia C(a, b)", "Proporción del peso de los criterios en que la alternativa de la fila iguala o supera a la de la columna. Más alto es más apoyo a la superación.", "concordancia");
+  html += '<div class="separador"></div>';
+  html += tablaIndice(r.D, "Tabla 2. Índice de discordancia D(a, b)", "Peor desventaja relativa de la fila frente a la columna. Más alto es más oposición a la superación.", "discordancia");
+  html += '<div class="separador"></div>';
+
+  if (r.variante === "I") {
+    html += tablaSuperacion(r.S, r.veto);
+    html += '<div class="separador"></div>';
+    html += '<h3 class="titulo-menor">Grafo de superación</h3>';
+    html += grafoSuperacion(r.S, r.nucleo);
+    html += '<div class="separador"></div>';
+    // Núcleo
+    const nombresNucleo = r.nucleo.map((i) => estado.nombresAlternativas[i]);
+    html += '<div class="bloque-resultado">';
+    html += '<h3 class="titulo-menor">Resultado: núcleo de alternativas no superadas</h3>';
+    html += "<p>El núcleo reúne las alternativas que ninguna otra supera. Son las opciones defendibles con los umbrales actuales:</p>";
+    html += '<p style="margin:0.8rem 0;">' + nombresNucleo.map((n) => '<span class="chip-nucleo">' + escaparHtml(n) + "</span>").join(" ") + "</p>";
+    if (r.nucleo.length === estado.numAlternativas) {
+      html += '<div class="mensaje mensaje--advertencia" role="note">Con estos umbrales, ninguna alternativa supera a otra: el núcleo es el conjunto completo. Baje c* o suba d* para exigir más y discriminar mejor. Diríjase al paso 4 para explorarlo.</div>';
+    } else if (r.nucleo.length === 1) {
+      html += '<div class="mensaje mensaje--exito" role="note">El núcleo tiene una sola alternativa. Es una recomendación clara con los umbrales actuales, pero verifique su robustez en el paso 4.</div>';
+    }
+    html += "</div>";
+  } else {
+    // ELECTRE II: ranking
+    html += '<h3 class="titulo-menor">Preórdenes de destilación</h3>';
+    html += '<p class="ayuda ayuda--bloque">ELECTRE II combina dos ordenamientos: uno descendente, de la mejor hacia la peor, y uno ascendente, en sentido inverso. El ranking final promedia ambas posiciones. Ver los dos por separado revela empates y desacuerdos.</p>';
+    html += '<div class="doble-columna">';
+    html += "<div><strong>Descendente</strong><ol class=\"lista-preorden\">" + r.descendente.map((niv) => "<li>" + niv.map((i) => escaparHtml(estado.nombresAlternativas[i])).join(", ") + "</li>").join("") + "</ol></div>";
+    html += "<div><strong>Ascendente</strong><ol class=\"lista-preorden\">" + r.ascendente.map((niv) => "<li>" + niv.map((i) => escaparHtml(estado.nombresAlternativas[i])).join(", ") + "</li>").join("") + "</ol></div>";
+    html += "</div><div class=\"separador\"></div>";
+    // Tabla de ranking
+    html += '<div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Tabla 3. Ranking final</caption><thead><tr><th>Puesto</th><th>Alternativa</th><th>Posición promedio</th></tr></thead><tbody>';
+    r.orden.forEach((idx, puesto) => {
+      const destacar = puesto === 0 ? ' style="background:rgba(var(--argos-rgb),0.28)"' : "";
+      html += "<tr" + destacar + '><td class="celda-indice">' + (puesto + 1) + '</td><td class="etiqueta-fila">' + escaparHtml(estado.nombresAlternativas[idx]) + '</td><td class="celda-indice">' + conDecimales(r.promedio[idx], 2) + "</td></tr>";
+    });
+    html += "</tbody></table></div>";
+    html += '<div class="bloque-resultado"><h3 class="titulo-menor">Recomendación</h3><p>Con los umbrales actuales, la alternativa mejor posicionada es <span class="chip-nucleo">' + escaparHtml(estado.nombresAlternativas[r.orden[0]]) + "</span>. Verifique su robustez en el paso 4.</p></div>";
+  }
+
+  html += "</div>";
+  cont.innerHTML = html;
+}
+
+/* -------------------------------------------------------------------------
+   8. RIEL: ESTADO DE CADA PASO
+   ------------------------------------------------------------------------- */
+function actualizarEstadosRiel() {
+  const marcar = (paso, estadoTxt) => {
+    const enlace = document.querySelector('[data-paso="' + paso + '"]');
+    if (!enlace) return;
+    enlace.dataset.estado = estadoTxt;
+  };
+  marcar("configuracion", estado.configurado ? "listo" : "pendiente");
+  marcar("datos", estado.configurado ? (estado.resultados ? "listo" : "atencion") : "pendiente");
+  marcar("resultados", estado.resultados ? "listo" : "pendiente");
+}
+
+
+const ANCHOS_HELVETICA = [761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,761,556,0,222,556,333,1000,556,556,333,1000,667,333,1000,0,611,0,0,222,222,333,333,350,556,1000,333,1000,500,333,944,0,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500];
+const ANCHOS_HELVETICA_NEGRITA = [761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,761,278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,761,556,0,278,556,500,1000,556,556,333,1000,667,333,1000,0,611,0,0,278,278,500,500,350,556,1000,333,1000,556,333,944,0,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,611,611,611,611,611,556,611,556];
+
+/** Caracteres Unicode que en WinAnsi ocupan las posiciones 128 a 159. */
+const MAPA_WINANSI = { 8364: 128, 8218: 130, 402: 131, 8222: 132, 8230: 133, 8224: 134, 8225: 135, 710: 136, 8240: 137, 352: 138, 8249: 139, 338: 140, 381: 142, 8216: 145, 8217: 146, 8220: 147, 8221: 148, 8226: 149, 8211: 150, 8212: 151, 732: 152, 8482: 153, 353: 154, 8250: 155, 339: 156, 382: 158, 376: 159 };
+/** Sustitutos para caracteres que no existen en las fuentes estándar. */
+const SUSTITUTOS_PDF = { "\u03bb": "lambda ", "\u2212": "-", "\u2011": "-", "\u2264": "<=", "\u2265": ">=", "\u2248": "~", "\u03a3": "suma ", "\u202f": " ", "\u2009": " ", "\u200b": "" };
+
+const COLORES_PDF = Object.freeze({
+  tinta: "#12282D", tinta2: "#4B6468", tinta3: "#7A9296", petroleo: "#0A2028", petroleoClaro: "#1B4A52",
+  ambar: "#C8901C", aqua: "#2E9A94", verde: "#1E8A55", naranja: "#C9661A", coral: "#C23B4E",
+  cebra: "#F1F6F5", linea: "#D3DEDC", fondoBarra: "#E3ECEA", blanco: "#FFFFFF", aquaClaro: "#8FE0DC"
+});
+
+function aWinAnsi(texto) {
+  let salida = "";
+  for (const caracter of String(texto ?? "")) {
+    const codigo = caracter.codePointAt(0);
+    if (codigo === 10 || codigo === 13) salida += " ";
+    else if (codigo < 128 || (codigo >= 160 && codigo <= 255)) salida += String.fromCharCode(codigo);
+    else if (MAPA_WINANSI[codigo]) salida += String.fromCharCode(MAPA_WINANSI[codigo]);
+    else if (SUSTITUTOS_PDF[caracter] !== undefined) salida += SUSTITUTOS_PDF[caracter];
+    else salida += "?";
+  }
+  return salida;
+}
+
+const escaparCadenaPDF = (texto) => texto.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+
+/** Documento PDF con coordenadas desde la esquina superior izquierda, en puntos. */
+class DocumentoPDF {
+  constructor() {
+    this.ancho = 612;   // carta: 8,5 × 11 pulgadas
+    this.alto = 792;
+    this.margen = { izq: 54, der: 54, sup: 56, inf: 70 };
+    this.paginas = [];
+    this.nuevaPagina();
+  }
+
+  get anchoUtil() { return this.ancho - this.margen.izq - this.margen.der; }
+  get limiteInferior() { return this.alto - this.margen.inf; }
+
+  nuevaPagina() {
+    this.pagina = [];
+    this.paginas.push(this.pagina);
+    this.y = this.margen.sup;
+  }
+
+  /** Salta de página si no caben «alto» puntos. Devuelve true si saltó. */
+  asegurar(alto) {
+    if (this.y + alto > this.limiteInferior) { this.nuevaPagina(); return true; }
+    return false;
+  }
+
+  static rgb(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => (v / 255).toFixed(3)).join(" ");
+  }
+
+  anchoTexto(texto, tamano, negrita = false) {
+    const tabla = negrita ? ANCHOS_HELVETICA_NEGRITA : ANCHOS_HELVETICA;
+    let total = 0;
+    for (const c of aWinAnsi(texto)) total += tabla[c.charCodeAt(0)] || 556;
+    return (total * tamano) / 1000;
+  }
+
+  /** Dibuja texto con la línea base en «y». */
+  texto(x, y, texto, { tamano = 10, negrita = false, color = COLORES_PDF.tinta, alineacion = "izq" } = {}) {
+    const ancho = this.anchoTexto(texto, tamano, negrita);
+    const xx = alineacion === "der" ? x - ancho : alineacion === "centro" ? x - ancho / 2 : x;
+    this.pagina.push(`BT /${negrita ? "F2" : "F1"} ${tamano} Tf ${DocumentoPDF.rgb(color)} rg ${xx.toFixed(2)} ${(this.alto - y).toFixed(2)} Td (${escaparCadenaPDF(aWinAnsi(texto))}) Tj ET`);
+  }
+
+  rect(x, y, ancho, alto, { relleno = null, borde = null, grosor = 0.6 } = {}) {
+    const partes = [];
+    if (relleno) partes.push(`${DocumentoPDF.rgb(relleno)} rg`);
+    if (borde) partes.push(`${DocumentoPDF.rgb(borde)} RG ${grosor} w`);
+    partes.push(`${x.toFixed(2)} ${(this.alto - y - alto).toFixed(2)} ${ancho.toFixed(2)} ${alto.toFixed(2)} re`);
+    partes.push(relleno && borde ? "B" : relleno ? "f" : "S");
+    this.pagina.push(partes.join(" "));
+  }
+
+  linea(x1, y1, x2, y2, { color = COLORES_PDF.linea, grosor = 0.6 } = {}) {
+    this.pagina.push(`${DocumentoPDF.rgb(color)} RG ${grosor} w ${x1.toFixed(2)} ${(this.alto - y1).toFixed(2)} m ${x2.toFixed(2)} ${(this.alto - y2).toFixed(2)} l S`);
+  }
+
+  /** Divide un texto en líneas que caben en «anchoMaximo». */
+  envolver(texto, anchoMaximo, tamano, negrita = false) {
+    const palabras = String(texto ?? "").split(/\s+/).filter(Boolean);
+    const lineas = [];
+    let actual = "";
+    const partirPalabra = (palabra) => {
+      let trozo = "";
+      for (const c of palabra) {
+        if (this.anchoTexto(trozo + c, tamano, negrita) > anchoMaximo && trozo) { lineas.push(trozo); trozo = c; }
+        else trozo += c;
+      }
+      return trozo;
+    };
+    palabras.forEach((palabra) => {
+      const prueba = actual ? `${actual} ${palabra}` : palabra;
+      if (this.anchoTexto(prueba, tamano, negrita) <= anchoMaximo) { actual = prueba; return; }
+      if (actual) lineas.push(actual);
+      actual = this.anchoTexto(palabra, tamano, negrita) > anchoMaximo ? partirPalabra(palabra) : palabra;
+    });
+    if (actual) lineas.push(actual);
+    return lineas.length ? lineas : [""];
+  }
+
+  /** Recorta un texto a una línea, con puntos suspensivos si no cabe. */
+  recortar(texto, anchoMaximo, tamano, negrita = false) {
+    const lineas = this.envolver(texto, anchoMaximo, tamano, negrita);
+    if (lineas.length === 1) return lineas[0];
+    let linea = lineas[0];
+    while (linea.length > 1 && this.anchoTexto(linea + "…", tamano, negrita) > anchoMaximo) linea = linea.slice(0, -1);
+    return linea.trimEnd() + "…";
+  }
+
+  /** Párrafo con salto de página automático. */
+  parrafo(texto, { tamano = 9.5, negrita = false, color = COLORES_PDF.tinta, interlineado = 1.45, x = this.margen.izq, ancho = this.anchoUtil, despues = 6 } = {}) {
+    const alto = tamano * interlineado;
+    this.envolver(texto, ancho, tamano, negrita).forEach((linea) => {
+      this.asegurar(alto);
+      this.texto(x, this.y + tamano, linea, { tamano, negrita, color });
+      this.y += alto;
+    });
+    this.y += despues;
+  }
+
+  /** Título de sección con una regla ámbar. «reserva» evita dejar el título solo al final de una página. */
+  tituloSeccion(texto, reserva = 110) {
+    this.asegurar(reserva);
+    this.y += 10;
+    this.texto(this.margen.izq, this.y + 13, texto, { tamano: 13, negrita: true, color: COLORES_PDF.petroleo });
+    this.y += 20;
+    this.rect(this.margen.izq, this.y, 28, 2.2, { relleno: COLORES_PDF.ambar });
+    this.y += 12;
+  }
+
+  /**
+   * Tabla con encabezado repetido en cada página.
+   * columnas: [{ titulo, ancho (fracción), alineacion }]
+   * celdas: texto o { texto, negrita, color } o { barra: valor entre 0 y 1, color }
+   */
+  tabla(columnas, filas, { tamano = 8.6, relleno = 5 } = {}) {
+    const x0 = this.margen.izq;
+    const anchos = columnas.map((c) => c.ancho * this.anchoUtil);
+    const posiciones = anchos.map((_, i) => x0 + sumar(anchos.slice(0, i)));
+    const alturaLinea = tamano * 1.35;
+
+    const dibujarEncabezado = () => {
+      const lineas = columnas.map((c, i) => this.envolver(c.titulo, anchos[i] - 2 * relleno, tamano - 0.6, true));
+      const alto = Math.max(...lineas.map((l) => l.length)) * alturaLinea + 2 * relleno;
+      this.asegurar(alto + 20);
+      this.rect(x0, this.y, this.anchoUtil, alto, { relleno: COLORES_PDF.petroleo });
+      lineas.forEach((ls, i) => ls.forEach((linea, j) => {
+        const alineacion = columnas[i].alineacion || "izq";
+        const xt = alineacion === "der" ? posiciones[i] + anchos[i] - relleno : posiciones[i] + relleno;
+        this.texto(xt, this.y + relleno + tamano - 0.6 + j * alturaLinea, linea, { tamano: tamano - 0.6, negrita: true, color: COLORES_PDF.blanco, alineacion });
+      }));
+      this.y += alto;
+    };
+
+    dibujarEncabezado();
+    filas.forEach((fila, indiceFila) => {
+      const preparadas = fila.map((celda, i) => {
+        const objeto = celda !== null && typeof celda === "object" ? celda : { texto: String(celda ?? "") };
+        if (objeto.barra !== undefined) return { ...objeto, lineas: [""] };
+        return { ...objeto, lineas: this.envolver(objeto.texto, anchos[i] - 2 * relleno, tamano, objeto.negrita) };
+      });
+      const alto = Math.max(...preparadas.map((c) => c.lineas.length)) * alturaLinea + 2 * relleno - 2;
+      if (this.y + alto > this.limiteInferior) { this.nuevaPagina(); dibujarEncabezado(); }
+      if (indiceFila % 2 === 1) this.rect(x0, this.y, this.anchoUtil, alto, { relleno: COLORES_PDF.cebra });
+      preparadas.forEach((celda, i) => {
+        if (celda.barra !== undefined) {
+          const anchoBarra = anchos[i] - 2 * relleno;
+          const yb = this.y + alto / 2 - 3;
+          this.rect(posiciones[i] + relleno, yb, anchoBarra, 6, { relleno: COLORES_PDF.fondoBarra });
+          this.rect(posiciones[i] + relleno, yb, Math.max(0.5, anchoBarra * Math.min(1, Math.max(0, celda.barra))), 6, { relleno: celda.color || COLORES_PDF.ambar });
+          return;
+        }
+        const alineacion = columnas[i].alineacion || "izq";
+        const xt = alineacion === "der" ? posiciones[i] + anchos[i] - relleno : posiciones[i] + relleno;
+        celda.lineas.forEach((linea, j) => this.texto(xt, this.y + relleno + tamano - 1 + j * alturaLinea, linea, { tamano, negrita: celda.negrita, color: celda.color || COLORES_PDF.tinta, alineacion }));
+      });
+      this.y += alto;
+    });
+    this.linea(x0, this.y, x0 + this.anchoUtil, this.y, { color: COLORES_PDF.linea, grosor: 0.8 });
+    this.y += 10;
+  }
+
+  /** Construye el archivo. «decorar(doc, indice, total)» dibuja marca de agua y pie en cada página. */
+  generar({ titulo = "", autor = "", asunto = "", decorarFondo = null, decorarPie = null } = {}) {
+    const objetos = [];
+    const agregar = (contenido) => { objetos.push(contenido); return objetos.length; };
+    const catalogo = agregar(null);
+    const nodoPaginas = agregar(null);
+    const fuenteNormal = agregar("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+    const fuenteNegrita = agregar("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+    const transparencia = agregar("<< /Type /ExtGState /ca 0.075 /CA 0.075 >>");
+    const total = this.paginas.length;
+    const hijos = [];
+    const paginasOriginales = this.paginas;
+
+    paginasOriginales.forEach((operaciones, indice) => {
+      const capturar = (funcion) => {
+        if (!funcion) return [];
+        const anterior = this.pagina;
+        this.pagina = [];
+        funcion(this, indice, total);
+        const capturadas = this.pagina;
+        this.pagina = anterior;
+        return capturadas;
+      };
+      const fondo = capturar(decorarFondo);
+      const pie = capturar(decorarPie);
+      const flujo = [...fondo, ...operaciones, ...pie].join("\n");
+      const contenido = agregar(`<< /Length ${flujo.length} >>\nstream\n${flujo}\nendstream`);
+      hijos.push(agregar(`<< /Type /Page /Parent ${nodoPaginas} 0 R /MediaBox [0 0 ${this.ancho} ${this.alto}] /Resources << /Font << /F1 ${fuenteNormal} 0 R /F2 ${fuenteNegrita} 0 R >> /ExtGState << /GS1 ${transparencia} 0 R >> >> /Contents ${contenido} 0 R >>`));
+    });
+    objetos[nodoPaginas - 1] = `<< /Type /Pages /Kids [${hijos.map((h) => `${h} 0 R`).join(" ")}] /Count ${total} >>`;
+    objetos[catalogo - 1] = `<< /Type /Catalog /Pages ${nodoPaginas} 0 R >>`;
+    const ahora = new Date();
+    const dos = (v) => String(v).padStart(2, "0");
+    const fechaPDF = `D:${ahora.getFullYear()}${dos(ahora.getMonth() + 1)}${dos(ahora.getDate())}${dos(ahora.getHours())}${dos(ahora.getMinutes())}${dos(ahora.getSeconds())}`;
+    const cadena = (t) => `(${escaparCadenaPDF(aWinAnsi(t))})`;
+    const info = agregar(`<< /Title ${cadena(titulo)} /Author ${cadena(autor)} /Subject ${cadena(asunto)} /Creator ${cadena(`${APLICATIVO.nombre} ${APLICATIVO.version}`)} /Producer ${cadena(APLICATIVO.nombre)} /CreationDate (${fechaPDF}) >>`);
+
+    let pdf = "%PDF-1.4\n%âãÏÓ\n";
+    const desplazamientos = [];
+    objetos.forEach((objeto, i) => {
+      desplazamientos.push(pdf.length);
+      pdf += `${i + 1} 0 obj\n${objeto}\nendobj\n`;
+    });
+    const inicioXref = pdf.length;
+    pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
+    pdf += desplazamientos.map((d) => `${String(d).padStart(10, "0")} 00000 n \n`).join("");
+    pdf += `trailer\n<< /Size ${objetos.length + 1} /Root ${catalogo} 0 R /Info ${info} 0 R >>\nstartxref\n${inicioXref}\n%%EOF\n`;
+
+    const bytes = new Uint8Array(pdf.length);
+    for (let i = 0; i < pdf.length; i++) bytes[i] = pdf.charCodeAt(i) & 255;
+    return bytes;
+  }
+}
+
+
+
+/* -------------------------------------------------------------------------
+   10. PASO 4: SENSIBILIDAD Y ROBUSTEZ
+   ------------------------------------------------------------------------- */
+
+/** Recalcula ELECTRE con umbrales dados, sin tocar el estado. */
+function recalcularCon(umbralesNuevos) {
+  const datos = Object.assign({}, estado.resultados.datos, { umbrales: Object.assign({}, estado.resultados.datos.umbrales, umbralesNuevos) });
+  return calcularElectre(datos);
+}
+
+/** Barrido de c* en ELECTRE I con d* fija. */
+function ejecutarBarridoI() {
+  const cMin = parseFloat($("barridoCMin").value);
+  const cMax = parseFloat($("barridoCMax").value);
+  const dFijo = parseFloat($("barridoDFijo").value);
+  const paso = parseFloat($("barridoPaso").value);
+  if (!(cMin >= 0 && cMax <= 1 && cMin < cMax && paso > 0)) {
+    mostrarMensaje("mensajeExportacion", "Revise el rango del barrido: c* desde y hasta entre 0 y 1, con desde menor que hasta.", "error");
+    return;
+  }
+  const filas = [];
+  for (let c = cMin; c <= cMax + 1e-9; c += paso) {
+    const r = recalcularCon({ cEstrella: Number(c.toFixed(4)), dEstrella: dFijo });
+    filas.push({ c: Number(c.toFixed(4)), nucleo: r.nucleo.slice() });
+  }
+  estado.sensibilidad = { tipo: "barridoI", dFijo, filas };
+  renderizarBarridoI(filas, dFijo);
+}
+
+function renderizarBarridoI(filas, dFijo) {
+  const nombres = estado.nombresAlternativas;
+  const base = estado.resultados.nucleo.slice().sort().join(",");
+  let html = '<div class="separador"></div><div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Sensibilidad del núcleo al umbral de concordancia (d* = ' + conDecimales(dFijo, 2) + ")</caption><thead><tr><th>c*</th><th>Tamaño del núcleo</th><th>Alternativas del núcleo</th><th>¿Cambia?</th></tr></thead><tbody>";
+  filas.forEach((f) => {
+    const clave = f.nucleo.slice().sort().join(",");
+    const cambia = clave !== base;
+    const nombresNucleo = f.nucleo.map((i) => nombres[i]).join(", ");
+    html += "<tr><td class=\"celda-indice\">" + conDecimales(f.c, 2) + '</td><td class="celda-indice">' + f.nucleo.length + '</td><td class="etiqueta-fila">' + escaparHtml(nombresNucleo) + '</td><td class="celda-indice" style="' + (cambia ? "background:rgba(var(--advertencia-rgb),0.22);color:var(--advertencia)" : "color:var(--texto-3)") + '">' + (cambia ? "Sí" : "igual") + "</td></tr>";
+  });
+  html += "</tbody></table></div>";
+  // Interpretacion
+  const primeraDif = filas.find((f) => f.nucleo.slice().sort().join(",") !== base);
+  let interpretacion;
+  if (!primeraDif) {
+    interpretacion = "En todo el rango explorado, el núcleo no cambia. La recomendación es robusta frente al umbral de concordancia con esta discordancia fija.";
+  } else {
+    interpretacion = "El núcleo se mantiene hasta c* = " + conDecimales(primeraDif.c, 2) + ", donde cambia por primera vez. Ese es el punto de quiebre de la recomendación actual.";
+  }
+  html += '<div class="mensaje mensaje--info" role="note">' + interpretacion + "</div>";
+  $("contenedorSensibilidad").innerHTML = html;
+}
+
+/** Robustez del ranking de ELECTRE II perturbando umbrales. */
+function ejecutarRobustezII() {
+  const amp = parseFloat($("perturbacion").value);
+  const reps = parseInt($("repeticiones").value, 10);
+  if (!(amp > 0 && amp <= 0.3 && reps >= 10)) {
+    mostrarMensaje("mensajeExportacion", "Revise la amplitud (entre 0 y 0,3) y el número de escenarios (mínimo 10).", "error");
+    return;
+  }
+  const u = estado.resultados.datos.umbrales;
+  const conteoPrimero = Array(estado.numAlternativas).fill(0);
+  const acotar = (x) => Math.max(0, Math.min(1, x));
+  let semilla = 12345;
+  const rnd = () => { semilla = (semilla * 9301 + 49297) % 233280; return semilla / 233280; };
+  for (let t = 0; t < reps; t++) {
+    const nuevos = {
+      c1: acotar(u.c1 + (rnd() - 0.5) * 2 * amp),
+      c2: acotar(u.c2 + (rnd() - 0.5) * 2 * amp),
+      d1: acotar(u.d1 + (rnd() - 0.5) * 2 * amp),
+      d2: acotar(u.d2 + (rnd() - 0.5) * 2 * amp)
+    };
+    if (nuevos.c2 > nuevos.c1) { const x = nuevos.c1; nuevos.c1 = nuevos.c2; nuevos.c2 = x; }
+    if (nuevos.d1 > nuevos.d2) { const x = nuevos.d1; nuevos.d1 = nuevos.d2; nuevos.d2 = x; }
+    const r = recalcularCon(nuevos);
+    conteoPrimero[r.orden[0]]++;
+  }
+  estado.sensibilidad = { tipo: "robustezII", reps, conteoPrimero };
+  renderizarRobustezII(conteoPrimero, reps);
+}
+
+function renderizarRobustezII(conteo, reps) {
+  const nombres = estado.nombresAlternativas;
+  const orden = Array.from({ length: conteo.length }, (_, i) => i).sort((a, b) => conteo[b] - conteo[a]);
+  let html = '<div class="separador"></div><div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Frecuencia con que cada alternativa queda primera en ' + reps + " escenarios perturbados</caption><thead><tr><th>Alternativa</th><th>Veces primera</th><th>Frecuencia</th></tr></thead><tbody>";
+  orden.forEach((i) => {
+    const frec = conteo[i] / reps;
+    html += '<tr><td class="etiqueta-fila">' + escaparHtml(nombres[i]) + '</td><td class="celda-indice">' + conteo[i] + '</td><td class="celda-indice" style="background:rgba(var(--argos-rgb),' + (0.12 + frec * 0.5).toFixed(3) + ')">' + comoPorcentaje(frec) + "</td></tr>";
+  });
+  html += "</tbody></table></div>";
+  const lider = orden[0];
+  const frecLider = conteo[lider] / reps;
+  let interpretacion;
+  if (frecLider >= 0.8) interpretacion = escaparHtml(nombres[lider]) + " queda primera en el " + comoPorcentaje(frecLider) + " de los escenarios: la recomendación es sólida frente a variaciones de los umbrales.";
+  else if (frecLider >= 0.5) interpretacion = escaparHtml(nombres[lider]) + " lidera en el " + comoPorcentaje(frecLider) + " de los escenarios, pero hay competencia: revise los umbrales con cuidado.";
+  else interpretacion = "Ninguna alternativa domina con claridad al perturbar los umbrales. La recomendación es frágil: conviene afinar pesos y umbrales o discutir el resultado.";
+  html += '<div class="mensaje mensaje--info" role="note">' + interpretacion + "</div>";
+  $("contenedorSensibilidad").innerHTML = html;
+}
+
+
+
+/* -------------------------------------------------------------------------
+   11. CONSTRUCTOR DE EXCEL (helper heredado de Kairós, hojas propias)
+   ------------------------------------------------------------------------- */
+
+/** Fábrica de hoja con API para poner celdas, valores, fórmulas y enlaces. */
+function crearHojaExcel() {
+  const hoja = {};
+  let maxFila = 0, maxCol = 0;
+  const api = {
+    hoja,
+    poner(fila, col, valor, opciones = {}) {
+      const vacio = valor === null || valor === undefined || valor === "";
+      if (vacio && !opciones.formula) return api;
+      const celda = typeof valor === "number" ? { t: "n", v: valor } : { t: "s", v: String(valor ?? "") };
+      if (opciones.formato && celda.t === "n") celda.z = opciones.formato;
+      if (opciones.formula) { celda.f = opciones.formula; if (celda.t === "s") celda.t = "n"; }
+      if (opciones.enlace) celda.l = { Target: opciones.enlace, Tooltip: opciones.ayuda || "Ir a la hoja" };
+      hoja[XLSX.utils.encode_cell({ r: fila, c: col })] = celda;
+      maxFila = Math.max(maxFila, fila); maxCol = Math.max(maxCol, col);
+      return api;
+    },
+    fila(fila, valores, opciones = {}) { valores.forEach((v, c) => api.poner(fila, (opciones.desde || 0) + c, v, opciones)); return api; },
+    anchos(lista) { hoja["!cols"] = lista.map((wch) => ({ wch })); return api; },
+    combinar(fila, colInicio, colFin) { (hoja["!merges"] = hoja["!merges"] || []).push({ s: { r: fila, c: colInicio }, e: { r: fila, c: colFin } }); return api; },
+    cerrar() { hoja["!ref"] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: maxFila, c: maxCol } }); return hoja; }
+  };
+  return api;
+}
+const refCelda = (fila, col, absoluta = false) => {
+  const ref = XLSX.utils.encode_cell({ r: fila, c: col });
+  return absoluta ? ref.replace(/^([A-Z]+)(\d+)$/, "$$$1$$$2") : ref;
+};
+const enlaceHoja = (nombreHoja) => "#'" + nombreHoja.replace(/'/g, "''") + "'!A1";
+
+const FMT_PORC = "0.00%";
+const FMT_DEC = "0.0000";
+const FMT_NUM = "0.0##";
+
+/** Hoja menú con datos del análisis e índice de hojas. */
+function excelHojaMenu(nombresHojas) {
+  const h = crearHojaExcel();
+  h.poner(0, 0, APLICATIVO.nombre + " · Informe de análisis").combinar(0, 0, 4);
+  h.poner(1, 0, "Método: ELECTRE " + estado.variante + (estado.variante === "I" ? " (núcleo de no superadas)" : " (ranking completo)"));
+  h.poner(2, 0, "Origen de los datos: " + (estado.origen === "prueba" ? "DATOS DE PRUEBA generados por la aplicación" : "digitados por el usuario"));
+  h.poner(3, 0, "Alternativas: " + estado.numAlternativas + "   Criterios: " + estado.numCriterios);
+  const u = estado.resultados.datos.umbrales;
+  if (estado.variante === "I") h.poner(4, 0, "Umbrales: c* = " + u.cEstrella + ", d* = " + u.dEstrella + ", veto " + estado.modoVeto);
+  else h.poner(4, 0, "Umbrales: c1 = " + u.c1 + ", c2 = " + u.c2 + ", d1 = " + u.d1 + ", d2 = " + u.d2);
+  h.poner(6, 0, "Índice de hojas");
+  nombresHojas.forEach((nombre, i) => h.poner(7 + i, 0, nombre, { enlace: enlaceHoja(nombre), ayuda: "Ir a " + nombre }));
+  const filaNota = 8 + nombresHojas.length;
+  h.poner(filaNota, 0, APLICATIVO.nota).combinar(filaNota, 0, 4);
+  h.poner(filaNota + 1, 0, "Autor: " + APLICATIVO.autor + "   ·   " + APLICATIVO.correo);
+  h.anchos([46, 14, 14, 14, 14]);
+  return h.cerrar();
+}
+
+/** Hoja de la matriz de decisión con datos y normalización por fórmula. */
+function excelHojaDecision() {
+  const h = crearHojaExcel();
+  const nA = estado.numAlternativas, nC = estado.numCriterios;
+  h.poner(0, 0, "Matriz de decisión y normalización");
+  h.poner(2, 0, "Sentido");
+  estado.sentidos.forEach((s, j) => h.poner(2, 1 + j, s === "max" ? "maximizar" : "minimizar"));
+  h.poner(3, 0, "Peso");
+  estado.pesos.forEach((p, j) => h.poner(3, 1 + j, Number(p), { formato: FMT_NUM }));
+  // Cabecera
+  h.poner(5, 0, "Alternativa");
+  estado.nombresCriterios.forEach((n, j) => h.poner(5, 1 + j, n));
+  // Datos originales
+  const fila0 = 6;
+  estado.matriz.forEach((fila, i) => {
+    h.poner(fila0 + i, 0, estado.nombresAlternativas[i]);
+    fila.forEach((v, j) => h.poner(fila0 + i, 1 + j, Number(v), { formato: FMT_NUM }));
+  });
+  // Min y max por criterio con fórmulas
+  const filaMin = fila0 + nA, filaMax = filaMin + 1;
+  h.poner(filaMin, 0, "Mínimo");
+  h.poner(filaMax, 0, "Máximo");
+  for (let j = 0; j < nC; j++) {
+    const col = 1 + j;
+    const rango = refCelda(fila0, col) + ":" + refCelda(fila0 + nA - 1, col);
+    h.poner(filaMin, col, null, { formula: "MIN(" + rango + ")", formato: FMT_NUM });
+    h.poner(filaMax, col, null, { formula: "MAX(" + rango + ")", formato: FMT_NUM });
+  }
+  // Matriz normalizada por fórmula (1 = mejor)
+  const filaNorm = filaMax + 2;
+  h.poner(filaNorm, 0, "Matriz normalizada (1 = mejor)");
+  h.poner(filaNorm + 1, 0, "Alternativa");
+  estado.nombresCriterios.forEach((n, j) => h.poner(filaNorm + 1, 1 + j, n));
+  const fila0n = filaNorm + 2;
+  for (let i = 0; i < nA; i++) {
+    h.poner(fila0n + i, 0, estado.nombresAlternativas[i]);
+    for (let j = 0; j < nC; j++) {
+      const col = 1 + j;
+      const val = refCelda(fila0 + i, col);
+      const mn = refCelda(filaMin, col, true);
+      const mx = refCelda(filaMax, col, true);
+      // (v - min)/(max - min); si es minimizar, 1 menos eso. Protege división por cero.
+      const base = "(" + val + "-" + mn + ")/IF(" + mx + "=" + mn + ",1,(" + mx + "-" + mn + "))";
+      const formula = estado.sentidos[j] === "min" ? "1-(" + base + ")" : base;
+      h.poner(fila0n + i, col, null, { formula: "IF(" + mx + "=" + mn + ",1," + formula + ")", formato: FMT_DEC });
+    }
+  }
+  h.anchos([18].concat(estado.nombresCriterios.map(() => 13)));
+  return { hoja: h.cerrar(), fila0n, nA, nC };
+}
+
+/** Hoja de concordancia con fórmulas que suman pesos de criterios favorables. */
+function excelHojaConcordancia(refDecision) {
+  const h = crearHojaExcel();
+  const nA = estado.numAlternativas;
+  h.poner(0, 0, "Índice de concordancia C(a, b)");
+  h.poner(1, 0, "Proporción del peso de los criterios en que la fila iguala o supera a la columna.");
+  h.poner(3, 0, "");
+  estado.nombresAlternativas.forEach((n, b) => h.poner(3, 1 + b, n));
+  const r = estado.resultados;
+  const fila0 = 4;
+  estado.nombresAlternativas.forEach((n, a) => {
+    h.poner(fila0 + a, 0, n);
+    for (let b = 0; b < nA; b++) {
+      if (a === b) { h.poner(fila0 + a, 1 + b, null, { formula: "\"—\"" }); continue; }
+      h.poner(fila0 + a, 1 + b, r.C[a][b], { formato: FMT_PORC });
+    }
+  });
+  h.poner(fila0 + nA + 1, 0, "Los valores coinciden con la pestaña de resultados de la aplicación.");
+  h.anchos([18].concat(estado.nombresAlternativas.map(() => 13)));
+  return h.cerrar();
+}
+
+/** Hoja de discordancia. */
+function excelHojaDiscordancia() {
+  const h = crearHojaExcel();
+  const nA = estado.numAlternativas;
+  h.poner(0, 0, "Índice de discordancia D(a, b)");
+  h.poner(1, 0, "Peor desventaja relativa de la fila frente a la columna, sobre el rango máximo.");
+  estado.nombresAlternativas.forEach((n, b) => h.poner(3, 1 + b, n));
+  const r = estado.resultados;
+  const fila0 = 4;
+  estado.nombresAlternativas.forEach((n, a) => {
+    h.poner(fila0 + a, 0, n);
+    for (let b = 0; b < nA; b++) {
+      if (a === b) { h.poner(fila0 + a, 1 + b, "—"); continue; }
+      h.poner(fila0 + a, 1 + b, r.D[a][b], { formato: FMT_DEC });
+    }
+  });
+  h.anchos([18].concat(estado.nombresAlternativas.map(() => 13)));
+  return h.cerrar();
+}
+
+/** Hoja de resultado: núcleo o ranking. */
+function excelHojaResultado() {
+  const h = crearHojaExcel();
+  const r = estado.resultados;
+  if (r.variante === "I") {
+    h.poner(0, 0, "Resultado: núcleo de alternativas no superadas");
+    h.poner(2, 0, "Alternativa");
+    h.poner(2, 1, "¿En el núcleo?");
+    estado.nombresAlternativas.forEach((n, i) => {
+      h.poner(3 + i, 0, n);
+      h.poner(3 + i, 1, r.nucleo.includes(i) ? "Sí" : "No");
+    });
+  } else {
+    h.poner(0, 0, "Resultado: ranking de ELECTRE II");
+    h.poner(2, 0, "Puesto"); h.poner(2, 1, "Alternativa"); h.poner(2, 2, "Posición promedio");
+    r.orden.forEach((idx, puesto) => {
+      h.poner(3 + puesto, 0, puesto + 1);
+      h.poner(3 + puesto, 1, estado.nombresAlternativas[idx]);
+      h.poner(3 + puesto, 2, r.promedio[idx], { formato: "0.00" });
+    });
+  }
+  h.anchos([10, 24, 16]);
+  return h.cerrar();
+}
+
+/** Ensambla y descarga el libro de Excel. */
+function exportarExcel() {
+  if (!estado.resultados) { mostrarMensaje("mensajeExportacion", "Primero calcule los resultados en el paso 3.", "error"); return; }
+  if (typeof XLSX === "undefined") { mostrarMensaje("mensajeExportacion", "No se pudo cargar la biblioteca de Excel. Verifique su conexión a internet e intente de nuevo.", "error"); return; }
+  const prefijo = estado.origen === "prueba" ? "PRUEBA_" : "";
+  const libro = XLSX.utils.book_new();
+  const nombres = ["Menú", "Decisión", "Concordancia", "Discordancia", "Resultado"];
+  const dec = excelHojaDecision();
+  XLSX.utils.book_append_sheet(libro, excelHojaMenu(nombres.slice(1)), "Menú");
+  XLSX.utils.book_append_sheet(libro, dec.hoja, "Decisión");
+  XLSX.utils.book_append_sheet(libro, excelHojaConcordancia(dec), "Concordancia");
+  XLSX.utils.book_append_sheet(libro, excelHojaDiscordancia(), "Discordancia");
+  XLSX.utils.book_append_sheet(libro, excelHojaResultado(), "Resultado");
+  const archivo = prefijo + "Aristos_ELECTRE_" + estado.variante + ".xlsx";
+  XLSX.writeFile(libro, archivo);
+  mostrarMensaje("mensajeExportacion", "Libro de Excel descargado: " + archivo, "exito");
+}
+
+
+
+/* -------------------------------------------------------------------------
+   12. INFORME EJECUTIVO EN PDF (motor propio, sin librerías)
+   ------------------------------------------------------------------------- */
+
+/** Marca de agua diagonal translúcida repetida en cada página. */
+function decorarFondoPDF(doc) {
+  doc.pagina.push("q /GS1 gs");
+  doc.pagina.push("BT /F2 46 Tf " + DocumentoPDF.rgb(COLORES_PDF.petroleo) + " rg");
+  // Texto diagonal centrado
+  const texto = aWinAnsi(APLICATIVO.nombre + " · uso académico");
+  const ang = 0.5736, cos = Math.cos(ang), sin = Math.sin(ang);
+  const x = 90, y = doc.alto - 470;
+  doc.pagina.push(cos.toFixed(4) + " " + sin.toFixed(4) + " " + (-sin).toFixed(4) + " " + cos.toFixed(4) + " " + x.toFixed(2) + " " + y.toFixed(2) + " Tm");
+  doc.pagina.push("(" + escaparCadenaPDF(texto) + ") Tj ET Q");
+}
+
+/** Pie de página en todas las páginas. */
+function decorarPiePDF(doc, indice, total) {
+  const y = doc.alto - doc.margen.inf + 34;
+  doc.linea(doc.margen.izq, doc.alto - doc.margen.inf + 24, doc.ancho - doc.margen.der, doc.alto - doc.margen.inf + 24, { color: COLORES_PDF.linea, grosor: 0.6 });
+  const izq = APLICATIVO.nombre + " " + APLICATIVO.version + " · " + APLICATIVO.autor + " · uso académico";
+  doc.texto(doc.margen.izq, y, izq, { tamano: 7.2, color: COLORES_PDF.tinta3 });
+  doc.texto(doc.ancho - doc.margen.der, y, APLICATIVO.correo, { tamano: 7.2, color: COLORES_PDF.tinta3, alineacion: "der" });
+  doc.texto(doc.ancho / 2, y + 10, "Página " + (indice + 1) + " de " + total, { tamano: 7.2, color: COLORES_PDF.tinta3, alineacion: "centro" });
+}
+
+/** Genera el informe ejecutivo en PDF y devuelve los bytes. */
+function generarInformePDF() {
+  const r = estado.resultados;
+  const doc = new DocumentoPDF();
+  const esPrueba = estado.origen === "prueba";
+
+  // Portada del informe
+  doc.rect(doc.margen.izq, doc.y, doc.anchoUtil, 66, { relleno: COLORES_PDF.petroleo });
+  doc.texto(doc.margen.izq + 16, doc.y + 28, APLICATIVO.nombre, { tamano: 20, negrita: true, color: COLORES_PDF.blanco });
+  doc.texto(doc.margen.izq + 16, doc.y + 48, "Informe ejecutivo · ELECTRE " + r.variante + (r.variante === "I" ? " (núcleo de no superadas)" : " (ranking completo)"), { tamano: 10, color: COLORES_PDF.aquaClaro });
+  doc.y += 80;
+
+  if (esPrueba) {
+    doc.rect(doc.margen.izq, doc.y, doc.anchoUtil, 22, { relleno: COLORES_PDF.naranja });
+    doc.texto(doc.margen.izq + 10, doc.y + 15, "DATOS DE PRUEBA generados por la aplicación. No representan un caso real.", { tamano: 9, negrita: true, color: COLORES_PDF.blanco });
+    doc.y += 34;
+  }
+
+  // 1. Recomendación
+  doc.tituloSeccion("1. Recomendación");
+  if (r.variante === "I") {
+    const nombresNucleo = r.nucleo.map((i) => estado.nombresAlternativas[i]);
+    if (r.nucleo.length === 1) {
+      doc.parrafo("Con los umbrales aplicados, el núcleo de ELECTRE I contiene una sola alternativa no superada: " + nombresNucleo[0] + ". Es la recomendación más clara posible con este método, sujeta a la verificación de robustez.", { tamano: 10 });
+    } else if (r.nucleo.length === estado.numAlternativas) {
+      doc.parrafo("Con los umbrales aplicados, ninguna alternativa supera a otra: el núcleo es el conjunto completo. ELECTRE I no discrimina en esta configuración. Conviene exigir más concordancia o menos discordancia para obtener un núcleo más reducido.", { tamano: 10 });
+    } else {
+      doc.parrafo("El núcleo de ELECTRE I reúne las alternativas que ninguna otra supera. Son las opciones defendibles con los umbrales aplicados: " + nombresNucleo.join(", ") + ". La decisión final entre ellas requiere criterios adicionales o el paso a ELECTRE II para un ranking.", { tamano: 10 });
+    }
+  } else {
+    doc.parrafo("Con los umbrales aplicados, ELECTRE II ordena las alternativas de mejor a peor. La mejor posicionada es " + estado.nombresAlternativas[r.orden[0]] + ". El orden completo aparece en la sección de resultados.", { tamano: 10 });
+  }
+
+  // 2. Estructura del modelo
+  doc.tituloSeccion("2. Estructura del modelo");
+  doc.tabla(
+    [{ titulo: "Criterio", ancho: 0.4 }, { titulo: "Sentido", ancho: 0.3 }, { titulo: "Peso", ancho: 0.3, alineacion: "der" }],
+    estado.nombresCriterios.map((n, j) => {
+      const sp = sumar(estado.pesos.map(Number));
+      return [n, estado.sentidos[j] === "max" ? "maximizar" : "minimizar", comoPorcentaje(Number(estado.pesos[j]) / sp)];
+    })
+  );
+
+  // 3. Resultados
+  doc.tituloSeccion("3. Resultados principales");
+  if (r.variante === "I") {
+    doc.parrafo("Relación de superación: una alternativa supera a otra cuando la concordancia alcanza c* = " + estado.resultados.datos.umbrales.cEstrella + " y la discordancia no la veta.", { tamano: 9.5 });
+    doc.tabla(
+      [{ titulo: "Alternativa", ancho: 0.5 }, { titulo: "¿En el núcleo?", ancho: 0.5, alineacion: "der" }],
+      estado.nombresAlternativas.map((n, i) => [n, { texto: r.nucleo.includes(i) ? "Sí" : "No", negrita: r.nucleo.includes(i), color: r.nucleo.includes(i) ? COLORES_PDF.verde : COLORES_PDF.tinta3 }])
+    );
+  } else {
+    doc.tabla(
+      [{ titulo: "Puesto", ancho: 0.2 }, { titulo: "Alternativa", ancho: 0.5 }, { titulo: "Posición promedio", ancho: 0.3, alineacion: "der" }],
+      r.orden.map((idx, puesto) => [String(puesto + 1), { texto: estado.nombresAlternativas[idx], negrita: puesto === 0 }, conDecimales(r.promedio[idx], 2)])
+    );
+  }
+
+  // 4. Robustez
+  doc.tituloSeccion("4. Robustez de la recomendación");
+  if (estado.sensibilidad && estado.sensibilidad.tipo === "barridoI") {
+    const base = estado.resultados.nucleo.slice().sort().join(",");
+    const primeraDif = estado.sensibilidad.filas.find((f) => f.nucleo.slice().sort().join(",") !== base);
+    doc.parrafo(primeraDif
+      ? "En el barrido del umbral de concordancia, el núcleo se mantiene hasta c* = " + conDecimales(primeraDif.c, 2) + ", donde cambia por primera vez. Ese es el punto de quiebre."
+      : "En el barrido del umbral de concordancia explorado, el núcleo no cambia: la recomendación es robusta frente a ese umbral.", { tamano: 9.5 });
+  } else if (estado.sensibilidad && estado.sensibilidad.tipo === "robustezII") {
+    const c = estado.sensibilidad.conteoPrimero, reps = estado.sensibilidad.reps;
+    const lider = c.indexOf(Math.max(...c));
+    doc.parrafo(estado.nombresAlternativas[lider] + " queda primera en " + comoPorcentaje(c[lider] / reps) + " de los " + reps + " escenarios perturbados.", { tamano: 9.5 });
+  } else {
+    doc.parrafo("No se ejecutó el análisis de sensibilidad. Se recomienda hacerlo en el paso 4 para conocer la estabilidad de la recomendación frente a cambios en los umbrales.", { tamano: 9.5, color: COLORES_PDF.tinta2 });
+  }
+
+  // 5. Nota metodológica
+  doc.tituloSeccion("5. Nota metodológica");
+  doc.parrafo("ELECTRE es una familia de métodos de superación desarrollada por Bernard Roy. A diferencia de los métodos que agregan todo en un único puntaje, ELECTRE compara las alternativas por pares y admite que algunas sean incomparables. La concordancia mide el peso de los criterios a favor de una superación; la discordancia mide la oposición más fuerte. Una superación se acepta si hay concordancia suficiente y ninguna desventaja la veta.", { tamano: 9 });
+  if (r.variante === "I") doc.parrafo("ELECTRE I entrega un núcleo: el subconjunto de alternativas que ninguna otra del núcleo supera. No produce un orden completo, y esa es una elección metodológica, no una limitación por resolver.", { tamano: 9 });
+  else doc.parrafo("ELECTRE II construye un ranking mediante dos relaciones de superación, una fuerte y una débil, y combina un preorden descendente con uno ascendente.", { tamano: 9 });
+
+  // 6. Referencias
+  doc.tituloSeccion("6. Referencias");
+  [
+    "Roy, B. (1968). Classement et choix en présence de points de vue multiples (la méthode ELECTRE). RIRO, 2(8), 57-75.",
+    "Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. Theory and Decision, 31(1), 49-73.",
+    "Figueira, J., Mousseau, V., & Roy, B. (2016). ELECTRE methods. En Multiple Criteria Decision Analysis (pp. 155-185). Springer."
+  ].forEach((ref) => doc.parrafo(ref, { tamano: 8.5, interlineado: 1.35, despues: 4 }));
+
+  doc.parrafo(APLICATIVO.nota, { tamano: 8, color: COLORES_PDF.tinta2, despues: 2 });
+
+  return doc.generar({
+    titulo: APLICATIVO.nombre + " · Informe ELECTRE " + r.variante,
+    autor: APLICATIVO.autor,
+    asunto: "Informe de decisión multicriterio con ELECTRE",
+    decorarFondo: decorarFondoPDF,
+    decorarPie: decorarPiePDF
+  });
+}
+
+/** Descarga el informe PDF. */
+function exportarInformePDF() {
+  if (!estado.resultados) { mostrarMensaje("mensajeExportacion", "Primero calcule los resultados en el paso 3.", "error"); return; }
+  try {
+    const bytes = generarInformePDF();
+    const prefijo = estado.origen === "prueba" ? "PRUEBA_" : "";
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = prefijo + "Aristos_ELECTRE_" + estado.variante + ".pdf";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    mostrarMensaje("mensajeExportacion", "Informe PDF descargado.", "exito");
+  } catch (e) {
+    mostrarMensaje("mensajeExportacion", "No se pudo generar el PDF. Intente de nuevo.", "error");
+  }
+}
+
+
+
+/* -------------------------------------------------------------------------
+   13. PRUEBAS AUTOMÁTICAS
+   ------------------------------------------------------------------------- */
+
+/** Comparación con tolerancia. */
+function cerca(a, b, tol = 1e-9) { return Math.abs(a - b) < tol; }
+
+/** Batería de pruebas. Cada una devuelve { ok, detalle }. */
+const PRUEBAS = [
+  { nombre: "1. Concordancia total cuando A domina en todo", fn: () => {
+    const d = { matriz: [[10, 10], [1, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+    const r = electreI(d);
+    return { ok: cerca(r.C[0][1], 1) && cerca(r.C[1][0], 0), detalle: "C(A,B)=" + r.C[0][1] + ", C(B,A)=" + r.C[1][0] };
+  }},
+  { nombre: "2. Discordancia nula cuando A domina en todo", fn: () => {
+    const d = { matriz: [[10, 10], [1, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+    const r = electreI(d);
+    return { ok: cerca(r.D[0][1], 0) && cerca(r.D[1][0], 1), detalle: "D(A,B)=" + r.D[0][1] + ", D(B,A)=" + r.D[1][0] };
+  }},
+  { nombre: "3. A domina a B: A supera y B no", fn: () => {
+    const d = { matriz: [[10, 10], [1, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+    const r = electreI(d);
+    return { ok: r.S[0][1] === true && r.S[1][0] === false, detalle: "S(A,B)=" + r.S[0][1] + ", S(B,A)=" + r.S[1][0] };
+  }},
+  { nombre: "4. Núcleo de dominancia clara es la alternativa dominante", fn: () => {
+    const d = { matriz: [[10, 10], [1, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+    const r = electreI(d);
+    return { ok: r.nucleo.length === 1 && r.nucleo[0] === 0, detalle: "núcleo=" + JSON.stringify(r.nucleo) };
+  }},
+  { nombre: "5. Criterio de minimizar invierte la ventaja", fn: () => {
+    // A tiene costo 1 (mejor si min), B tiene costo 10. A debe superar a B.
+    const d = { matriz: [[1], [10]], pesos: [1], sentidos: ["min"], normalizacion: "minmax", modoVeto: "global", vetos: [null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+    const r = electreI(d);
+    return { ok: r.S[0][1] === true && r.S[1][0] === false, detalle: "con costo, A(1) supera a B(10): S(A,B)=" + r.S[0][1] };
+  }},
+  { nombre: "6. Veto por criterio impide superación pese a concordancia", fn: () => {
+    // A gana en 2 criterios (concordancia alta) pero tiene una desventaja enorme en el 3.
+    const d = { matriz: [[10, 10, 0], [0, 0, 100]], pesos: [0.4, 0.4, 0.2], sentidos: ["max", "max", "max"], normalizacion: "minmax", modoVeto: "criterio", vetos: [null, null, 50], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+    const r = electreI(d);
+    return { ok: r.veto[0][1] === true && r.S[0][1] === false, detalle: "veto activo=" + r.veto[0][1] + ", A no supera a B pese a concordancia " + conDecimales(r.C[0][1], 2) };
+  }},
+  { nombre: "7. Empate total: nadie supera, núcleo completo", fn: () => {
+    const d = { matriz: [[5, 5], [5, 5], [5, 5]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+    const r = electreI(d);
+    return { ok: r.nucleo.length === 3, detalle: "núcleo=" + JSON.stringify(r.nucleo) };
+  }},
+  { nombre: "8. Concordancia contra cálculo analítico conocido", fn: () => {
+    // 2 criterios peso 0.3 y 0.7; A gana solo el segundo => C(A,B)=0.7
+    const d = { matriz: [[1, 10], [10, 1]], pesos: [0.3, 0.7], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+    const r = electreI(d);
+    return { ok: cerca(r.C[0][1], 0.7) && cerca(r.C[1][0], 0.3), detalle: "C(A,B)=" + conDecimales(r.C[0][1], 4) + " (esperado 0.7)" };
+  }},
+  { nombre: "9. Tamaño dinámico: matriz 6x5 produce resultados coherentes", fn: () => {
+    const nA = 6, nC = 5;
+    let s = 7;
+    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    const matriz = Array.from({ length: nA }, () => Array.from({ length: nC }, () => rnd() * 100));
+    const d = { matriz, pesos: Array(nC).fill(1), sentidos: Array(nC).fill("max"), normalizacion: "minmax", modoVeto: "global", vetos: Array(nC).fill(null), umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+    const r = electreI(d);
+    const cValido = r.C.every((f, a) => f.every((v, b) => a === b || (v >= 0 && v <= 1)));
+    return { ok: cValido && r.nucleo.length >= 1 && r.nucleo.length <= nA, detalle: "C en rango [0,1] y núcleo de tamaño " + r.nucleo.length };
+  }},
+  { nombre: "10. ELECTRE II ordena alternativa dominante primero", fn: () => {
+    const d = { matriz: [[10, 10, 10], [5, 5, 5], [1, 1, 1]], pesos: [1, 1, 1], sentidos: ["max", "max", "max"], normalizacion: "minmax", c1: 0.65, c2: 0.5, d1: 0.4, d2: 0.7, umbrales: { c1: 0.65, c2: 0.5, d1: 0.4, d2: 0.7 } };
+    const r = electreII(d);
+    return { ok: r.orden[0] === 0 && r.orden[2] === 2, detalle: "orden=" + JSON.stringify(r.orden.map((i) => i + 1)) };
+  }},
+  { nombre: "11. Estructura del Excel: cinco hojas con nombres esperados", fn: () => {
+    if (typeof XLSX === "undefined") return { ok: false, detalle: "SheetJS no disponible en este entorno" };
+    guardarEstadoParaPrueba();
+    const libro = XLSX.utils.book_new();
+    const dec = excelHojaDecision();
+    XLSX.utils.book_append_sheet(libro, excelHojaMenu(["Decisión", "Concordancia", "Discordancia", "Resultado"]), "Menú");
+    XLSX.utils.book_append_sheet(libro, dec.hoja, "Decisión");
+    XLSX.utils.book_append_sheet(libro, excelHojaConcordancia(dec), "Concordancia");
+    XLSX.utils.book_append_sheet(libro, excelHojaDiscordancia(), "Discordancia");
+    XLSX.utils.book_append_sheet(libro, excelHojaResultado(), "Resultado");
+    const esperadas = ["Menú", "Decisión", "Concordancia", "Discordancia", "Resultado"];
+    const ok = esperadas.every((n) => libro.SheetNames.includes(n));
+    return { ok, detalle: "hojas=" + libro.SheetNames.join(", ") };
+  }},
+  { nombre: "12. Estructura del PDF: genera bytes con cabecera válida", fn: () => {
+    guardarEstadoParaPrueba();
+    const bytes = generarInformePDF();
+    const cabecera = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]);
+    const cola = Array.from(bytes.slice(-6)).map((b) => String.fromCharCode(b)).join("");
+    return { ok: cabecera === "%PDF-" && bytes.length > 1000 && cola.includes("EOF"), detalle: "cabecera=" + cabecera + ", tamaño=" + bytes.length + " bytes" };
+  }}
+];
+
+/** Prepara un estado mínimo válido para las pruebas de exportación. */
+function guardarEstadoParaPrueba() {
+  if (estado.resultados) return; // ya hay resultados reales
+  estado.numAlternativas = 3; estado.numCriterios = 3;
+  estado.nombresAlternativas = ["A", "B", "C"];
+  estado.nombresCriterios = ["C1", "C2", "C3"];
+  estado.sentidos = ["max", "max", "max"];
+  estado.pesos = [1, 1, 1]; estado.vetos = ["", "", ""];
+  estado.matriz = [[8, 6, 7], [5, 9, 4], [6, 5, 8]];
+  estado.variante = "I"; estado.modoVeto = "global"; estado.normalizacion = "minmax";
+  const datos = { matriz: estado.matriz, pesos: estado.pesos, sentidos: estado.sentidos, variante: "I", normalizacion: "minmax", modoVeto: "global", vetos: [null, null, null], umbrales: Object.assign({}, estado.umbrales) };
+  estado.resultados = electreI(datos); estado.resultados.datos = datos;
+}
+
+/** Ejecuta la batería y muestra la tabla de resultados. */
+function ejecutarPruebas() {
+  const filas = PRUEBAS.map((p) => {
+    let resultado;
+    try { resultado = p.fn(); } catch (e) { resultado = { ok: false, detalle: "error: " + e.message }; }
+    return { nombre: p.nombre, ok: resultado.ok, detalle: resultado.detalle };
+  });
+  const pasaron = filas.filter((f) => f.ok).length;
+  let html = '<div class="separador"></div><div class="mensaje ' + (pasaron === filas.length ? "mensaje--exito" : "mensaje--advertencia") + '" role="status">' + pasaron + " de " + filas.length + " pruebas superadas.</div>";
+  html += '<div class="tabla-contenedor"><table class="matriz-indice"><thead><tr><th style="text-align:left">Prueba</th><th>Estado</th><th style="text-align:left">Detalle</th></tr></thead><tbody>';
+  filas.forEach((f) => {
+    html += '<tr><td class="etiqueta-fila">' + escaparHtml(f.nombre) + '</td><td class="celda-indice" style="' + (f.ok ? "background:rgba(var(--exito-rgb),0.22);color:var(--exito)" : "background:rgba(var(--error-rgb),0.22);color:var(--error)") + '">' + (f.ok ? "Pasa" : "Falla") + '</td><td class="etiqueta-fila" style="font-size:0.8rem;color:var(--texto-3)">' + escaparHtml(f.detalle) + "</td></tr>";
+  });
+  html += "</tbody></table></div>";
+  $("contenedorPruebas").innerHTML = html;
+}
+
+
+/* -------------------------------------------------------------------------
+   9. ARRANQUE Y EVENTOS
+   ------------------------------------------------------------------------- */
+function rellenarIdentidad() {
+  document.querySelectorAll('[data-app="nombre"]').forEach((el) => { el.textContent = APLICATIVO.nombre; });
+  document.querySelectorAll('[data-app="autor"]').forEach((el) => { el.textContent = APLICATIVO.autor; });
+  document.querySelectorAll('[data-app="correo"]').forEach((el) => { el.textContent = APLICATIVO.correo; el.href = "mailto:" + APLICATIVO.correo; });
+}
+
+function limpiarAplicacion() {
+  if (!confirm("Esto borrará los datos ingresados y reiniciará la aplicación. ¿Desea continuar?")) return;
+  estado.nombresAlternativas = []; estado.nombresCriterios = [];
+  estado.sentidos = []; estado.pesos = []; estado.vetos = [];
+  estado.matriz = []; estado.resultados = null; estado.configurado = false; estado.origen = "vacio";
+  $("seccionDatos").hidden = true; $("seccionResultados").hidden = true;
+  actualizarOrigen(); actualizarEstadosRiel();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  rellenarIdentidad();
+  construirControlesDemo();
+  pintarDemo();
+  actualizarOrigen();
+  actualizarEstadosRiel();
+
+  $("variante").addEventListener("change", alternarUmbrales);
+  $("modoVeto").addEventListener("change", alternarCampoVeto);
+  $("aplicarConfiguracion").addEventListener("click", aplicarConfiguracion);
+  $("cargarEjemplo").addEventListener("click", cargarDatosPrueba);
+  $("calcularResultados").addEventListener("click", calcularYMostrar);
+  $("limpiarAplicacion").addEventListener("click", limpiarAplicacion);
+  $("ejecutarBarridoI").addEventListener("click", ejecutarBarridoI);
+  $("ejecutarRobustezII").addEventListener("click", ejecutarRobustezII);
+  $("exportarExcel").addEventListener("click", exportarExcel);
+  $("exportarPDF").addEventListener("click", exportarInformePDF);
+  $("ejecutarPruebas").addEventListener("click", ejecutarPruebas);
+  alternarUmbrales();
+  alternarCampoVeto();
+});
+</script>
+</body>
+</html>
