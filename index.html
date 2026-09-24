@@ -917,7 +917,7 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
       <div class="rejilla-config">
         <div class="campo">
           <label for="cEstrella">Umbral de concordancia c*</label>
-          <input type="number" id="cEstrella" min="0" step="0.01" placeholder="se calcula en el paso 2" inputmode="decimal">
+          <input type="number" id="cEstrella" min="0" max="1" step="0.01" placeholder="se calcula en el paso 2" inputmode="decimal">
           <p class="ayuda">Nivel mínimo de concordancia para aceptar una sobreclasificación.</p>
         </div>
         <div class="campo">
@@ -1091,13 +1091,23 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
   </div>
 
   <h2 id="tituloReferencias">Fundamento metodológico</h2>
-  <p>ELECTRE I compara las alternativas por pares mediante relaciones de sobreclasificación. Para cada par se mide la concordancia, que reúne el peso de los criterios a favor, y la discordancia, que mide la oposición más fuerte. Una alternativa sobreclasifica a otra cuando la concordancia alcanza el umbral y la discordancia no lo supera. El resultado es el núcleo: el conjunto de alternativas que ninguna otra sobreclasifica. ELECTRE I reduce el conjunto de opciones admisibles; no produce necesariamente un orden completo, y el núcleo no debe leerse como la mejor alternativa.</p>
-  <p>Esta implementación adopta convenciones explícitas: normalización por rango, r igual a x dividido por la diferencia entre el máximo y el mínimo; concordancia que otorga el peso completo del criterio cuando hay empate; y umbrales por defecto iguales al promedio de los elementos fuera de la diagonal de cada matriz. Son puntos de partida razonables a partir de los datos, no constantes universales del método, y conviene revisarlos con el análisis de sensibilidad.</p>
+  <p>ELECTRE I compara las alternativas por pares mediante relaciones de sobreclasificación. Para cada par se mide la concordancia, que reúne el peso de los criterios a favor, y la discordancia, que mide la oposición más fuerte. Una alternativa sobreclasifica a otra cuando la concordancia alcanza el umbral y la discordancia no lo supera. El resultado es el núcleo: el subconjunto de alternativas con estabilidad interna, ninguna sobreclasifica a otra del núcleo, y dominancia externa, toda alternativa de fuera es sobreclasificada por alguna de dentro. Cuando el grafo tiene circuitos, el procedimiento los contrae antes de extraer el núcleo. ELECTRE I reduce el conjunto de opciones admisibles; no produce necesariamente un orden completo, y el núcleo no debe leerse como la mejor alternativa: evaluar no es decidir.</p>
+  <p>Esta implementación adopta convenciones explícitas: normalización por rango, r igual a x dividido por la diferencia entre el máximo y el mínimo; concordancia que otorga el peso completo del criterio cuando hay empate; y umbrales sugeridos iguales al promedio de los elementos fuera de la diagonal de cada matriz. Son puntos de partida razonables derivados de los datos, no constantes universales del método, y conviene revisarlos con el análisis de sensibilidad.</p>
+  <p>Cuando el grafo de sobreclasificación contiene circuitos, un núcleo en sentido estricto puede no existir. El aplicativo detecta los componentes fuertemente conexos (circuitos), los contrae a una clase, extrae el núcleo sobre el grafo resultante, que es acíclico, y lo expande. El resultado se verifica comprobando la estabilidad interna y la dominancia externa.</p>
+
+  <h2>Trazabilidad de fuentes</h2>
+  <p>Normalización por rango, concordancia con empate a peso completo, discordancia sobre la matriz ponderada y umbrales sugeridos: Roy (1968) y Roy (1991); presentación pedagógica en Figueira, Mousseau &amp; Roy (2005). Aplicación ilustrativa de ELECTRE I: Shanian &amp; Savadogo (2006). Relación de sobreclasificación, núcleo del grafo (estabilidad interna y dominancia externa) y tratamiento de circuitos por contracción: Roy (1968) y Hansen, Anciaux-Mundeleer &amp; Vincke (1976).</p>
 
   <h2>Referencias</h2>
+  <p>Roy, B. (1968). Classement et choix en présence de points de vue multiples (la méthode ELECTRE). <em>Revue Française d'Informatique et de Recherche Opérationnelle, 2</em>(8), 57-75. https://doi.org/10.1051/ro/196802v100571</p>
   <p>Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. <em>Theory and Decision, 31</em>(1), 49-73. https://doi.org/10.1007/BF00134132</p>
   <p>Figueira, J., Mousseau, V., &amp; Roy, B. (2005). ELECTRE Methods. En J. Figueira, S. Greco &amp; M. Ehrgott (Eds.), <em>Multiple Criteria Decision Analysis: State of the Art Surveys</em> (pp. 133-162). Springer. https://doi.org/10.1007/0-387-23081-5_4</p>
+  <p>Hansen, P., Anciaux-Mundeleer, M., &amp; Vincke, P. (1976). Quasi-kernels of outranking relations. En H. Thiriez &amp; S. Zionts (Eds.), <em>Multiple Criteria Decision Making</em> (Lecture Notes in Economics and Mathematical Systems, vol. 130, pp. 53-63). Springer. https://doi.org/10.1007/978-3-642-87563-2_3</p>
   <p>Shanian, A., &amp; Savadogo, O. (2006). ELECTRE I decision support model for material selection of bipolar plates for polymer electrolyte fuel cells applications. <em>Journal of New Materials for Electrochemical Systems, 9</em>(3), 191-199.</p>
+
+  <h2>Historial de versiones</h2>
+  <p><strong>V3.1</strong>. Corrección del tratamiento de circuitos en el cálculo del núcleo mediante contracción de componentes fuertemente conexos, con verificación de estabilidad interna y dominancia externa. Nuevas pruebas estructurales del grafo. Revalidación de la sensibilidad con la misma lógica del análisis principal. Manejo explícito de criterios con rango cero. Validación de c* en el intervalo de 0 a 1. Precisión terminológica de los pesos. Mejoras en la interpretación metodológica del núcleo. Fortalecimiento de la trazabilidad bibliográfica. Mayor auditabilidad del Excel. Consistencia de la versión en exportaciones y documentación.</p>
+  <p><strong>V3.0</strong>. Versión base centrada en ELECTRE I, con las trece etapas en acordeones, trazabilidad «Ver cálculo», grafo de sobreclasificación, análisis de sensibilidad, exportación a Excel y PDF, y pruebas automáticas. Fue la versión sometida a la auditoría metodológica.</p>
 </section>
 
 </main>
@@ -1118,7 +1128,7 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
    ------------------------------------------------------------------------- */
 const APLICATIVO = {
   nombre: "Áristos ELECTRE",
-  version: "3.0",
+  version: "3.1",
   autor: "Mario Sergio Gómez Rueda",
   correo: "mgomezr1@gmail.com",
   nota: "Este aplicativo fue desarrollado por Mario Sergio Gómez Rueda, su uso es de carácter académico y cualquier otro uso se regirá por el derecho de la propiedad intelectual."
@@ -1261,26 +1271,129 @@ function matrizDominanciaAgregada(F, G) {
 }
 
 /**
- * Núcleo a partir de la matriz de dominancia agregada H.
- * Una alternativa sale del núcleo si otra que permanece la sobreclasifica
- * (H = 1) sin ser sobreclasificada de vuelta.
+ * Núcleo (noyau) del grafo de sobreclasificación, según la teoría de grafos de
+ * Berge y el procedimiento de explotación de ELECTRE I (Roy, 1968; Hansen,
+ * Anciaux-Mundeleer y Vincke, 1976).
+ *
+ * Un núcleo K de un grafo dirigido cumple dos propiedades:
+ *   Estabilidad interna: ningún elemento de K sobreclasifica a otro de K.
+ *   Dominancia externa: todo elemento fuera de K es sobreclasificado por alguno de K.
+ *
+ * Un grafo sin circuitos tiene un núcleo único. Un grafo con circuitos puede no
+ * tener núcleo en sentido estricto. El procedimiento trata los circuitos por
+ * contracción: detecta los componentes fuertemente conexos (los circuitos), los
+ * contrae a un supernodo (condensación, que siempre es acíclica), extrae el núcleo
+ * sobre la condensación y lo expande. Las alternativas de un mismo circuito son
+ * mutuamente sobreclasificadas y entran o salen del núcleo en bloque.
+ *
+ * Devuelve un objeto con:
+ *   nucleo: índices de las alternativas del núcleo, en orden ascendente.
+ *   componentes: partición en componentes fuertemente conexos (cada uno, lista de índices).
+ *   circuitos: componentes con más de un elemento (o un lazo), es decir circuitos.
+ *   reciprocas: pares [i,k] con i S k y k S i.
+ *   estabilidadInterna: true si el núcleo devuelto es internamente estable.
+ *   dominanciaExterna: true si el núcleo devuelto domina externamente.
  */
 function calcularNucleo(H) {
-  const m = H.length, enNucleo = Array(m).fill(true);
-  let cambio = true, guarda = 0;
-  while (cambio && guarda < m * m + 5) {
-    cambio = false; guarda++;
-    for (let b = 0; b < m; b++) {
-      if (!enNucleo[b]) continue;
-      for (let a = 0; a < m; a++) {
-        if (a === b || !enNucleo[a]) continue;
-        if (H[a][b] === 1 && H[b][a] !== 1) { enNucleo[b] = false; cambio = true; break; }
+  const m = H.length;
+  const supera = (a, b) => a !== b && H[a][b] === 1;
+
+  // 1. Componentes fuertemente conexos (algoritmo de Tarjan). Determinista.
+  const indice = Array(m).fill(-1), bajo = Array(m).fill(0), enPila = Array(m).fill(false);
+  const pila = []; let contador = 0; const comps = [];
+  const idComp = Array(m).fill(-1);
+  // Tarjan iterativo para evitar límites de recursión.
+  for (let s = 0; s < m; s++) {
+    if (indice[s] !== -1) continue;
+    const trabajo = [[s, 0]];
+    while (trabajo.length) {
+      const marco = trabajo[trabajo.length - 1];
+      const v = marco[0];
+      if (marco[1] === 0) { indice[v] = bajo[v] = contador++; pila.push(v); enPila[v] = true; }
+      let recurrio = false;
+      for (let w = marco[1]; w < m; w++) {
+        if (!supera(v, w)) continue;
+        if (indice[w] === -1) { marco[1] = w + 1; trabajo.push([w, 0]); recurrio = true; break; }
+        else if (enPila[w]) { bajo[v] = Math.min(bajo[v], indice[w]); }
       }
+      if (recurrio) continue;
+      if (bajo[v] === indice[v]) {
+        const comp = [];
+        let w;
+        do { w = pila.pop(); enPila[w] = false; idComp[w] = comps.length; comp.push(w); } while (w !== v);
+        comp.sort((a, b) => a - b);
+        comps.push(comp);
+      }
+      trabajo.pop();
+      if (trabajo.length) { const padre = trabajo[trabajo.length - 1][0]; bajo[padre] = Math.min(bajo[padre], bajo[v]); }
     }
   }
+
+  // 2. Condensación: aristas entre componentes distintos. Es acíclica.
+  const nc = comps.length;
+  const arcoComp = Array.from({ length: nc }, () => Array(nc).fill(false));
+  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
+    if (supera(a, b) && idComp[a] !== idComp[b]) arcoComp[idComp[a]][idComp[b]] = true;
+  }
+
+  // 3. Núcleo sobre el grafo acíclico de componentes. En ELECTRE I un arco
+  //    c -> d significa que c sobreclasifica a d, es decir c es preferible. El
+  //    núcleo debe reunir a los dominadores y dominar externamente al resto. En
+  //    un grafo acíclico el núcleo es único: procesando los componentes en orden
+  //    topológico (las fuentes primero), un componente entra al núcleo salvo que
+  //    ya haya sido sobreclasificado por un componente admitido.
+  const orden = ordenTopologico(arcoComp);          // fuentes primero
+  const enNucleoComp = Array(nc).fill(false);
+  const sobreclasificado = Array(nc).fill(false);
+  for (const c of orden) {
+    if (sobreclasificado[c]) continue;              // ya lo domina alguien del núcleo
+    enNucleoComp[c] = true;
+    for (let d = 0; d < nc; d++) if (arcoComp[c][d]) sobreclasificado[d] = true;
+  }
+
+  // 4. Expansión a alternativas.
   const nucleo = [];
-  for (let i = 0; i < m; i++) if (enNucleo[i]) nucleo.push(i);
-  return nucleo;
+  for (let c = 0; c < nc; c++) if (enNucleoComp[c]) for (const v of comps[c]) nucleo.push(v);
+  nucleo.sort((a, b) => a - b);
+
+  // 5. Estructura del grafo para la interfaz.
+  const circuitos = comps.filter((c) => c.length > 1 || (c.length === 1 && H[c[0]][c[0]] === 1)).map((c) => c.slice());
+  const reciprocas = [];
+  for (let a = 0; a < m; a++) for (let b = a + 1; b < m; b++) if (supera(a, b) && supera(b, a)) reciprocas.push([a, b]);
+
+  // 6. Verificación de las propiedades del núcleo sobre el conjunto devuelto.
+  const enK = Array(m).fill(false); nucleo.forEach((i) => { enK[i] = true; });
+  let estabilidadInterna = true;
+  for (const a of nucleo) for (const b of nucleo) if (a !== b && supera(a, b)) estabilidadInterna = false;
+  let dominanciaExterna = true;
+  for (let x = 0; x < m; x++) if (!enK[x]) {
+    let dominado = false;
+    for (const a of nucleo) if (supera(a, x)) { dominado = true; break; }
+    if (!dominado) dominanciaExterna = false;
+  }
+
+  return { nucleo, componentes: comps, circuitos, reciprocas, estabilidadInterna, dominanciaExterna };
+}
+
+/** Orden topológico de un grafo acíclico dado por su matriz booleana de arcos. */
+function ordenTopologico(arco) {
+  const n = arco.length;
+  const gradoEntrada = Array(n).fill(0);
+  for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) if (arco[a][b]) gradoEntrada[b]++;
+  const cola = [];
+  for (let i = 0; i < n; i++) if (gradoEntrada[i] === 0) cola.push(i);
+  cola.sort((a, b) => a - b);
+  const orden = [];
+  while (cola.length) {
+    const u = cola.shift(); orden.push(u);
+    const nuevos = [];
+    for (let v = 0; v < n; v++) if (arco[u][v]) { if (--gradoEntrada[v] === 0) nuevos.push(v); }
+    nuevos.sort((a, b) => a - b);
+    for (const v of nuevos) cola.push(v);
+  }
+  // Si quedara algún nodo (no debería en un DAG), añadirlo al final de forma determinista.
+  for (let i = 0; i < n; i++) if (!orden.includes(i)) orden.push(i);
+  return orden;
 }
 
 /**
@@ -1290,6 +1403,7 @@ function calcularNucleo(H) {
  */
 function electreI(d) {
   const rangos = rangosCriterios(d.matriz);
+  const criteriosSinVariacion = rangos.map((r, j) => (r.rango === 0 ? j : -1)).filter((j) => j >= 0);
   const normalizada = matrizNormalizadaRango(d.matriz, rangos);
   const V = matrizPonderada(normalizada, d.pesos);
   const C = matrizConcordancia(d.matriz, d.pesos, d.sentidos);
@@ -1299,8 +1413,18 @@ function electreI(d) {
   const F = matrizDominanciaConcordante(C, cEstrella);
   const G = matrizDominanciaDiscordante(D, dEstrella);
   const H = matrizDominanciaAgregada(F, G);
-  const nucleo = calcularNucleo(H);
-  return { rangos, normalizada, V, C, D, F, G, H, nucleo, cEstrella, dEstrella };
+  const nuc = calcularNucleo(H);
+  return {
+    rangos, normalizada, V, C, D, F, G, H,
+    nucleo: nuc.nucleo,
+    componentes: nuc.componentes,
+    circuitos: nuc.circuitos,
+    reciprocas: nuc.reciprocas,
+    estabilidadInterna: nuc.estabilidadInterna,
+    dominanciaExterna: nuc.dominanciaExterna,
+    criteriosSinVariacion,
+    cEstrella, dEstrella
+  };
 }
 
 /** Punto de entrada del cálculo. */
@@ -1313,6 +1437,8 @@ function conDecimales(x, n = 4) { return Number(x).toLocaleString("es-CO", { min
 function dec(x) { if (x === null || x === undefined) return "—"; return conDecimales(x, estado.decimales); }
 /** Valor numérico plano para inputs, sin separadores de miles. */
 function conValor(x) { return Number(x).toFixed(6).replace(/0+$/, "").replace(/\.$/, ""); }
+/** Fecha legible en español para las exportaciones. */
+function fechaLegible() { return new Date().toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" }); }
 function escaparHtml(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
 
 function mostrarMensaje(id, texto, tipo) {
@@ -1438,7 +1564,7 @@ function aplicarConfiguracion() {
   estado.umbralesManuales = false;
   if (cTxt !== "") {
     const c = parseFloat(cTxt);
-    if (!(c >= 0)) { mostrarMensaje("mensajeConfiguracion", "El umbral c* debe ser un número mayor o igual a 0.", "error"); return; }
+    if (!(c >= 0 && c <= 1)) { mostrarMensaje("mensajeConfiguracion", "El umbral de concordancia c* debe estar entre 0 y 1, igual que los índices de concordancia.", "error"); return; }
     u.cEstrella = c; estado.umbralesManuales = true;
   } else { u.cEstrella = null; }
   if (dTxt !== "") {
@@ -1531,7 +1657,7 @@ function actualizarAvisoPesos() {
   const pesos = estado.pesos.map((p) => (p === "" || isNaN(p) ? 0 : Number(p)));
   const total = sumar(pesos);
   const aviso = $("avisoPesos");
-  if (total <= 0) { aviso.textContent = "Asigne pesos positivos. Los pesos deben sumar 1 (100 %)."; aviso.style.color = ""; return; }
+  if (total <= 0) { aviso.textContent = "Los pesos deben ser no negativos y sumar 1 (100 %)."; aviso.style.color = ""; return; }
   const dif = Math.abs(total - 1);
   if (dif < 1e-9) {
     aviso.textContent = "Suma de pesos: 1,0000 (correcto). Reparto: " + estado.nombresCriterios.map((n, j) => n + " " + comoPorcentaje(pesos[j])).join(" · ");
@@ -1636,7 +1762,8 @@ function validarDatos() {
   const problemas = [];
   const pesos = estado.pesos.map((p) => (p === "" || isNaN(p) ? 0 : Number(p)));
   const total = sumar(pesos);
-  if (total <= 0) problemas.push("Asigne pesos positivos a los criterios.");
+  if (estado.pesos.some((p) => p !== "" && !isNaN(p) && Number(p) < 0)) problemas.push("Los pesos deben ser no negativos.");
+  if (total <= 0) problemas.push("Los pesos deben ser no negativos y sumar 1 (100 %).");
   else if (Math.abs(total - 1) > 1e-6) problemas.push("Los pesos deben sumar 1 (100 %); ahora suman " + conDecimales(total, 4) + ".");
   for (let i = 0; i < estado.numAlternativas; i++)
     for (let j = 0; j < estado.numCriterios; j++) {
@@ -1863,6 +1990,43 @@ function listaSobreclasificaciones(H) {
   return rel;
 }
 
+/** Informa de circuitos y relaciones recíprocas encontrados en el grafo. */
+function bloqueEstructuraGrafo(r) {
+  const nombres = estado.nombresAlternativas;
+  const partes = [];
+  if (r.circuitos && r.circuitos.length) {
+    const lista = r.circuitos.map((c) => "{ " + c.map((i) => escaparHtml(nombres[i])).join(", ") + " }").join(", ");
+    partes.push('<div class="mensaje mensaje--advertencia" role="note">Se detectaron circuitos de sobreclasificación: ' + lista +
+      ". Dentro de un circuito, las alternativas se sobreclasifican mutuamente y son indiferentes entre sí desde el punto de vista del método. El procedimiento las trata en bloque: entran o salen del núcleo juntas.</div>");
+  }
+  if (r.reciprocas && r.reciprocas.length) {
+    const lista = r.reciprocas.map((p) => escaparHtml(nombres[p[0]]) + " ↔ " + escaparHtml(nombres[p[1]])).join(", ");
+    partes.push('<p class="ayuda">Relaciones recíprocas (cada una sobreclasifica a la otra): ' + lista + ". Son un caso particular de circuito de dos alternativas.</p>");
+  }
+  return partes.join("");
+}
+
+/** Muestra si el núcleo devuelto satisface las propiedades formales. */
+function bloquePropiedadesNucleo(r) {
+  const marca = (ok) => ok
+    ? '<span style="color:var(--exito)">se cumple</span>'
+    : '<span style="color:var(--advertencia)">no se cumple</span>';
+  return '<p class="ayuda">Propiedades verificadas sobre el conjunto devuelto: ' +
+    "estabilidad interna " + marca(r.estabilidadInterna) + " (ningún par del núcleo se sobreclasifica), " +
+    "dominancia externa " + marca(r.dominanciaExterna) + " (toda alternativa fuera del núcleo es sobreclasificada por alguna de dentro).</p>";
+}
+
+/** Texto explicativo del núcleo, coherente con el procedimiento formal. */
+function textoNucleo(r) {
+  const hayCircuitos = r.circuitos && r.circuitos.length;
+  let base = "El núcleo es el subconjunto de alternativas que satisface, a la vez, estabilidad interna (ninguna sobreclasifica a otra del núcleo) y dominancia externa (toda alternativa de fuera es sobreclasificada por alguna de dentro). ";
+  if (hayCircuitos) {
+    base += "Como el grafo contiene circuitos, un núcleo en sentido estricto podría no existir; el procedimiento contrae cada circuito a una única clase, obtiene el núcleo sobre el grafo resultante, que es acíclico, y lo expande. ";
+  }
+  base += "ELECTRE I puede conservar varias alternativas en el núcleo: reduce el conjunto de opciones admisibles mediante relaciones de sobreclasificación, sin producir necesariamente un orden completo. El núcleo no representa automáticamente «la mejor alternativa»; evaluar no es decidir.";
+  return base;
+}
+
 /** Renderiza la sección de resultados completa con las trece etapas. */
 function renderizarResultados() {
   const r = estado.resultados;
@@ -1884,7 +2048,13 @@ function renderizarResultados() {
   e2 += '<details class="ver-calculo"><summary>Ver cálculo de C(i, k)</summary>' + selectorPar("cCalc", "concordancia") + "</details>";
 
   // 3. Rangos + normalización
-  let e3 = tablaRangos(r) + '<div class="separador"></div>' +
+  let avisoRango = "";
+  if (r.criteriosSinVariacion && r.criteriosSinVariacion.length) {
+    const nombresCrit = r.criteriosSinVariacion.map((j) => escaparHtml(estado.nombresCriterios[j])).join(", ");
+    avisoRango = '<div class="mensaje mensaje--advertencia" role="note">Criterio sin variación: ' + nombresCrit +
+      ". Todas las alternativas presentan el mismo valor, por lo que su rango es cero. Este criterio no permite discriminar entre alternativas y su columna normalizada se fija en cero. Revise si desea conservarlo en el análisis.</div>";
+  }
+  let e3 = avisoRango + tablaRangos(r) + '<div class="separador"></div>' +
     tablaRectangular(r.normalizada, { titulo: "Matriz decisional normalizada (R)", nota: "Normalización por rango: r(i, j) = x(i, j) / (máx(j) − mín(j)). No reescala a [0, 1] ni resta el mínimo. Los valores se redondean solo para su lectura." });
 
   // 4. Ponderada
@@ -1915,9 +2085,11 @@ function renderizarResultados() {
   let e8 = '<h4 class="titulo-menor">Grafo de sobreclasificación</h4>' + grafoSuperacion(r.H, r.nucleo) +
     '<p class="ayuda">Un arco i → k indica que i sobreclasifica a k. Los nodos del núcleo aparecen en ámbar.</p>' +
     "<p><strong>Relaciones de sobreclasificación:</strong> " + (rel.length ? rel.join(", ") : "ninguna con los umbrales actuales") + "</p>" +
+    bloqueEstructuraGrafo(r) +
     '<div class="separador"></div><h4 class="titulo-menor">Núcleo</h4>' +
     '<p style="margin:0.6rem 0;">' + (nombresNucleo.length ? nombresNucleo.map((n) => '<span class="chip-nucleo">' + escaparHtml(n) + "</span>").join(" ") : "vacío") + "</p>" +
-    '<p class="ayuda">El núcleo reúne las alternativas que ninguna otra sobreclasifica. ELECTRE I puede conservar varias alternativas en el núcleo: reduce el conjunto de opciones admisibles mediante relaciones de sobreclasificación, sin producir necesariamente un ranking completo. No debe leerse automáticamente como «la mejor alternativa».</p>';
+    bloquePropiedadesNucleo(r) +
+    '<p class="ayuda">' + textoNucleo(r) + "</p>";
 
   let html = marcaPrueba +
     acordeon(1, "Datos y pesos", e1, true) +
@@ -2244,6 +2416,7 @@ function actualizarSensibilidadVivo() {
   html += "</div>";
   html += "<p><strong>" + rel.length + " relación(es) de sobreclasificación.</strong> Núcleo: " +
     (nombresNucleo.length ? nombresNucleo.map((n) => '<span class="chip-nucleo">' + escaparHtml(n) + "</span>").join(" ") : "vacío") + "</p>";
+  if (r.circuitos && r.circuitos.length) html += bloqueEstructuraGrafo(r);
   $("sensibilidadVivo").innerHTML = html;
 }
 
@@ -2328,15 +2501,16 @@ const FMT_NUM = "0.0####";
 /** Hoja menú con datos del análisis e índice de hojas. */
 function excelHojaMenu(nombresHojas) {
   const h = crearHojaExcel();
-  h.poner(0, 0, APLICATIVO.nombre + " · Informe de análisis ELECTRE I").combinar(0, 0, 5);
-  h.poner(1, 0, "Origen de los datos: " + (estado.origen === "prueba" ? "DATOS DE PRUEBA" : "digitados por el usuario"));
-  h.poner(2, 0, "Alternativas: " + estado.numAlternativas + "   Criterios: " + estado.numCriterios);
+  h.poner(0, 0, APLICATIVO.nombre + " " + APLICATIVO.version + " · Informe de análisis ELECTRE I").combinar(0, 0, 5);
+  h.poner(1, 0, "Método: ELECTRE I   ·   Versión: " + APLICATIVO.version + "   ·   Generado el " + fechaLegible());
+  h.poner(2, 0, "Origen de los datos: " + (estado.origen === "prueba" ? "DATOS DE PRUEBA" : "digitados por el usuario"));
+  h.poner(3, 0, "Alternativas: " + estado.numAlternativas + "   Criterios: " + estado.numCriterios);
   const r = estado.resultados;
-  h.poner(3, 0, "Umbral de concordancia c* = " + r.cEstrella);
-  h.poner(4, 0, "Umbral de discordancia d* = " + r.dEstrella);
-  h.poner(6, 0, "Índice de hojas");
-  nombresHojas.forEach((nombre, i) => h.poner(7 + i, 0, nombre, { enlace: enlaceHoja(nombre), ayuda: "Ir a " + nombre }));
-  const filaNota = 8 + nombresHojas.length;
+  h.poner(4, 0, "Umbral de concordancia c* = " + r.cEstrella);
+  h.poner(5, 0, "Umbral de discordancia d* = " + r.dEstrella);
+  h.poner(7, 0, "Índice de hojas");
+  nombresHojas.forEach((nombre, i) => h.poner(8 + i, 0, nombre, { enlace: enlaceHoja(nombre), ayuda: "Ir a " + nombre }));
+  const filaNota = 9 + nombresHojas.length;
   h.poner(filaNota, 0, APLICATIVO.nota).combinar(filaNota, 0, 5);
   h.poner(filaNota + 1, 0, "Autor: " + APLICATIVO.autor + "   ·   " + APLICATIVO.correo);
   h.anchos([46, 14, 14, 14, 14, 14]);
@@ -2347,12 +2521,15 @@ function excelHojaMenu(nombresHojas) {
 function excelHojaDatos() {
   const h = crearHojaExcel();
   h.poner(0, 0, "Datos del modelo");
-  h.poner(2, 0, "Número de alternativas"); h.poner(2, 1, estado.numAlternativas);
-  h.poner(3, 0, "Número de criterios"); h.poner(3, 1, estado.numCriterios);
-  h.poner(4, 0, "Umbral c*"); h.poner(4, 1, estado.resultados.cEstrella, { formato: FMT_DEC });
-  h.poner(5, 0, "Umbral d*"); h.poner(5, 1, estado.resultados.dEstrella, { formato: FMT_DEC });
-  h.poner(6, 0, "Origen"); h.poner(6, 1, estado.origen === "prueba" ? "DATOS DE PRUEBA" : "usuario");
-  h.anchos([26, 18]);
+  h.poner(1, 0, "Aplicativo"); h.poner(1, 1, APLICATIVO.nombre + " " + APLICATIVO.version);
+  h.poner(2, 0, "Método"); h.poner(2, 1, "ELECTRE I");
+  h.poner(3, 0, "Generado"); h.poner(3, 1, fechaLegible());
+  h.poner(4, 0, "Número de alternativas"); h.poner(4, 1, estado.numAlternativas);
+  h.poner(5, 0, "Número de criterios"); h.poner(5, 1, estado.numCriterios);
+  h.poner(6, 0, "Umbral c*"); h.poner(6, 1, estado.resultados.cEstrella, { formato: FMT_DEC });
+  h.poner(7, 0, "Umbral d*"); h.poner(7, 1, estado.resultados.dEstrella, { formato: FMT_DEC });
+  h.poner(8, 0, "Origen"); h.poner(8, 1, estado.origen === "prueba" ? "DATOS DE PRUEBA" : "usuario");
+  h.anchos([26, 24]);
   return h.cerrar();
 }
 
@@ -2411,8 +2588,8 @@ function excelHojaRangos(refDec) {
   return h.cerrar();
 }
 
-/** Hoja de matriz numérica genérica (normalizada, ponderada, concordancia, etc.). */
-function excelHojaMatriz(titulo, M, etiquetasFila, etiquetasCol, formato) {
+/** Hoja de matriz numérica genérica (concordancia, discordancia, dominancias). */
+function excelHojaMatriz(titulo, M, etiquetasFila, etiquetasCol, formato, nota) {
   const h = crearHojaExcel();
   h.poner(0, 0, titulo);
   h.poner(2, 0, "");
@@ -2425,7 +2602,49 @@ function excelHojaMatriz(titulo, M, etiquetasFila, etiquetasCol, formato) {
       h.poner(fila0 + i, 1 + j, Number(v), { formato: formato || FMT_DEC });
     });
   });
+  if (nota) h.poner(fila0 + M.length + 1, 0, nota);
   h.anchos([18].concat(etiquetasCol.map(() => 12)));
+  return h.cerrar();
+}
+
+/** Hoja Normalizada con fórmulas: r(i,j) = Decisión(i,j) / Rangos.rango(j). */
+function excelHojaNormalizadaFormulas(refDec) {
+  const h = crearHojaExcel();
+  const nA = refDec.nA, nC = refDec.nC;
+  h.poner(0, 0, "Matriz normalizada por rango (R = X / rango)");
+  h.poner(2, 0, "");
+  estado.nombresCriterios.forEach((n, j) => h.poner(2, 1 + j, n));
+  const fila0 = 3;
+  for (let i = 0; i < nA; i++) {
+    h.poner(fila0 + i, 0, estado.nombresAlternativas[i]);
+    for (let j = 0; j < nC; j++) {
+      const celdaX = "'Decisión'!" + XLSX.utils.encode_cell({ r: refDec.fila0 + i, c: 1 + j });
+      const celdaR = "'Rangos'!" + XLSX.utils.encode_cell({ r: 3 + j, c: 3 }); // columna Rango
+      // Si el rango es cero, la normalización se define como cero.
+      h.poner(fila0 + i, 1 + j, null, { formula: "IF(" + celdaR + "=0,0," + celdaX + "/" + celdaR + ")", formato: FMT_DEC });
+    }
+  }
+  h.anchos([18].concat(estado.nombresCriterios.map(() => 12)));
+  return h.cerrar();
+}
+
+/** Hoja Ponderada con fórmulas: v(i,j) = Normalizada(i,j) * Pesos(j). */
+function excelHojaPonderadaFormulas(refDec) {
+  const h = crearHojaExcel();
+  const nA = refDec.nA, nC = refDec.nC;
+  h.poner(0, 0, "Matriz normalizada y ponderada (V = w · R)");
+  h.poner(2, 0, "");
+  estado.nombresCriterios.forEach((n, j) => h.poner(2, 1 + j, n));
+  const fila0 = 3;
+  for (let i = 0; i < nA; i++) {
+    h.poner(fila0 + i, 0, estado.nombresAlternativas[i]);
+    for (let j = 0; j < nC; j++) {
+      const celdaR = "'Normalizada'!" + XLSX.utils.encode_cell({ r: 3 + i, c: 1 + j });
+      const celdaW = "'Pesos'!" + XLSX.utils.encode_cell({ r: 3 + j, c: 1 });
+      h.poner(fila0 + i, 1 + j, null, { formula: celdaR + "*" + celdaW, formato: FMT_DEC });
+    }
+  }
+  h.anchos([18].concat(estado.nombresCriterios.map(() => 12)));
   return h.cerrar();
 }
 
@@ -2460,15 +2679,22 @@ function excelHojaSobreclasificaciones() {
 /** Hoja del núcleo. */
 function excelHojaNucleo() {
   const h = crearHojaExcel();
-  const r = estado.resultados;
+  const r = estado.resultados, nombres = estado.nombresAlternativas;
   h.poner(0, 0, "Núcleo de alternativas");
   h.poner(2, 0, "Alternativa"); h.poner(2, 1, "¿En el núcleo?");
-  estado.nombresAlternativas.forEach((n, i) => {
+  nombres.forEach((n, i) => {
     h.poner(3 + i, 0, n);
     h.poner(3 + i, 1, r.nucleo.includes(i) ? "Sí" : "No");
   });
-  h.poner(4 + estado.numAlternativas, 0, "El núcleo reúne las alternativas que ninguna otra sobreclasifica. No es un ranking.");
-  h.anchos([22, 16]);
+  let fila = 4 + estado.numAlternativas;
+  h.poner(fila++, 0, "Estabilidad interna: " + (r.estabilidadInterna ? "se cumple" : "no se cumple"));
+  h.poner(fila++, 0, "Dominancia externa: " + (r.dominanciaExterna ? "se cumple" : "no se cumple"));
+  if (r.circuitos && r.circuitos.length) {
+    const lista = r.circuitos.map((c) => "{" + c.map((i) => nombres[i]).join(", ") + "}").join("; ");
+    h.poner(fila++, 0, "Circuitos detectados: " + lista);
+  }
+  h.poner(fila++, 0, "El núcleo tiene estabilidad interna y dominancia externa. No es un ranking ni «la mejor alternativa».");
+  h.anchos([28, 16]);
   return h.cerrar();
 }
 
@@ -2508,14 +2734,14 @@ function exportarExcel() {
   XLSX.utils.book_append_sheet(libro, dec.hoja, "Decisión");
   XLSX.utils.book_append_sheet(libro, excelHojaPesos(), "Pesos");
   XLSX.utils.book_append_sheet(libro, excelHojaRangos(dec), "Rangos");
-  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Matriz normalizada (R)", r.normalizada, nombres, crit, FMT_DEC), "Normalizada");
-  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Matriz normalizada y ponderada (V)", r.V, nombres, crit, FMT_DEC), "Ponderada");
-  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Índices de concordancia (C)", r.C, nombres, nombres, FMT_DEC), "Concordancia");
-  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Índices de discordancia (D)", r.D, nombres, nombres, FMT_DEC), "Discordancia");
+  XLSX.utils.book_append_sheet(libro, excelHojaNormalizadaFormulas(dec), "Normalizada");
+  XLSX.utils.book_append_sheet(libro, excelHojaPonderadaFormulas(dec), "Ponderada");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Índices de concordancia (C)", r.C, nombres, nombres, FMT_DEC, "C(i,k): peso de los criterios donde i es igual o mejor que k. Resultado calculado en el aplicativo a partir de la matriz de decisión y los pesos."), "Concordancia");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Índices de discordancia (D)", r.D, nombres, nombres, FMT_DEC, "D(i,k): oposición relativa más fuerte sobre la matriz ponderada V. Resultado calculado en el aplicativo."), "Discordancia");
   XLSX.utils.book_append_sheet(libro, excelHojaUmbrales(), "Umbrales");
-  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Dominancia concordante (F)", r.F, nombres, nombres, "0"), "Dominancia F");
-  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Dominancia discordante (G)", r.G, nombres, nombres, "0"), "Dominancia G");
-  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Dominancia agregada (H)", r.H, nombres, nombres, "0"), "Dominancia H");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Dominancia concordante (F)", r.F, nombres, nombres, "0", "F(i,k)=1 si C(i,k) ≥ c*. Resultado calculado en el aplicativo."), "Dominancia F");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Dominancia discordante (G)", r.G, nombres, nombres, "0", "G(i,k)=1 si D(i,k) ≤ d*. Resultado calculado en el aplicativo."), "Dominancia G");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Dominancia agregada (H)", r.H, nombres, nombres, "0", "H(i,k)=1 si F(i,k)=1 y G(i,k)=1, es decir i sobreclasifica a k. Resultado calculado en el aplicativo."), "Dominancia H");
   XLSX.utils.book_append_sheet(libro, excelHojaSobreclasificaciones(), "Sobreclasificación");
   XLSX.utils.book_append_sheet(libro, excelHojaNucleo(), "Núcleo");
   XLSX.utils.book_append_sheet(libro, excelHojaSensibilidad(), "Sensibilidad");
@@ -2560,10 +2786,11 @@ function generarInformePDF() {
   const nombres = estado.nombresAlternativas;
 
   // Portada del informe
-  doc.rect(doc.margen.izq, doc.y, doc.anchoUtil, 66, { relleno: COLORES_PDF.petroleo });
-  doc.texto(doc.margen.izq + 16, doc.y + 28, APLICATIVO.nombre, { tamano: 20, negrita: true, color: COLORES_PDF.blanco });
-  doc.texto(doc.margen.izq + 16, doc.y + 48, "Informe metodológico · ELECTRE I", { tamano: 10, color: COLORES_PDF.aquaClaro });
-  doc.y += 80;
+  doc.rect(doc.margen.izq, doc.y, doc.anchoUtil, 72, { relleno: COLORES_PDF.petroleo });
+  doc.texto(doc.margen.izq + 16, doc.y + 26, APLICATIVO.nombre + " " + APLICATIVO.version, { tamano: 20, negrita: true, color: COLORES_PDF.blanco });
+  doc.texto(doc.margen.izq + 16, doc.y + 46, "Informe metodológico · ELECTRE I", { tamano: 10, color: COLORES_PDF.aquaClaro });
+  doc.texto(doc.margen.izq + 16, doc.y + 62, "Generado el " + fechaLegible() + " · Método: ELECTRE I", { tamano: 8.5, color: COLORES_PDF.aquaClaro });
+  doc.y += 86;
 
   if (esPrueba) {
     doc.rect(doc.margen.izq, doc.y, doc.anchoUtil, 22, { relleno: COLORES_PDF.naranja });
@@ -2615,8 +2842,14 @@ function generarInformePDF() {
 
   // 6. Núcleo
   doc.tituloSeccion("6. Núcleo");
-  doc.parrafo("El núcleo reúne las alternativas que ninguna otra sobreclasifica: " + (nombresNucleo.length ? nombresNucleo.join(", ") : "vacío") + ".", { tamano: 10 });
-  doc.parrafo("ELECTRE I puede conservar varias alternativas en el núcleo. Reduce el conjunto de opciones admisibles mediante relaciones de sobreclasificación; no produce necesariamente un ranking completo, y el núcleo no debe leerse como «la mejor alternativa».", { tamano: 9, color: COLORES_PDF.tinta2 });
+  doc.parrafo("Núcleo: " + (nombresNucleo.length ? nombresNucleo.join(", ") : "vacío") + ".", { tamano: 10 });
+  doc.parrafo("El núcleo es el subconjunto de alternativas con estabilidad interna (ninguna sobreclasifica a otra del núcleo) y dominancia externa (toda alternativa de fuera es sobreclasificada por alguna de dentro).", { tamano: 9 });
+  if (r.circuitos && r.circuitos.length) {
+    const lista = r.circuitos.map((c) => "{ " + c.map((i) => nombres[i]).join(", ") + " }").join(", ");
+    doc.parrafo("Se detectaron circuitos de sobreclasificación: " + lista + ". El procedimiento los contrae a una clase y los trata en bloque, pues sus alternativas se sobreclasifican mutuamente.", { tamano: 9, color: COLORES_PDF.tinta2 });
+  }
+  doc.parrafo("Propiedades verificadas: estabilidad interna " + (r.estabilidadInterna ? "se cumple" : "no se cumple") + ", dominancia externa " + (r.dominanciaExterna ? "se cumple" : "no se cumple") + ".", { tamano: 9, color: COLORES_PDF.tinta2 });
+  doc.parrafo("ELECTRE I puede conservar varias alternativas en el núcleo. Reduce el conjunto de opciones admisibles; no produce necesariamente un orden completo, y el núcleo no debe leerse como «la mejor alternativa». Evaluar no es decidir.", { tamano: 9, color: COLORES_PDF.tinta2 });
 
   // 7. Robustez
   doc.tituloSeccion("7. Robustez");
@@ -2633,14 +2866,16 @@ function generarInformePDF() {
   // 8. Nota metodológica
   doc.tituloSeccion("8. Nota metodológica");
   doc.parrafo("Áristos ELECTRE implementa ELECTRE I como herramienta de apoyo a la decisión multicriterio. La aplicación explicita las convenciones utilizadas para la normalización por rango, el tratamiento de empates y la determinación inicial de umbrales. Estos parámetros deben interpretarse en el contexto del problema y pueden someterse a análisis de sensibilidad.", { tamano: 9 });
-  doc.parrafo("Convenciones de esta implementación: la concordancia trata el empate con el peso completo del criterio; la normalización es por rango, r = x / (máx − mín); los umbrales por defecto son el promedio de los elementos fuera de la diagonal de cada matriz.", { tamano: 8.5, color: COLORES_PDF.tinta2 });
+  doc.parrafo("Convenciones de esta implementación: la concordancia trata el empate con el peso completo del criterio; la normalización es por rango, r = x / (máx − mín); los umbrales sugeridos son el promedio de los elementos fuera de la diagonal de cada matriz. El núcleo se obtiene como núcleo del grafo de sobreclasificación (estabilidad interna y dominancia externa); cuando el grafo contiene circuitos, se contraen a una clase antes de extraer el núcleo.", { tamano: 8.5, color: COLORES_PDF.tinta2 });
 
   // 9. Referencias
   doc.tituloSeccion("9. Referencias");
   [
-    "Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. Theory and Decision, 31, 49-73. DOI: 10.1007/BF00134132",
-    "Figueira, J., Mousseau, V., & Roy, B. (2005). ELECTRE Methods. En Multiple Criteria Decision Analysis: State of the Art Surveys. Springer. DOI: 10.1007/0-387-23081-5_4",
-    "Shanian, A., & Savadogo, O. (2006). ELECTRE I Decision Support Model for Material Selection of Bipolar Plates for Polymer Electrolyte Fuel Cells Applications. Journal of New Materials for Electrochemical Systems, 9(3), 191-199."
+    "Roy, B. (1968). Classement et choix en présence de points de vue multiples (la méthode ELECTRE). RIRO, 2(8), 57-75. DOI: 10.1051/ro/196802v100571",
+    "Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. Theory and Decision, 31(1), 49-73. DOI: 10.1007/BF00134132",
+    "Figueira, J., Mousseau, V., & Roy, B. (2005). ELECTRE Methods. En Multiple Criteria Decision Analysis: State of the Art Surveys (pp. 133-162). Springer. DOI: 10.1007/0-387-23081-5_4",
+    "Hansen, P., Anciaux-Mundeleer, M., & Vincke, P. (1976). Quasi-kernels of outranking relations. En Multiple Criteria Decision Making (LNEMS 130, pp. 53-63). Springer. DOI: 10.1007/978-3-642-87563-2_3",
+    "Shanian, A., & Savadogo, O. (2006). ELECTRE I decision support model for material selection of bipolar plates for polymer electrolyte fuel cells applications. Journal of New Materials for Electrochemical Systems, 9(3), 191-199."
   ].forEach((ref) => doc.parrafo(ref, { tamano: 8.5, interlineado: 1.35, despues: 4 }));
 
   doc.parrafo(APLICATIVO.nota, { tamano: 8, color: COLORES_PDF.tinta2, despues: 2 });
@@ -2851,6 +3086,53 @@ const PRUEBAS = [
     const cabecera = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]);
     const cola = Array.from(bytes.slice(-6)).map((b) => String.fromCharCode(b)).join("");
     return { ok: cabecera === "%PDF-" && bytes.length > 1000 && cola.includes("EOF"), detalle: "cabecera=" + cabecera + ", tamaño=" + bytes.length + " bytes" };
+  }},
+  { nombre: "20. Kernel, grafo sin arcos: núcleo es el conjunto completo", fn: () => {
+    const H = [[null, 0, 0], [0, null, 0], [0, 0, null]];
+    const r = calcularNucleo(H);
+    return { ok: r.nucleo.length === 3 && r.estabilidadInterna && r.dominanciaExterna, detalle: "núcleo = " + JSON.stringify(r.nucleo.map((i) => "ABC"[i])) };
+  }},
+  { nombre: "21. Kernel, dominador claro: A sobreclasifica a B y C, núcleo = {A}", fn: () => {
+    const H = [[null, 1, 1], [0, null, 0], [0, 0, null]];
+    const r = calcularNucleo(H);
+    return { ok: JSON.stringify(r.nucleo) === "[0]" && r.estabilidadInterna && r.dominanciaExterna, detalle: "núcleo = " + JSON.stringify(r.nucleo.map((i) => "ABC"[i])) };
+  }},
+  { nombre: "22. Kernel, ciclo A→B→C→A: se detecta el circuito y no se resuelve por orden", fn: () => {
+    const H = [[null, 1, 0], [0, null, 1], [1, 0, null]];
+    const r = calcularNucleo(H);
+    const circuitoCompleto = r.circuitos.length === 1 && r.circuitos[0].length === 3;
+    return { ok: circuitoCompleto && r.nucleo.length === 3, detalle: "circuitos = " + JSON.stringify(r.circuitos.map((c) => c.map((i) => "ABC"[i]))) + ", núcleo = " + JSON.stringify(r.nucleo.map((i) => "ABC"[i])) };
+  }},
+  { nombre: "23. Kernel, relaciones recíprocas A↔B: se detectan como circuito", fn: () => {
+    const H = [[null, 1, 0], [1, null, 0], [0, 0, null]];
+    const r = calcularNucleo(H);
+    return { ok: r.reciprocas.length === 1 && r.reciprocas[0][0] === 0 && r.reciprocas[0][1] === 1, detalle: "recíprocas = " + JSON.stringify(r.reciprocas.map((p) => "ABC"[p[0]] + "↔" + "ABC"[p[1]])) };
+  }},
+  { nombre: "24. Kernel, alternativas incomparables: A→B con C aislada, núcleo = {A, C}", fn: () => {
+    const H = [[null, 1, 0], [0, null, 0], [0, 0, null]];
+    const r = calcularNucleo(H);
+    return { ok: JSON.stringify(r.nucleo) === "[0,2]" && r.estabilidadInterna && r.dominanciaExterna, detalle: "núcleo = " + JSON.stringify(r.nucleo.map((i) => "ABC"[i])) };
+  }},
+  { nombre: "25. Kernel, múltiples cadenas: dos dominadores independientes, núcleo = {A, C}", fn: () => {
+    const H = [[null, 1, 0, 0], [0, null, 0, 0], [0, 0, null, 1], [0, 0, 0, null]];
+    const r = calcularNucleo(H);
+    return { ok: JSON.stringify(r.nucleo) === "[0,2]" && r.estabilidadInterna && r.dominanciaExterna, detalle: "núcleo = " + JSON.stringify(r.nucleo.map((i) => "ABCD"[i])) };
+  }},
+  { nombre: "26. Kernel, invariancia ante permutación del orden de alternativas", fn: () => {
+    const base = [[null, 1, 0], [0, null, 0], [0, 0, null]]; // A→B, C aislada; núcleo {A,C}
+    const permutar = (H, p) => { const m = H.length; const H2 = Array.from({ length: m }, () => Array(m).fill(null)); for (let i = 0; i < m; i++) for (let k = 0; k < m; k++) if (i !== k) H2[p[i]][p[k]] = H[i][k]; return H2; };
+    let ok = true, detalle = "";
+    for (const p of [[0, 1, 2], [1, 0, 2], [2, 1, 0], [1, 2, 0], [2, 0, 1], [0, 2, 1]]) {
+      const got = calcularNucleo(permutar(base, p)).nucleo;
+      const esperado = [p[0], p[2]].sort((a, b) => a - b);
+      if (JSON.stringify(got) !== JSON.stringify(esperado)) { ok = false; detalle += JSON.stringify(p) + "→" + JSON.stringify(got) + " (esp " + JSON.stringify(esperado) + ") "; }
+    }
+    return { ok, detalle: ok ? "las 6 permutaciones dan el núcleo equivalente" : detalle };
+  }},
+  { nombre: "27. Kernel, caso 5×5 de validación: núcleo = {D, E} con propiedades verificadas", fn: () => {
+    const r = electreI(datosValidacion());
+    const nucleo = r.nucleo.slice().sort().join(",");
+    return { ok: nucleo === "3,4" && r.estabilidadInterna && r.dominanciaExterna, detalle: "núcleo = " + JSON.stringify(r.nucleo.map((i) => "ABCDE"[i])) + ", estInt=" + r.estabilidadInterna + ", domExt=" + r.dominanciaExterna };
   }}
 ];
 

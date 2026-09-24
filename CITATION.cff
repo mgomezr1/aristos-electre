@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "Si usa este software, cítelo como se indica a continuación."
 title: "Áristos ELECTRE"
-version: "3.0"
+version: "3.1"
 date-released: "2026-09-24"
 authors:
   - family-names: "Gómez Rueda"

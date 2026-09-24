@@ -12,7 +12,7 @@ No requiere instalación ni registro. Funciona en cualquier navegador moderno, e
 - Calcular, paso a paso, los rangos, la matriz normalizada por rango, la matriz ponderada y los índices de concordancia y discordancia entre cada par de alternativas.
 - Auditar par por par cómo se obtiene cada índice, con la función «Ver cálculo».
 - Ajustar la precisión con que se muestran los números, sin alterar el cálculo interno.
-- Ver las matrices de dominancia F, G y H, el grafo de sobreclasificación y el núcleo de alternativas no sobreclasificadas.
+- Ver las matrices de dominancia F, G y H, el grafo de sobreclasificación y el núcleo del grafo, con detección de circuitos y verificación de sus propiedades formales.
 - Hacer análisis de sensibilidad en vivo y descubrir qué tendría que cambiar para que el resultado fuera otro.
 - Descargar los resultados en Excel, con las fórmulas escritas celda por celda, y un informe ejecutivo en PDF con el grafo dibujado dentro del documento.
 
@@ -41,7 +41,7 @@ La guía completa (método, fórmulas, funciones, exportaciones y limitaciones) 
 
 ## Cómo citar
 
-Gómez Rueda, M. S. (2026). *Áristos ELECTRE* (Versión 3.0) [Software]. https://mgomezr1.github.io/aristos-electre/
+Gómez Rueda, M. S. (2026). *Áristos ELECTRE* (Versión 3.1) [Software]. https://mgomezr1.github.io/aristos-electre/
 
 ## Autoría y uso
 
@@ -51,14 +51,18 @@ Este aplicativo fue desarrollado por Mario Sergio Gómez Rueda. Su uso es de car
 
 Áristos ELECTRE explicita las decisiones que toma dentro de la familia ELECTRE, para que puedan interpretarse y discutirse:
 
-- Normalización por rango: cada valor se divide por el rango de su criterio, sin reescalar al intervalo de cero a uno.
+- Normalización por rango: cada valor se divide por el rango de su criterio, sin reescalar al intervalo de cero a uno. Los valores normalizados pueden ser mayores que uno; es deliberado.
 - Concordancia: el empate en un criterio recibe el peso completo de ese criterio.
-- Umbrales por defecto: el promedio de los elementos fuera de la diagonal de cada matriz, como punto de partida a partir de los datos, no como constante universal.
+- Umbrales sugeridos: el promedio de los elementos fuera de la diagonal de cada matriz, como punto de partida derivado de los datos, no como constante universal. El usuario puede modificarlos.
+- Relación de sobreclasificación: i sobreclasifica a k cuando la concordancia alcanza el umbral y la discordancia no lo supera.
+- Núcleo: núcleo del grafo de sobreclasificación, con estabilidad interna y dominancia externa. Cuando el grafo contiene circuitos, se detectan los componentes fuertemente conexos, se contraen a una clase, se extrae el núcleo sobre el grafo acíclico resultante y se expande. El aplicativo verifica ambas propiedades y avisa de circuitos y relaciones recíprocas. El núcleo no es un ranking ni «la mejor alternativa».
 
 ## Fundamento metodológico
 
+- Roy, B. (1968). Classement et choix en présence de points de vue multiples (la méthode ELECTRE). *RIRO, 2*(8), 57-75. https://doi.org/10.1051/ro/196802v100571
 - Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. *Theory and Decision, 31*(1), 49-73. https://doi.org/10.1007/BF00134132
 - Figueira, J., Mousseau, V., & Roy, B. (2005). ELECTRE Methods. En J. Figueira, S. Greco, & M. Ehrgott (Eds.), *Multiple Criteria Decision Analysis: State of the Art Surveys* (pp. 133-162). Springer. https://doi.org/10.1007/0-387-23081-5_4
+- Hansen, P., Anciaux-Mundeleer, M., & Vincke, P. (1976). Quasi-kernels of outranking relations. En H. Thiriez & S. Zionts (Eds.), *Multiple Criteria Decision Making* (LNEMS 130, pp. 53-63). Springer. https://doi.org/10.1007/978-3-642-87563-2_3
 - Shanian, A., & Savadogo, O. (2006). ELECTRE I decision support model for material selection of bipolar plates for polymer electrolyte fuel cells applications. *Journal of New Materials for Electrochemical Systems, 9*(3), 191-199.
 
 ## Componentes de terceros

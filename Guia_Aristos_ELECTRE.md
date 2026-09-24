@@ -5,13 +5,13 @@ Aplicación web autocontenida para aplicar el método de superación ELECTRE I e
 Autor: Mario Sergio Gómez Rueda. Correo: mgomezr1@gmail.com.
 Uso de carácter académico. Cualquier otro uso se regirá por el derecho de la propiedad intelectual.
 
-Versión 3.0.
+Versión 3.1.
 
 ## 1. Descripción general
 
 Áristos ELECTRE ayuda a decidir entre varias alternativas evaluadas con varios criterios, cuando esos criterios no se pueden reducir a un único número sin perder información. A diferencia de los métodos que suman todo en un puntaje, ELECTRE compara las alternativas por pares y admite que algunas sean incomparables entre sí.
 
-La aplicación implementa ELECTRE I, que entrega el núcleo: el subconjunto de alternativas que ninguna otra sobreclasifica. ELECTRE I reduce el conjunto de opciones admisibles mediante relaciones de sobreclasificación; no produce necesariamente un orden completo, y esa es una elección metodológica del método, no una carencia de la herramienta.
+La aplicación implementa ELECTRE I, que entrega el núcleo: el subconjunto de alternativas con estabilidad interna, ninguna sobreclasifica a otra del núcleo, y dominancia externa, toda alternativa de fuera es sobreclasificada por alguna de dentro. Cuando el grafo de sobreclasificación contiene circuitos, se contraen antes de extraer el núcleo. ELECTRE I reduce el conjunto de opciones admisibles; no produce necesariamente un orden completo, y esa es una elección metodológica del método, no una carencia de la herramienta.
 
 La versión 3.0 reorganiza la aplicación en torno a la trazabilidad. Cada etapa del cálculo se muestra en un acordeón, con auditorías «Ver cálculo» que exhiben cómo se obtiene cada índice de concordancia y de discordancia par por par. La precisión con que se muestran los números es configurable y afecta solo la presentación, nunca el cálculo interno, que siempre usa precisión completa.
 
@@ -63,8 +63,8 @@ El libro tiene dieciséis hojas: una de menú y quince de contenido.
 - Decisión. La matriz de decisión con el sentido de cada criterio.
 - Pesos. El peso de cada criterio y su suma.
 - Rangos. El mínimo, el máximo y el rango de cada criterio, escritos como fórmulas reales de Excel que referencian la hoja Decisión, de modo que el estudiante puede seguir el cálculo celda por celda.
-- Normalizada. La matriz normalizada por rango.
-- Ponderada. La matriz normalizada y ponderada.
+- Normalizada. La matriz normalizada por rango, escrita como fórmulas de Excel que dividen la hoja Decisión entre el rango de cada criterio.
+- Ponderada. La matriz normalizada y ponderada, escrita como fórmulas que multiplican la hoja Normalizada por los pesos. Las matrices de concordancia, discordancia y dominancia se exportan como resultados calculados en el aplicativo, con una nota que lo indica.
 - Concordancia. El índice de concordancia entre cada par de alternativas.
 - Discordancia. El índice de discordancia entre cada par.
 - Umbrales. Los umbrales de concordancia y de discordancia adoptados, con la indicación de si se fijaron a mano o se calcularon.
@@ -151,7 +151,7 @@ Cuando H(i, k) = 1 se cumple i S k: la alternativa i sobreclasifica a k con los 
 
 ### Núcleo
 
-El núcleo es el subconjunto de alternativas tal que ninguna alternativa de fuera lo sobreclasifica. Una alternativa sale del núcleo cuando otra que permanece la sobreclasifica y ella no la sobreclasifica de vuelta. El núcleo puede contener varias alternativas y no debe leerse como la mejor alternativa, sino como el conjunto de opciones admisibles.
+El núcleo (noyau) del grafo de sobreclasificación es el subconjunto de alternativas que satisface dos propiedades: estabilidad interna, ninguna alternativa del núcleo sobreclasifica a otra del núcleo; y dominancia externa, toda alternativa fuera del núcleo es sobreclasificada por al menos una de dentro. Un grafo sin circuitos tiene un núcleo único. Un grafo con circuitos puede no tener núcleo en sentido estricto; en ese caso el procedimiento detecta los componentes fuertemente conexos, es decir los circuitos, los contrae a una única clase, extrae el núcleo sobre el grafo resultante, que es acíclico, y lo expande. Las alternativas de un mismo circuito son mutuamente indiferentes y entran o salen del núcleo en bloque. El aplicativo verifica las dos propiedades sobre el conjunto devuelto e informa de la presencia de circuitos y relaciones recíprocas. El núcleo puede contener varias alternativas y no debe leerse como la mejor alternativa, sino como el conjunto de opciones admisibles: evaluar no es decidir. Este tratamiento sigue a Roy (1968) y a Hansen, Anciaux-Mundeleer y Vincke (1976).
 
 ## 8. Explicación de las funciones
 
@@ -162,9 +162,10 @@ El núcleo es el subconjunto de alternativas tal que ninguna alternativa de fuer
 - `matrizPonderada`. Multiplica la matriz normalizada por los pesos.
 - `matrizConcordancia`. Suma los pesos de los criterios favorables, con peso completo en los empates.
 - `matrizDiscordancia`. Calcula la discordancia sobre la matriz ponderada.
-- `promedioFueraDiagonal`. Promedia los elementos fuera de la diagonal, para los umbrales por defecto.
+- `promedioFueraDiagonal`. Promedia los elementos fuera de la diagonal, para los umbrales sugeridos.
 - `matrizDominanciaConcordante`, `matrizDominanciaDiscordante`, `matrizDominanciaAgregada`. Construyen F, G y H.
-- `calcularNucleo`. Obtiene el núcleo a partir de H.
+- `calcularNucleo`. Obtiene el núcleo a partir de H mediante detección de componentes fuertemente conexos (Tarjan), contracción de circuitos, extracción del núcleo sobre el grafo acíclico y verificación de estabilidad interna y dominancia externa. Devuelve además los circuitos y las relaciones recíprocas.
+- `ordenTopologico`. Ordena topológicamente el grafo acíclico de componentes para extraer el núcleo de forma determinista, invariante ante el orden de las alternativas.
 - `electreI`. Ejecuta el método completo y devuelve todas las matrices intermedias.
 
 ### Utilidades e interpretación
@@ -228,10 +229,13 @@ La aplicación carga el caso de validación como datos de prueba, marcados como 
 
 Antes de la entrega se ejecutó la aplicación en un navegador real y se comprobó lo siguiente:
 
-- Las diecinueve pruebas automáticas pasan, incluidas las de regresión sobre el caso de validación.
-- El motor de cálculo reproduce el caso de validación: c* = 0,5475, las ocho sobreclasificaciones y el núcleo D y E.
-- El libro de Excel, recalculado de forma independiente con LibreOffice, produce los mismos valores que la aplicación; en particular, las fórmulas de rangos que referencian la hoja Decisión devuelven los rangos correctos.
+- Las veintisiete pruebas automáticas pasan, incluidas las de regresión sobre el caso de validación y las ocho pruebas estructurales del núcleo.
+- El motor de cálculo reproduce el caso de validación: c* = 0,5475, d* ≈ 0,8099375843, las ocho sobreclasificaciones y el núcleo D y E, con estabilidad interna y dominancia externa verificadas.
+- El tratamiento de circuitos es correcto: en el grafo A → B → C → A el procedimiento detecta el circuito y no selecciona una alternativa arbitraria por el orden de recorrido; el resultado es invariante ante permutaciones del orden de las alternativas.
+- El libro de Excel, recalculado de forma independiente con LibreOffice, produce los mismos valores que la aplicación; las fórmulas de rangos, la matriz normalizada y la matriz ponderada recalculan correctamente encadenadas entre hojas.
+- Los resultados de pantalla, Excel y PDF coinciden en datos, umbrales, matrices, núcleo, interpretación y versión.
 - El PDF abre sin errores, dibuja el grafo dentro del documento y presenta la marca de agua y el pie de página en todas sus páginas.
+- Los criterios con rango cero se manejan sin producir NaN ni Infinity, con una advertencia al usuario.
 - La página no se desplaza en sentido horizontal a cuatrocientos píxeles de ancho.
 - No hay errores en la consola del navegador.
 - La precisión en pantalla cambia la presentación sin alterar el cálculo.
@@ -246,14 +250,25 @@ Antes de la entrega se ejecutó la aplicación en un navegador real y se comprob
 ## 13. Limitaciones
 
 - Los umbrales de concordancia y de discordancia no son constantes universales. Dependen del problema y de la actitud de quien decide. La aplicación calcula valores de partida a partir de los datos, pero no los presenta como referencias publicadas.
-- La normalización por rango, el tratamiento del empate con peso completo y el promedio como umbral por defecto son convenciones de esta implementación. Están documentadas y son razonables, pero no son las únicas posibles dentro de la familia ELECTRE.
+- La normalización por rango, el tratamiento del empate con peso completo y el promedio como umbral sugerido son convenciones de esta implementación. Están documentadas y son razonables, pero no son las únicas posibles dentro de la familia ELECTRE.
 - El cálculo de la discordancia sobre la matriz ponderada supone que la ponderación hace comparables las diferencias entre criterios. Cuando las unidades son muy dispares, conviene revisar el resultado con cuidado.
 - ELECTRE I no ordena las alternativas. Entrega un subconjunto. Esa es una característica del método, no una carencia de la aplicación.
+- Un grafo de sobreclasificación con circuitos puede no tener núcleo en sentido estricto. La aplicación resuelve estos casos por contracción de los circuitos e informa de su presencia, pero la interpretación de un circuito, alternativas mutuamente sobreclasificadas, corresponde a quien decide.
 - El ejemplo interactivo de la portada usa un umbral fijo con fines ilustrativos y no refleja la configuración del paso 1.
 
-## 14. Referencias
+## 14. Historial de versiones
+
+Versión 3.1. Corrección del tratamiento de circuitos en el cálculo del núcleo mediante contracción de componentes fuertemente conexos, con verificación de estabilidad interna y dominancia externa. Ocho nuevas pruebas estructurales del grafo. Revalidación de la sensibilidad con la misma lógica del análisis principal. Manejo explícito de criterios con rango cero. Validación de c* en el intervalo de 0 a 1. Precisión terminológica de los pesos, no negativos y con suma 1. Mejoras en la interpretación metodológica del núcleo. Fortalecimiento de la trazabilidad bibliográfica. Mayor auditabilidad del Excel, con fórmulas encadenadas para la matriz normalizada y la ponderada. Identificación de la versión y consistencia entre exportaciones y documentación.
+
+Versión 3.0. Versión base centrada en ELECTRE I, con las trece etapas en acordeones, trazabilidad «Ver cálculo», grafo de sobreclasificación, análisis de sensibilidad, exportación a Excel y PDF, y pruebas automáticas. Fue la versión sometida a la auditoría metodológica.
+
+## 15. Referencias
 
 Figueira, J., Mousseau, V., & Roy, B. (2005). ELECTRE Methods. En J. Figueira, S. Greco, & M. Ehrgott (Eds.), Multiple Criteria Decision Analysis: State of the Art Surveys (pp. 133-162). Springer. https://doi.org/10.1007/0-387-23081-5_4
+
+Hansen, P., Anciaux-Mundeleer, M., & Vincke, P. (1976). Quasi-kernels of outranking relations. En H. Thiriez & S. Zionts (Eds.), Multiple Criteria Decision Making (Lecture Notes in Economics and Mathematical Systems, vol. 130, pp. 53-63). Springer. https://doi.org/10.1007/978-3-642-87563-2_3
+
+Roy, B. (1968). Classement et choix en présence de points de vue multiples (la méthode ELECTRE). RIRO, 2(8), 57-75. https://doi.org/10.1051/ro/196802v100571
 
 Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. Theory and Decision, 31(1), 49-73. https://doi.org/10.1007/BF00134132
 
