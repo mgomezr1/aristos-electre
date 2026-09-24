@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "Si usa este software, cítelo como se indica a continuación."
 title: "Áristos ELECTRE"
-version: "1.0"
-date-released: "2026-09-12"
+version: "3.0"
+date-released: "2026-09-24"
 authors:
   - family-names: "Gómez Rueda"
     given-names: "Mario Sergio"
@@ -11,12 +11,15 @@ type: software
 url: "https://mgomezr1.github.io/aristos-electre/"
 abstract: >-
   Aplicación web autocontenida para aplicar el método de superación
-  ELECTRE (variantes I y II) en decisiones multicriterio, con fines
-  de docencia de posgrado y apoyo a decisiones institucionales.
+  ELECTRE I en decisiones multicriterio, con énfasis en la
+  transparencia y la trazabilidad del cálculo, para docencia de
+  posgrado y apoyo a decisiones institucionales.
 keywords:
   - ELECTRE
+  - ELECTRE I
   - decisión multicriterio
   - métodos de superación
+  - sobreclasificación
   - análisis de decisión
   - docencia
 license: "Uso académico. Consulte LICENSE.md"

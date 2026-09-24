@@ -1,20 +1,19 @@
 # Áristos ELECTRE
 
-Aplicación web autocontenida para aplicar el método de superación ELECTRE (variantes I y II) en decisiones multicriterio. Pensada para docencia de posgrado y para apoyar decisiones institucionales.
+Aplicación web autocontenida para aplicar el método de superación ELECTRE I en decisiones multicriterio. Pensada para docencia de posgrado y para apoyar decisiones institucionales, con énfasis en la transparencia y la trazabilidad de cada cálculo.
 
 Autor: Mario Sergio Gómez Rueda. Correo: mgomezr1@gmail.com.
 Uso de carácter académico. Cualquier otro uso se regirá por el derecho de la propiedad intelectual.
 
-Versión 1.0.
+Versión 3.0.
 
 ## 1. Descripción general
 
 Áristos ELECTRE ayuda a decidir entre varias alternativas evaluadas con varios criterios, cuando esos criterios no se pueden reducir a un único número sin perder información. A diferencia de los métodos que suman todo en un puntaje, ELECTRE compara las alternativas por pares y admite que algunas sean incomparables entre sí.
 
-La aplicación ofrece dos variantes:
+La aplicación implementa ELECTRE I, que entrega el núcleo: el subconjunto de alternativas que ninguna otra sobreclasifica. ELECTRE I reduce el conjunto de opciones admisibles mediante relaciones de sobreclasificación; no produce necesariamente un orden completo, y esa es una elección metodológica del método, no una carencia de la herramienta.
 
-- ELECTRE I. Entrega el núcleo: el subconjunto de alternativas que ninguna otra supera. Sirve para seleccionar un grupo de opciones defendibles, no para ordenarlas.
-- ELECTRE II. Produce un ranking completo de mejor a peor, mediante dos relaciones de superación, una fuerte y una débil.
+La versión 3.0 reorganiza la aplicación en torno a la trazabilidad. Cada etapa del cálculo se muestra en un acordeón, con auditorías «Ver cálculo» que exhiben cómo se obtiene cada índice de concordancia y de discordancia par por par. La precisión con que se muestran los números es configurable y afecta solo la presentación, nunca el cálculo interno, que siempre usa precisión completa.
 
 Todo el cálculo ocurre en el navegador. Ningún dato sale del equipo. No se usan servidores, bases de datos ni estadísticas de visitas.
 
@@ -37,199 +36,225 @@ Funciona en los navegadores actuales de escritorio y de dispositivos móviles.
 
 La aplicación se recorre en cinco pasos, señalados en el riel lateral. En pantallas pequeñas el riel se convierte en una barra superior.
 
-- Paso 1. Configuración del modelo. Define el número de alternativas y criterios, la variante de ELECTRE, la normalización y los umbrales.
-- Paso 2. Matriz de decisión. Nombra cada criterio, indica si se maximiza o se minimiza, asigna su peso y escribe el desempeño de cada alternativa.
-- Paso 3. Resultados. Muestra las matrices de concordancia y discordancia, la relación de superación, el grafo y el resultado final.
-- Paso 4. Sensibilidad y robustez. Responde a la pregunta central: qué tendría que cambiar para que la recomendación fuera otra.
+- Paso 1. Configuración del modelo. Define el número de alternativas y criterios, la precisión con que se muestran los números y, si se desea, los umbrales de concordancia y de discordancia. Si los umbrales se dejan vacíos, la aplicación los calcula a partir de los datos.
+- Paso 2. Matriz de decisión. Nombra cada criterio, indica si se maximiza o se minimiza, asigna su peso y escribe el desempeño de cada alternativa. Los pesos deben sumar 1, equivalente al 100 por ciento.
+- Paso 3. Resultados. Presenta las trece etapas del método en acordeones: datos y pesos, concordancia, normalización por rango, ponderación, discordancia, umbrales, dominancias F, G y H, grafo de sobreclasificación y núcleo. Cada acordeón puede abrirse y cerrarse, y varias etapas incluyen la auditoría «Ver cálculo».
+- Paso 4. Sensibilidad. Responde a la pregunta central: qué tendría que cambiar para que el resultado fuera otro. Ofrece deslizadores que recalculan en vivo la matriz de dominancia, el grafo y el núcleo, y un barrido del umbral de concordancia que señala el punto de quiebre.
 - Paso 5. Exportación. Descarga el libro de Excel y el informe en PDF. Incluye además el modo de prueba con las pruebas automáticas.
+
+### Precisión en pantalla
+
+En el paso 1 se elige cuántos decimales se muestran: dos, tres, cuatro o seis. Esta elección afecta solo lo que se ve. Todos los cálculos internos, y todas las comparaciones contra los umbrales, se hacen con la precisión completa del navegador. Cambiar la precisión vuelve a dibujar los resultados sin recalcular nada.
 
 ### Ejemplo interactivo de la portada
 
-La portada incluye un ejemplo con dos alternativas y tres criterios. Al mover los valores, la aplicación recalcula en vivo la concordancia y dice quién supera a quién. Su umbral es fijo, del sesenta por ciento, y sirve solo para enseñar el concepto. No depende de los umbrales que usted configure en el paso 1.
-
-### Mensajes
-
-Los mensajes de error indican qué ocurrió y cómo corregirlo, sin códigos técnicos. Las advertencias aparecen cuando un supuesto del método podría no cumplirse, por ejemplo cuando las escalas de los criterios no son comparables.
+La portada incluye un ejemplo con dos alternativas y tres criterios. Al mover los valores, la aplicación recalcula en vivo la concordancia y dice quién sobreclasifica a quién. Su umbral es fijo y sirve solo para enseñar el concepto. No depende de los umbrales que usted configure en el paso 1.
 
 ### Identidad visual
 
-El fondo es un azul petróleo profundo. Dos colores tienen significado dentro del método: el ámbar señala la concordancia, la fuerza a favor de una superación, y el aqua señala la discordancia, la oposición en contra. Ambos tiñen las matrices y el grafo. Toda la paleta y las medidas están definidas como variables al inicio del bloque de estilos.
+El fondo es un azul petróleo profundo. Dos colores tienen significado dentro del método: el ámbar señala la concordancia, la fuerza a favor de una sobreclasificación, y el aqua señala la discordancia, la oposición en contra. Ambos tiñen las matrices y el grafo. En el grafo y en el núcleo, el ámbar marca las alternativas que quedan dentro del núcleo. Toda la paleta y las medidas están definidas como variables al inicio del bloque de estilos.
 
 ## 5. Exportación a Excel
 
-El libro tiene seis hojas:
+El libro tiene dieciséis hojas: una de menú y quince de contenido.
 
 - Menú. Datos del análisis y un índice con enlaces a las demás hojas.
-- Decisión. La matriz de decisión, el mínimo y el máximo por criterio, y la matriz normalizada. Los mínimos, máximos y la normalización están escritos como fórmulas reales de Excel, de modo que el estudiante puede seguir el cálculo celda por celda.
+- Datos. Configuración del modelo: tamaño, umbrales y origen de los datos.
+- Decisión. La matriz de decisión con el sentido de cada criterio.
+- Pesos. El peso de cada criterio y su suma.
+- Rangos. El mínimo, el máximo y el rango de cada criterio, escritos como fórmulas reales de Excel que referencian la hoja Decisión, de modo que el estudiante puede seguir el cálculo celda por celda.
+- Normalizada. La matriz normalizada por rango.
+- Ponderada. La matriz normalizada y ponderada.
 - Concordancia. El índice de concordancia entre cada par de alternativas.
 - Discordancia. El índice de discordancia entre cada par.
-- Núcleo ELECTRE I. La relación de superación entre cada par y el núcleo de alternativas no superadas.
-- Ranking ELECTRE II. El ranking completo de mejor a peor.
+- Umbrales. Los umbrales de concordancia y de discordancia adoptados, con la indicación de si se fijaron a mano o se calcularon.
+- Dominancia F. La matriz de dominancia concordante.
+- Dominancia G. La matriz de dominancia discordante.
+- Dominancia H. La matriz de dominancia agregada.
+- Sobreclasificación. La lista de relaciones i sobreclasifica a k.
+- Núcleo. Las alternativas que quedan dentro y fuera del núcleo.
+- Sensibilidad. El resultado del barrido de umbrales, si se ejecutó en la sesión.
 
-Los porcentajes se muestran con dos decimales. Cuando los datos son de prueba, el nombre del archivo lleva el prefijo PRUEBA y la hoja Menú lo advierte.
+Cuando los datos son de prueba, el nombre del archivo lleva el prefijo PRUEBA y la hoja Menú lo advierte.
 
 ## 6. Informe ejecutivo en PDF
 
-El PDF se genera con código propio en JavaScript, sin bibliotecas, por lo que funciona sin conexión. El informe presenta los resultados de las dos variantes, sin importar cuál se haya elegido como principal. Su estructura es:
+El PDF se genera con código propio en JavaScript, sin bibliotecas, por lo que funciona sin conexión. Su estructura es:
 
-- Recomendación, con el resultado de ELECTRE I y el de ELECTRE II.
-- Estructura del modelo, con la tabla de criterios, sentidos y pesos.
-- Resultados principales, con la tabla del núcleo de ELECTRE I y la tabla del ranking de ELECTRE II.
-- Robustez de la recomendación, si se ejecutó el análisis de sensibilidad.
-- Nota metodológica.
-- Referencias en APA 7.
+1. Configuración, con la tabla de criterios, sentidos y pesos, y los umbrales adoptados.
+2. Matriz de decisión.
+3. Concordancia y discordancia.
+4. Dominancia agregada H.
+5. Grafo de sobreclasificación, dibujado dentro del propio PDF, con los nodos del núcleo en ámbar y los arcos con la dirección de cada sobreclasificación.
+6. Núcleo.
+7. Robustez, si se ejecutó el análisis de sensibilidad.
+8. Nota metodológica, que explicita las convenciones de la implementación.
+9. Referencias.
 
 Todas las páginas llevan una marca de agua diagonal translúcida y un pie con el nombre del aplicativo, su versión, el autor, la mención de uso académico, el correo y la numeración de páginas. Cuando los datos son de prueba, el informe lo advierte y el archivo lleva el prefijo PRUEBA.
 
 ## 7. Fundamento de cálculo
 
-Sea una matriz de decisión con m alternativas y k criterios. El valor de la alternativa i en el criterio j se denota x(i, j). Cada criterio tiene un peso w(j) y un sentido, maximizar o minimizar.
+Sea una matriz de decisión con m alternativas y k criterios. El valor de la alternativa i en el criterio j se denota x(i, j). Cada criterio tiene un peso w(j) y un sentido, maximizar o minimizar. Los pesos suman 1.
 
-### Normalización
+Las convenciones que siguen son decisiones de esta implementación. Son razonables y están documentadas, pero no son las únicas posibles dentro de la familia ELECTRE. Conviene interpretarlas en el contexto del problema y someterlas al análisis de sensibilidad.
 
-Cada criterio se reescala al rango de cero a uno, donde uno es siempre lo mejor. Para un criterio de maximizar:
+### Rangos y normalización por rango
 
-    r(i, j) = (x(i, j) − min_j) / (max_j − min_j)
+Para cada criterio se calcula su rango, es decir la diferencia entre el máximo y el mínimo observados:
 
-Para un criterio de minimizar se invierte:
+    rango(j) = max_j menos min_j
 
-    r(i, j) = 1 − (x(i, j) − min_j) / (max_j − min_j)
+La matriz se normaliza dividiendo cada valor por el rango de su criterio:
 
-Si el máximo y el mínimo coinciden, el criterio no distingue y se asigna uno a todas las alternativas.
+    r(i, j) = x(i, j) dividido por (max_j menos min_j)
+
+Esta normalización por rango no reescala al intervalo de cero a uno ni resta el mínimo, y no invierte los criterios de minimizar. La dirección de cada criterio se respeta más adelante, al comparar las alternativas en la concordancia y en la discordancia.
+
+### Ponderación
+
+La matriz normalizada se pondera multiplicando cada valor por el peso de su criterio:
+
+    v(i, j) = w(j) por r(i, j)
+
+La matriz ponderada V es la base del cálculo de la discordancia.
 
 ### Índice de concordancia
 
-La concordancia de a frente a b es la proporción del peso de los criterios en que a iguala o supera a b:
+La concordancia de i frente a k es la suma de los pesos de los criterios en que i es igual o mejor que k, respetando la dirección de cada criterio. Para un criterio de maximizar, i es igual o mejor si x(i, j) es mayor o igual que x(k, j); para uno de minimizar, si x(i, j) es menor o igual que x(k, j).
 
-    C(a, b) = (suma de w(j) para los j donde r(a, j) >= r(b, j)) / (suma de todos los w(j))
+    C(i, k) = suma de w(j) para los j donde i es igual o mejor que k
 
-Toma valores entre cero y uno. Más alto significa más apoyo a que a supere a b.
+El empate recibe el peso completo del criterio. Como los pesos suman 1, la concordancia queda entre cero y uno sin necesidad de dividir.
 
-### Índice de discordancia global
+### Índice de discordancia
 
-La discordancia de a frente a b es la peor desventaja de a, dividida por el mayor rango de cualquier criterio:
+La discordancia de i frente a k se calcula sobre la matriz ponderada V. El numerador es la mayor diferencia absoluta entre i y k entre los criterios en que i es peor que k. El denominador es la mayor diferencia absoluta entre i y k en cualquier criterio.
 
-    D(a, b) = (mayor valor de r(b, j) − r(a, j) sobre todos los j) / (mayor rango entre todos los criterios)
+    D(i, k) = numerador dividido por denominador
 
-Más alto significa más oposición a que a supere a b.
+donde el numerador es la mayor diferencia absoluta entre v(i, j) y v(k, j) en los criterios en que i es peor que k, y el denominador es la mayor diferencia absoluta entre v(i, j) y v(k, j) en cualquier criterio. Si el denominador es cero, la discordancia es cero.
 
-### Relación de superación en ELECTRE I
+### Umbrales
 
-La alternativa a supera a b cuando se cumplen dos condiciones a la vez:
+Por defecto, el umbral de concordancia c* es el promedio de los elementos fuera de la diagonal de la matriz de concordancia, y el umbral de discordancia d* es el promedio de los elementos fuera de la diagonal de la matriz de discordancia. Son un punto de partida a partir de los datos, no constantes universales del método. Pueden fijarse a mano en el paso 1 y explorarse en el paso 4.
 
-    C(a, b) >= c*    y    D(a, b) <= d*
+### Matrices de dominancia
 
-donde c* es el umbral de concordancia y d* el de discordancia. En el modo de veto por criterio, la segunda condición se sustituye por la ausencia de veto: a no supera a b si en algún criterio la desventaja de a, medida en las unidades propias de ese criterio, supera el umbral de veto v(j) de ese criterio.
+A partir de los umbrales se construyen tres matrices booleanas:
 
-### Umbrales recomendados
+    F(i, k) = 1 si C(i, k) es mayor o igual que c*
+    G(i, k) = 1 si D(i, k) es menor o igual que d*
+    H(i, k) = F(i, k) y G(i, k)
 
-La aplicación ofrece una opción recomendada para fijar los umbrales, siguiendo la práctica clásica del método: c* se toma como el promedio de los elementos de la matriz de concordancia, y d* como el promedio de los elementos de la matriz de discordancia. En ambos casos el promedio se calcula sobre los elementos fuera de la diagonal. En el paso 2, una vez completa la matriz de decisión, el botón «Calcular umbrales recomendados» los aplica. Conviene después someterlos al análisis de sensibilidad del paso 4, porque siguen siendo valores de referencia y no constantes universales.
+Cuando H(i, k) = 1 se cumple i S k: la alternativa i sobreclasifica a k con los parámetros adoptados.
 
 ### Núcleo
 
-El núcleo es el subconjunto de alternativas tal que ninguna alternativa de fuera del núcleo supera a las de dentro, y dentro del núcleo ninguna supera a otra de forma estricta. Se obtiene retirando de forma iterativa las alternativas que son superadas por alguna otra que permanece.
-
-### ELECTRE II
-
-Usa dos pares de umbrales. La superación fuerte se acepta cuando C(a, b) >= c1 y D(a, b) <= d1. La débil cuando C(a, b) >= c2 y D(a, b) <= d2, con c2 menor que c1 y d2 mayor que d1. A partir de esas relaciones se construyen dos ordenamientos, uno descendente y uno ascendente, y el ranking final promedia la posición de cada alternativa en ambos.
+El núcleo es el subconjunto de alternativas tal que ninguna alternativa de fuera lo sobreclasifica. Una alternativa sale del núcleo cuando otra que permanece la sobreclasifica y ella no la sobreclasifica de vuelta. El núcleo puede contener varias alternativas y no debe leerse como la mejor alternativa, sino como el conjunto de opciones admisibles.
 
 ## 8. Explicación de las funciones
 
 ### Motor de cálculo
 
-- `normalizarDecision`. Reescala la matriz según el sentido de cada criterio.
-- `matrizConcordancia`. Calcula el índice de concordancia entre cada par.
-- `matrizDiscordanciaGlobal`. Calcula el índice de discordancia global.
-- `matrizVetoPorCriterio`. Determina, para el modo por criterio, dónde una desventaja excesiva impide la superación.
-- `relacionSuperacionI`. Construye la matriz booleana de superación de ELECTRE I.
-- `calcularNucleo`. Obtiene el núcleo a partir de la relación de superación.
-- `electreI` y `electreII`. Ejecutan cada variante completa.
-- `relacionesII` y `destilar`. Construyen las relaciones fuerte y débil y los preórdenes de ELECTRE II.
+- `rangosCriterios`. Calcula el mínimo, el máximo y el rango de cada criterio.
+- `matrizNormalizadaRango`. Normaliza por rango.
+- `matrizPonderada`. Multiplica la matriz normalizada por los pesos.
+- `matrizConcordancia`. Suma los pesos de los criterios favorables, con peso completo en los empates.
+- `matrizDiscordancia`. Calcula la discordancia sobre la matriz ponderada.
+- `promedioFueraDiagonal`. Promedia los elementos fuera de la diagonal, para los umbrales por defecto.
+- `matrizDominanciaConcordante`, `matrizDominanciaDiscordante`, `matrizDominanciaAgregada`. Construyen F, G y H.
+- `calcularNucleo`. Obtiene el núcleo a partir de H.
+- `electreI`. Ejecuta el método completo y devuelve todas las matrices intermedias.
 
 ### Utilidades e interpretación
 
-- `comoPorcentaje` y `conDecimales`. Dan formato a los números en español.
+- `conDecimales` y `dec`. Dan formato a los números en español; `dec` respeta la precisión visual configurada.
 - `mostrarMensaje` y `actualizarOrigen`. Gestionan los avisos y la insignia de origen de los datos.
 
 ### Interfaz y resultados
 
 - `aplicarConfiguracion`. Valida la configuración y construye las estructuras del modelo.
 - `construirTablaCriterios` y `construirMatrizDecision`. Arman las tablas editables.
-- `cargarDatosPrueba`. Genera datos ficticios reproducibles, marcados como prueba.
-- `calcularYMostrar` y `renderizarResultados`. Ejecutan el cálculo y muestran los resultados.
+- `cargarDatosPrueba`. Carga el caso de validación, marcado como prueba.
+- `calcularYMostrar` y `renderizarResultados`. Ejecutan el cálculo y muestran las trece etapas en acordeones.
+- `detalleConcordancia` y `detalleDiscordancia`. Auditan par por par cada índice.
 - `grafoSuperacion`. Dibuja el grafo en SVG, con el núcleo en ámbar.
 
 ### Sensibilidad
 
-- `ejecutarBarridoI`. Recalcula el núcleo para un rango de umbrales de concordancia.
-- `ejecutarRobustezII`. Perturba los umbrales de ELECTRE II y mide con qué frecuencia cada alternativa queda primera.
+- `actualizarSensibilidadVivo`. Recalcula H, el grafo y el núcleo con los umbrales de los deslizadores.
+- `ejecutarBarridoI`. Recalcula el núcleo para un rango de umbrales de concordancia y señala el punto de quiebre.
 
 ### Exportación
 
 - `crearHojaExcel`. Fábrica de hojas con soporte para celdas, fórmulas y enlaces.
-- `excelHojaMenu`, `excelHojaDecision`, `excelHojaConcordancia`, `excelHojaDiscordancia`, `excelHojaResultado`. Construyen cada hoja.
-- `DocumentoPDF`. Motor de PDF propio, sin bibliotecas.
+- `excelHojaMenu`, `excelHojaDatos`, `excelHojaDecision`, `excelHojaPesos`, `excelHojaRangos`, `excelHojaMatriz`, `excelHojaUmbrales`, `excelHojaSobreclasificaciones`, `excelHojaNucleo`, `excelHojaSensibilidad`. Construyen cada hoja.
+- `DocumentoPDF`. Motor de PDF propio, sin bibliotecas, con soporte para círculos y líneas.
+- `dibujarGrafoPDF`. Dibuja el grafo de sobreclasificación dentro del PDF.
 - `generarInformePDF` y `exportarInformePDF`. Ensamblan y descargan el informe.
 
 ### Pruebas
 
-- `PRUEBAS` y `ejecutarPruebas`. Batería de pruebas automáticas que se ejecutan desde la interfaz.
+- `PRUEBAS` y `ejecutarPruebas`. Batería de pruebas automáticas que se ejecutan desde la interfaz, incluidas las de regresión sobre el caso de validación.
 
-## 9. Ejemplo de uso
+## 9. Caso de validación
 
-Considere tres proveedores evaluados en tres criterios, todos a maximizar, con pesos 0,5, 0,3 y 0,2.
+La aplicación trae cargado, con el botón «Cargar datos de prueba», un caso de cinco proyectos evaluados en cinco criterios.
 
-| Alternativa | Criterio 1 | Criterio 2 | Criterio 3 |
-| --- | --- | --- | --- |
-| P1 | 6 | 5 | 4 |
-| P2 | 9 | 8 | 7 |
-| P3 | 5 | 9 | 6 |
+| Alternativa | VAN | TIR | Empleo | Ventas | Impacto ambiental |
+| --- | --- | --- | --- | --- | --- |
+| A | 100 | 15 | 7 | 40 | 50 |
+| B | 200 | 25 | 7 | 60 | 200 |
+| C | 100 | 20 | 4 | 25 | 25 |
+| D | 200 | 30 | 20 | 70 | 350 |
+| E | 250 | 25 | 15 | 100 | 500 |
 
-Con normalización de mínimo a máximo, umbral de concordancia c* = 0,50 y umbral de discordancia d* = 0,60, el resultado verificado es:
+Los primeros cuatro criterios se maximizan y el impacto ambiental se minimiza. Los pesos son 0,25 para el VAN, 0,25 para la TIR, 0,20 para el empleo, 0,10 para las ventas y 0,20 para el impacto ambiental.
 
-- Matriz normalizada: P1 queda en 0,25, 0,00 y 0,00; P2 en 1,00, 0,75 y 1,00; P3 en 0,00, 1,00 y 0,67.
-- Concordancia: C(P2, P1) = 1,00, C(P2, P3) = 0,70, C(P3, P1) = 0,50, C(P1, P3) = 0,50.
-- Relación de superación: P2 supera a P1 y a P3; P3 supera a P1.
-- Núcleo: P2.
+Con los umbrales calculados por defecto, el resultado verificado es:
 
-La recomendación es P2, la única alternativa que ninguna otra supera. Este resultado se obtiene igual en la aplicación, en el libro de Excel al recalcular sus fórmulas y en el cálculo manual con las fórmulas de la sección 7.
+- Umbral de concordancia c* = 0,5475.
+- Sobreclasificaciones: B sobre A, B sobre C, C sobre A, D sobre A, D sobre B, D sobre C, E sobre A y E sobre C.
+- Núcleo: D y E.
+
+El núcleo reúne las dos alternativas que ninguna otra sobreclasifica. Decidir entre ellas requiere criterios adicionales a los del modelo. Este resultado se obtiene igual en la aplicación, en el libro de Excel al recalcular sus fórmulas y en el cálculo manual con las fórmulas de la sección 7.
 
 ## 10. Modo de prueba
 
-La aplicación puede generar datos de prueba de distintos tamaños, siempre marcados como tales. Los archivos que exporte con esos datos llevan el prefijo PRUEBA y una advertencia dentro. La aplicación nunca presenta datos inventados como si fueran reales.
+La aplicación carga el caso de validación como datos de prueba, marcados como tales. Los archivos que exporte con esos datos llevan el prefijo PRUEBA y una advertencia dentro. La aplicación nunca presenta datos de prueba como si fueran reales.
 
 ## 11. Verificación realizada
 
 Antes de la entrega se ejecutó la aplicación en un navegador real y se comprobó lo siguiente:
 
-- Las doce pruebas automáticas pasan.
-- El motor de cálculo coincide, celda por celda, con un cálculo independiente hecho en Python.
-- El libro de Excel, recalculado de forma independiente con LibreOffice, produce los mismos valores que la aplicación.
-- El PDF abre sin errores y presenta la marca de agua y el pie de página en todas sus páginas.
+- Las diecinueve pruebas automáticas pasan, incluidas las de regresión sobre el caso de validación.
+- El motor de cálculo reproduce el caso de validación: c* = 0,5475, las ocho sobreclasificaciones y el núcleo D y E.
+- El libro de Excel, recalculado de forma independiente con LibreOffice, produce los mismos valores que la aplicación; en particular, las fórmulas de rangos que referencian la hoja Decisión devuelven los rangos correctos.
+- El PDF abre sin errores, dibuja el grafo dentro del documento y presenta la marca de agua y el pie de página en todas sus páginas.
 - La página no se desplaza en sentido horizontal a cuatrocientos píxeles de ancho.
 - No hay errores en la consola del navegador.
+- La precisión en pantalla cambia la presentación sin alterar el cálculo.
 
 ## 12. Publicación en GitHub Pages
 
-1. Cree un repositorio en GitHub y suba el contenido del paquete: `index.html`, `README.md`, `LICENSE`, `CITATION.cff` y la carpeta `docs`.
+1. Cree un repositorio en GitHub y suba el contenido del paquete: `index.html`, `README.md`, `LICENSE.md`, `CITATION.cff` y la carpeta `docs`.
 2. En el repositorio, entre a Settings y luego a Pages.
 3. En Source elija la rama principal y la carpeta raíz.
 4. Guarde. En pocos minutos la aplicación quedará disponible en la dirección que GitHub indique.
 
 ## 13. Limitaciones
 
-- Los umbrales de concordancia y discordancia no son constantes universales. Dependen del problema y de la actitud de quien decide. La aplicación sugiere valores de partida, pero no los presenta como referencias publicadas.
-- La discordancia global supone que las escalas de los criterios son comparables. Cuando las unidades son muy distintas, conviene usar el modo de veto por criterio, más defendible.
+- Los umbrales de concordancia y de discordancia no son constantes universales. Dependen del problema y de la actitud de quien decide. La aplicación calcula valores de partida a partir de los datos, pero no los presenta como referencias publicadas.
+- La normalización por rango, el tratamiento del empate con peso completo y el promedio como umbral por defecto son convenciones de esta implementación. Están documentadas y son razonables, pero no son las únicas posibles dentro de la familia ELECTRE.
+- El cálculo de la discordancia sobre la matriz ponderada supone que la ponderación hace comparables las diferencias entre criterios. Cuando las unidades son muy dispares, conviene revisar el resultado con cuidado.
 - ELECTRE I no ordena las alternativas. Entrega un subconjunto. Esa es una característica del método, no una carencia de la aplicación.
-- La destilación de ELECTRE II implementada es una versión didáctica orientada al grafo de superación. Es adecuada para la enseñanza y para casos de tamaño moderado; para estudios que exijan la formulación exacta de una variante específica, conviene contrastar con la fuente original.
 - El ejemplo interactivo de la portada usa un umbral fijo con fines ilustrativos y no refleja la configuración del paso 1.
 
 ## 14. Referencias
 
-Figueira, J., Mousseau, V., & Roy, B. (2016). ELECTRE methods. En S. Greco, M. Ehrgott, & J. Figueira (Eds.), Multiple Criteria Decision Analysis: State of the Art Surveys (2.ª ed., pp. 155-185). Springer.
+Figueira, J., Mousseau, V., & Roy, B. (2005). ELECTRE Methods. En J. Figueira, S. Greco, & M. Ehrgott (Eds.), Multiple Criteria Decision Analysis: State of the Art Surveys (pp. 133-162). Springer. https://doi.org/10.1007/0-387-23081-5_4
 
-Roy, B. (1968). Classement et choix en présence de points de vue multiples (la méthode ELECTRE). Revue Française d'Informatique et de Recherche Opérationnelle, 2(8), 57-75.
+Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. Theory and Decision, 31(1), 49-73. https://doi.org/10.1007/BF00134132
 
-Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. Theory and Decision, 31(1), 49-73.
-
-Roy, B., & Bouyssou, D. (1993). Aide multicritère à la décision: méthodes et cas. Economica.
+Shanian, A., & Savadogo, O. (2006). ELECTRE I decision support model for material selection of bipolar plates for polymer electrolyte fuel cells applications. Journal of New Materials for Electrochemical Systems, 9(3), 191-199.

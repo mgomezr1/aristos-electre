@@ -771,8 +771,44 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
 
 
 
-.titulo-variante { display: flex; align-items: center; gap: 0.6rem; font-size: 1.15rem; margin-top: 0.4rem; }
 .chip-principal { background: var(--argos); color: #0A1A24; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* Acordeones de resultados (V3) */
+.acordeon { background: var(--plano); border-radius: var(--r-bloque); margin-bottom: 0.9rem; overflow: hidden; }
+.acordeon__cab { display: flex; align-items: center; gap: 0.8rem; padding: 1rem 1.2rem; cursor: pointer; list-style: none; user-select: none; transition: background var(--t-rapida) var(--curva); }
+.acordeon__cab::-webkit-details-marker { display: none; }
+.acordeon__cab::marker { content: ""; }
+.acordeon__cab:hover { background: var(--relieve); }
+.acordeon__cab:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--veto); }
+.acordeon__num { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9rem; height: 1.9rem; border-radius: 999px; background: var(--relieve-alto); color: var(--texto); font-weight: 700; font-size: 0.9rem; flex: 0 0 auto; }
+.acordeon[open] .acordeon__num { background: var(--argos); color: #0A1A24; }
+.acordeon__titulo { font-size: 1.02rem; font-weight: 650; color: var(--texto); flex: 1; }
+.acordeon__cab::after { content: "+"; font-size: 1.3rem; color: var(--texto-3); }
+.acordeon[open] .acordeon__cab::after { content: "−"; }
+.acordeon__cuerpo { padding: 0.4rem 1.2rem 1.4rem; }
+
+.vector-pesos { font-family: var(--fuente-titulos); font-size: 1rem; color: var(--argos); margin-top: 0.8rem; font-variant-numeric: tabular-nums; }
+.crit-flecha { font-weight: 700; margin-left: 0.15rem; }
+.crit-flecha.crit-sentido-max { color: var(--argos); }
+.crit-flecha.crit-sentido-min { color: var(--veto); }
+.valor-vivo { font-weight: 700; color: var(--argos); font-variant-numeric: tabular-nums; }
+
+.ver-calculo { margin-top: 1rem; background: var(--abismo); border-radius: var(--r-control); padding: 0.4rem 0.9rem; }
+.ver-calculo > summary { cursor: pointer; padding: 0.5rem 0; color: var(--veto); font-weight: 600; font-size: 0.9rem; list-style: none; }
+.ver-calculo > summary::-webkit-details-marker { display: none; }
+.ver-calculo > summary::before { content: "▸ "; }
+.ver-calculo[open] > summary::before { content: "▾ "; }
+.ver-calculo-par { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0.6rem 0; }
+.ver-calculo-par label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.82rem; color: var(--texto-2); }
+.ver-calculo-par select { background: var(--relieve); color: var(--texto); border: none; border-radius: var(--r-control); padding: 0.5rem 0.7rem; font-size: 0.9rem; }
+.ver-calculo-salida { margin-top: 0.5rem; }
+.detalle-calc { font-size: 0.9rem; line-height: 1.55; color: var(--texto-2); }
+.detalle-calc strong { color: var(--texto); }
+
+.rejilla-umbrales { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.8rem; }
+.cifra { background: var(--plano); border-radius: var(--r-bloque); padding: 1rem 1.4rem; flex: 1; min-width: 180px; }
+.cifra__etq { display: block; font-size: 0.82rem; color: var(--texto-3); margin-bottom: 0.3rem; }
+.cifra__val { font-size: 1.8rem; font-weight: 700; color: var(--argos); font-variant-numeric: tabular-nums; }
 
 /* Complementos de resultados */
 .tabla-titulo { text-align: left; font-size: 0.92rem; font-weight: 650; color: var(--texto-2); padding: 0 0 0.6rem; caption-side: top; }
@@ -845,7 +881,7 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
     <span class="seccion__num" aria-hidden="true">1</span>
     <div>
       <h2 id="tituloConfiguracion">Configuración del modelo</h2>
-      <p class="seccion__texto">Defina cuántas alternativas y criterios tiene su decisión, la variante de ELECTRE y los umbrales. Todo es editable después.</p>
+      <p class="seccion__texto">Defina cuántas alternativas y criterios tiene su decisión. Los umbrales se calculan a partir de sus datos en el paso 2 y puede ajustarlos después.</p>
     </div>
   </div>
 
@@ -853,85 +889,43 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
     <div class="rejilla-config">
       <div class="campo">
         <label for="numAlternativas">Número de alternativas</label>
-        <input type="number" id="numAlternativas" min="2" max="20" value="4" inputmode="numeric">
+        <input type="number" id="numAlternativas" min="2" max="20" value="5" inputmode="numeric">
         <p class="ayuda">Las opciones entre las que decide. Mínimo 2.</p>
       </div>
       <div class="campo">
         <label for="numCriterios">Número de criterios</label>
-        <input type="number" id="numCriterios" min="2" max="15" value="4" inputmode="numeric">
+        <input type="number" id="numCriterios" min="2" max="15" value="5" inputmode="numeric">
         <p class="ayuda">Los aspectos con que evalúa. Mínimo 2.</p>
       </div>
       <div class="campo">
-        <label for="variante">Variante del método</label>
-        <select id="variante">
-          <option value="I">ELECTRE I: núcleo de no superadas</option>
-          <option value="II">ELECTRE II: ranking completo</option>
+        <label for="decimales">Decimales en pantalla</label>
+        <select id="decimales">
+          <option value="2">2 decimales</option>
+          <option value="3">3 decimales</option>
+          <option value="4" selected>4 decimales</option>
+          <option value="6">6 decimales</option>
         </select>
-        <p class="ayuda">ELECTRE I selecciona un subconjunto; ELECTRE II ordena todas.</p>
-      </div>
-      <div class="campo">
-        <label for="normalizacion">Normalización</label>
-        <select id="normalizacion">
-          <option value="minmax">Mínimo a máximo (recomendada)</option>
-          <option value="ninguno">Ninguna (usar valores tal cual)</option>
-        </select>
-        <p class="ayuda">Reescala cada criterio a un rango comparable de 0 a 1.</p>
+        <p class="ayuda">Solo afecta la presentación. Los cálculos siempre usan precisión completa.</p>
       </div>
     </div>
 
     <div class="separador" role="presentation"></div>
 
-    <!-- Umbrales, dependientes de la variante -->
-    <div id="umbralesI" class="bloque-umbrales">
+    <div class="bloque-umbrales">
       <h3 class="titulo-menor">Umbrales de ELECTRE I</h3>
-      <p class="ayuda ayuda--bloque">Opción recomendada: en el paso 2, una vez llena la matriz, pulse «Calcular umbrales recomendados». La aplicación fija c* como el promedio de los elementos de la matriz de concordancia y d* como el promedio de los de la discordancia, siguiendo la práctica clásica del método. Conviene después someterlos al análisis de sensibilidad del paso 4.</p>
+      <p class="ayuda ayuda--bloque">Los umbrales de concordancia c* y de discordancia d* se calculan por defecto en el paso 2 como el promedio de los elementos fuera de la diagonal de cada matriz. Es un punto de partida a partir de sus datos, no una constante universal de ELECTRE I. Puede modificarlos aquí o en el paso de resultados y observar el efecto en el análisis de sensibilidad.</p>
       <div class="rejilla-config">
         <div class="campo">
           <label for="cEstrella">Umbral de concordancia c*</label>
-          <input type="number" id="cEstrella" min="0" max="1" step="0.01" value="0.60" inputmode="decimal">
-          <p class="ayuda">Acuerdo mínimo para aceptar una superación. Valor de partida sugerido, no una constante publicada.</p>
+          <input type="number" id="cEstrella" min="0" step="0.01" placeholder="se calcula en el paso 2" inputmode="decimal">
+          <p class="ayuda">Nivel mínimo de concordancia para aceptar una sobreclasificación.</p>
         </div>
-        <div class="campo" id="campoDEstrella">
+        <div class="campo">
           <label for="dEstrella">Umbral de discordancia d*</label>
-          <input type="number" id="dEstrella" min="0" max="1" step="0.01" value="0.40" inputmode="decimal">
-          <p class="ayuda">Oposición máxima tolerada. Valor de partida sugerido, no una constante publicada.</p>
-        </div>
-        <div class="campo">
-          <label for="modoVeto">Modo de veto</label>
-          <select id="modoVeto">
-            <option value="global">Global: un solo umbral d*</option>
-            <option value="criterio">Por criterio: un veto en cada criterio</option>
-          </select>
-          <p class="ayuda">El modo por criterio se define en la matriz, en las unidades de cada criterio.</p>
+          <input type="number" id="dEstrella" min="0" max="1" step="0.01" placeholder="se calcula en el paso 2" inputmode="decimal">
+          <p class="ayuda">Oposición máxima tolerada para no impedir la sobreclasificación.</p>
         </div>
       </div>
-    </div>
-
-    <div id="umbralesII" class="bloque-umbrales" hidden>
-      <h3 class="titulo-menor">Umbrales de ELECTRE II</h3>
-      <p class="ayuda ayuda--bloque">ELECTRE II usa dos niveles: una superación fuerte y una débil. El nivel fuerte exige más concordancia y tolera menos discordancia que el débil.</p>
-      <div class="rejilla-config">
-        <div class="campo">
-          <label for="c1">Concordancia fuerte c1</label>
-          <input type="number" id="c1" min="0" max="1" step="0.01" value="0.65" inputmode="decimal">
-        </div>
-        <div class="campo">
-          <label for="c2">Concordancia débil c2</label>
-          <input type="number" id="c2" min="0" max="1" step="0.01" value="0.50" inputmode="decimal">
-        </div>
-        <div class="campo">
-          <label for="d1">Discordancia fuerte d1</label>
-          <input type="number" id="d1" min="0" max="1" step="0.01" value="0.40" inputmode="decimal">
-        </div>
-        <div class="campo">
-          <label for="d2">Discordancia débil d2</label>
-          <input type="number" id="d2" min="0" max="1" step="0.01" value="0.70" inputmode="decimal">
-        </div>
-      </div>
-    </div>
-
-    <div class="mensaje mensaje--advertencia" id="avisoEscalas" role="note">
-      En ELECTRE I clásico, la discordancia global supone escalas comparables entre criterios. Si sus criterios están en unidades muy distintas, prefiera el modo de veto por criterio, más defendible.
     </div>
 
     <div class="acciones-seccion">
@@ -949,7 +943,7 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
     <span class="seccion__num" aria-hidden="true">2</span>
     <div>
       <h2 id="tituloDatos">Matriz de decisión</h2>
-      <p class="seccion__texto">Nombre cada criterio, indique si se maximiza o minimiza, asigne su peso y escriba el desempeño de cada alternativa. Los pesos se normalizan solos.</p>
+      <p class="seccion__texto">Nombre cada criterio, indique si se maximiza o minimiza, asigne su peso y escriba el desempeño de cada alternativa. Los pesos deben sumar 1 (equivalente a 100 %).</p>
     </div>
   </div>
 
@@ -970,18 +964,8 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
       </table>
     </div>
 
-    <div id="filaVetos" hidden>
-      <div class="separador" role="presentation"></div>
-      <h3 class="titulo-menor">Umbrales de veto por criterio</h3>
-      <p class="ayuda ayuda--bloque">Deje una casilla vacía si ese criterio no veta. Si la desventaja de una alternativa en ese criterio supera el veto, no podrá superar a la otra, en las unidades propias del criterio.</p>
-      <div class="tabla-contenedor">
-        <table class="matriz-decision" id="tablaVetos"><thead><tr id="cabeceraVetos"></tr></thead><tbody><tr id="cuerpoVetos"></tr></tbody></table>
-      </div>
-    </div>
-
     <div class="acciones-seccion">
       <button type="button" id="cargarEjemplo" class="boton boton--suave">Cargar datos de prueba</button>
-      <button type="button" id="umbralesSugeridos" class="boton boton--suave">Calcular umbrales recomendados</button>
       <button type="button" id="calcularResultados" class="boton boton--principal">Calcular</button>
     </div>
     <div class="mensaje" id="mensajeDatos" role="status" aria-live="polite" hidden></div>
@@ -996,7 +980,7 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
     <span class="seccion__num" aria-hidden="true">3</span>
     <div>
       <h2 id="tituloResultados">Resultados</h2>
-      <p class="seccion__texto">Las matrices de concordancia y discordancia, la relación de superación y el resultado: el núcleo en ELECTRE I o el ranking en ELECTRE II.</p>
+      <p class="seccion__texto">Las trece etapas del método, de los datos al núcleo: rangos, normalización, ponderación, concordancia, discordancia, umbrales, dominancias, grafo de sobreclasificación y núcleo de alternativas no sobreclasificadas.</p>
     </div>
   </div>
 
@@ -1011,56 +995,47 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
   <div class="seccion__cabecera">
     <span class="seccion__num" aria-hidden="true">4</span>
     <div>
-      <h2 id="tituloSensibilidad">Sensibilidad y robustez</h2>
-      <p class="seccion__texto">La pregunta central: ¿qué tendría que cambiar para que la recomendación fuera otra? Mueva los umbrales y observe cómo se transforma el núcleo o el ranking.</p>
+      <h2 id="tituloSensibilidad">Sensibilidad</h2>
+      <p class="seccion__texto">La pregunta central: ¿qué tendría que cambiar para que el resultado fuera otro? Mueva los umbrales y observe cómo se transforman las relaciones de sobreclasificación, la matriz H, el grafo y el núcleo.</p>
     </div>
   </div>
 
   <div class="panel">
-    <div id="sensibilidadI">
-      <h3 class="titulo-menor">Barrido de umbrales de ELECTRE I</h3>
-      <p class="ayuda ayuda--bloque">Cada fila recalcula el núcleo con un par de umbrales distinto. Así ve en qué rango la recomendación se mantiene estable y a partir de qué punto cambia.</p>
-      <div class="rejilla-config">
-        <div class="campo">
-          <label for="barridoCMin">Concordancia c* desde</label>
-          <input type="number" id="barridoCMin" min="0" max="1" step="0.05" value="0.50" inputmode="decimal">
-        </div>
-        <div class="campo">
-          <label for="barridoCMax">c* hasta</label>
-          <input type="number" id="barridoCMax" min="0" max="1" step="0.05" value="0.80" inputmode="decimal">
-        </div>
-        <div class="campo">
-          <label for="barridoDFijo">Discordancia d* fija</label>
-          <input type="number" id="barridoDFijo" min="0" max="1" step="0.05" value="0.40" inputmode="decimal">
-        </div>
-        <div class="campo">
-          <label for="barridoPaso">Paso</label>
-          <input type="number" id="barridoPaso" min="0.01" max="0.5" step="0.01" value="0.05" inputmode="decimal">
-        </div>
+    <h3 class="titulo-menor">Exploración interactiva de umbrales</h3>
+    <p class="ayuda ayuda--bloque">Ajuste c* y d* y vea el efecto inmediato. Los resultados de ELECTRE I pueden ser sensibles a los umbrales adoptados; estos no son parámetros universales.</p>
+    <div class="rejilla-config">
+      <div class="campo">
+        <label for="sensC">Umbral de concordancia c* <span id="sensCval" class="valor-vivo"></span></label>
+        <input type="range" id="sensC" min="0" max="1" step="0.01" value="0.5">
       </div>
-      <div class="acciones-seccion">
-        <button type="button" id="ejecutarBarridoI" class="boton boton--principal">Ejecutar barrido</button>
+      <div class="campo">
+        <label for="sensD">Umbral de discordancia d* <span id="sensDval" class="valor-vivo"></span></label>
+        <input type="range" id="sensD" min="0" max="1" step="0.01" value="0.8">
       </div>
     </div>
+    <div id="sensibilidadVivo"></div>
 
-    <div id="sensibilidadII" hidden>
-      <h3 class="titulo-menor">Robustez del ranking de ELECTRE II</h3>
-      <p class="ayuda ayuda--bloque">Se perturban los cuatro umbrales alrededor de sus valores actuales y se observa con qué frecuencia cada alternativa conserva el primer puesto.</p>
-      <div class="rejilla-config">
-        <div class="campo">
-          <label for="perturbacion">Amplitud de la perturbación</label>
-          <input type="number" id="perturbacion" min="0.01" max="0.3" step="0.01" value="0.05" inputmode="decimal">
-        </div>
-        <div class="campo">
-          <label for="repeticiones">Número de escenarios</label>
-          <input type="number" id="repeticiones" min="10" max="500" step="10" value="100" inputmode="numeric">
-        </div>
+    <div class="separador" role="presentation"></div>
+
+    <h3 class="titulo-menor">Barrido del umbral de concordancia</h3>
+    <p class="ayuda ayuda--bloque">Cada fila recalcula el núcleo con un c* distinto, manteniendo d* fijo. Muestra en qué rango el resultado se mantiene estable y a partir de qué punto cambia.</p>
+    <div class="rejilla-config">
+      <div class="campo">
+        <label for="barridoCMin">c* desde</label>
+        <input type="number" id="barridoCMin" min="0" step="0.05" value="0.30" inputmode="decimal">
       </div>
-      <div class="acciones-seccion">
-        <button type="button" id="ejecutarRobustezII" class="boton boton--principal">Evaluar robustez</button>
+      <div class="campo">
+        <label for="barridoCMax">c* hasta</label>
+        <input type="number" id="barridoCMax" min="0" step="0.05" value="0.90" inputmode="decimal">
+      </div>
+      <div class="campo">
+        <label for="barridoPaso">Paso</label>
+        <input type="number" id="barridoPaso" min="0.01" max="0.5" step="0.01" value="0.05" inputmode="decimal">
       </div>
     </div>
-
+    <div class="acciones-seccion">
+      <button type="button" id="ejecutarBarridoI" class="boton boton--principal">Ejecutar barrido</button>
+    </div>
     <div id="contenedorSensibilidad"></div>
   </div>
 </section>
@@ -1109,6 +1084,22 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
   </div>
 </section>
 
+<section class="referencias" aria-labelledby="tituloReferencias">
+  <div class="autoria">
+    <h2>Áristos ELECTRE</h2>
+    <p>Aplicación de uso académico para el método de superación ELECTRE I. Desarrollada por <span data-app="autor">Mario Sergio Gómez Rueda</span>. Cualquier uso distinto del académico se regirá por el derecho de la propiedad intelectual. Sugerencias o dudas: <a data-app="correo" href="mailto:mgomezr1@gmail.com">mgomezr1@gmail.com</a></p>
+  </div>
+
+  <h2 id="tituloReferencias">Fundamento metodológico</h2>
+  <p>ELECTRE I compara las alternativas por pares mediante relaciones de sobreclasificación. Para cada par se mide la concordancia, que reúne el peso de los criterios a favor, y la discordancia, que mide la oposición más fuerte. Una alternativa sobreclasifica a otra cuando la concordancia alcanza el umbral y la discordancia no lo supera. El resultado es el núcleo: el conjunto de alternativas que ninguna otra sobreclasifica. ELECTRE I reduce el conjunto de opciones admisibles; no produce necesariamente un orden completo, y el núcleo no debe leerse como la mejor alternativa.</p>
+  <p>Esta implementación adopta convenciones explícitas: normalización por rango, r igual a x dividido por la diferencia entre el máximo y el mínimo; concordancia que otorga el peso completo del criterio cuando hay empate; y umbrales por defecto iguales al promedio de los elementos fuera de la diagonal de cada matriz. Son puntos de partida razonables a partir de los datos, no constantes universales del método, y conviene revisarlos con el análisis de sensibilidad.</p>
+
+  <h2>Referencias</h2>
+  <p>Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. <em>Theory and Decision, 31</em>(1), 49-73. https://doi.org/10.1007/BF00134132</p>
+  <p>Figueira, J., Mousseau, V., &amp; Roy, B. (2005). ELECTRE Methods. En J. Figueira, S. Greco &amp; M. Ehrgott (Eds.), <em>Multiple Criteria Decision Analysis: State of the Art Surveys</em> (pp. 133-162). Springer. https://doi.org/10.1007/0-387-23081-5_4</p>
+  <p>Shanian, A., &amp; Savadogo, O. (2006). ELECTRE I decision support model for material selection of bipolar plates for polymer electrolyte fuel cells applications. <em>Journal of New Materials for Electrochemical Systems, 9</em>(3), 191-199.</p>
+</section>
+
 </main>
 </div>
 </div>
@@ -1118,7 +1109,7 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
 /* =========================================================================
    ÁRISTOS ELECTRE
    Aplicación académica autocontenida para decisiones multicriterio con el
-   método de superación ELECTRE (variantes I y II).
+   método de superación ELECTRE I, con trazabilidad de cada etapa.
    Autor: Mario Sergio Gómez Rueda.
    ========================================================================= */
 
@@ -1127,7 +1118,7 @@ details.desplegable.desplegable--separado { margin-top: 2rem; }
    ------------------------------------------------------------------------- */
 const APLICATIVO = {
   nombre: "Áristos ELECTRE",
-  version: "1.0",
+  version: "3.0",
   autor: "Mario Sergio Gómez Rueda",
   correo: "mgomezr1@gmail.com",
   nota: "Este aplicativo fue desarrollado por Mario Sergio Gómez Rueda, su uso es de carácter académico y cualquier otro uso se regirá por el derecho de la propiedad intelectual."
@@ -1139,18 +1130,17 @@ const APLICATIVO = {
 const estado = {
   numAlternativas: 4,
   numCriterios: 4,
-  variante: "I",
-  normalizacion: "minmax",
-  modoVeto: "global",
-  umbrales: { cEstrella: 0.60, dEstrella: 0.40, c1: 0.65, c2: 0.50, d1: 0.40, d2: 0.70 },
+  umbrales: { cEstrella: null, dEstrella: null },
+  umbralesManuales: false,   // true cuando el usuario fija c* o d* a mano
+  decimales: 4,              // precisión visual, no afecta el cálculo
   nombresAlternativas: [],
   nombresCriterios: [],
   sentidos: [],
   pesos: [],
-  vetos: [],
   matriz: [],
   origen: "vacio",   // vacio | usuario | prueba
   resultados: null,
+  sensibilidad: null,
   configurado: false
 };
 
@@ -1164,180 +1154,84 @@ function $(id) { return document.getElementById(id); }
 /** Suma de un vector. */
 function sumar(vector) { return vector.reduce((s, v) => s + v, 0); }
 
-/** Normaliza la matriz de decisión por criterio; 1 es siempre lo mejor. */
-function normalizarDecision(matriz, sentidos, metodo) {
-  const m = matriz.length, k = matriz[0].length;
-  const salida = matriz.map((f) => f.slice());
-  if (metodo === "ninguno") return salida;
+/* -------------------------------------------------------------------------
+   Motor de ELECTRE I. Convenciones de esta implementación:
+   - Normalización por rango: r_ij = x_ij / (max_j - min_j). No reescala a
+     [0,1] ni resta el mínimo. No invierte los criterios de minimizar; la
+     dirección se respeta al comparar en concordancia y discordancia.
+   - Concordancia: el empate recibe el peso completo del criterio.
+   - Discordancia: cociente por par sobre la matriz ponderada V.
+   Todos los cálculos conservan la precisión completa de JavaScript.
+   ------------------------------------------------------------------------- */
+
+/** Rango de cada criterio: máximo menos mínimo. Devuelve {min, max, rango} por criterio. */
+function rangosCriterios(matriz) {
+  const k = matriz[0].length;
+  const salida = [];
   for (let j = 0; j < k; j++) {
     const columna = matriz.map((f) => f[j]);
-    const min = Math.min(...columna), max = Math.max(...columna), rango = max - min;
-    for (let i = 0; i < m; i++) {
-      if (rango === 0) { salida[i][j] = 1; continue; }
-      const r = (matriz[i][j] - min) / rango;
-      salida[i][j] = sentidos[j] === "min" ? 1 - r : r;
-    }
+    const min = Math.min(...columna), max = Math.max(...columna);
+    salida.push({ min, max, rango: max - min });
   }
   return salida;
 }
 
-/** Índice de concordancia C(a,b): peso de los criterios en que a iguala o supera a b. */
-function matrizConcordancia(orientada, pesos) {
-  const m = orientada.length, k = pesos.length, sp = sumar(pesos);
+/** Normalización por rango: r_ij = x_ij / (max_j - min_j). Sin restar el mínimo. */
+function matrizNormalizadaRango(matriz, rangos) {
+  return matriz.map((fila) => fila.map((v, j) => {
+    const R = rangos[j].rango;
+    return R === 0 ? 0 : v / R;
+  }));
+}
+
+/** Matriz normalizada y ponderada: v_ij = w_j * r_ij. */
+function matrizPonderada(normalizada, pesos) {
+  return normalizada.map((fila) => fila.map((v, j) => v * pesos[j]));
+}
+
+/**
+ * Índice de concordancia C(i,k): suma de pesos de los criterios en que i es
+ * al menos tan favorable como k, respetando la dirección de cada criterio.
+ * El empate recibe el peso completo (condición "igual o mejor").
+ * Se calcula sobre la matriz de decisión original.
+ */
+function matrizConcordancia(matriz, pesos, sentidos) {
+  const m = matriz.length, k = pesos.length;
   const C = Array.from({ length: m }, () => Array(m).fill(null));
-  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
-    if (a === b) continue;
+  for (let i = 0; i < m; i++) for (let kk = 0; kk < m; kk++) {
+    if (i === kk) continue;
     let acuerdo = 0;
-    for (let j = 0; j < k; j++) if (orientada[a][j] >= orientada[b][j]) acuerdo += pesos[j];
-    C[a][b] = acuerdo / sp;
+    for (let j = 0; j < k; j++) {
+      const favorable = sentidos[j] === "min" ? matriz[i][j] <= matriz[kk][j] : matriz[i][j] >= matriz[kk][j];
+      if (favorable) acuerdo += pesos[j];
+    }
+    C[i][kk] = acuerdo;
   }
   return C;
 }
 
-/** Índice de discordancia global D(a,b): peor desventaja de a sobre el rango máximo. */
-function matrizDiscordanciaGlobal(orientada) {
-  const m = orientada.length, k = orientada[0].length;
-  let rangoMaximo = 0;
-  for (let j = 0; j < k; j++) {
-    const c = orientada.map((f) => f[j]);
-    rangoMaximo = Math.max(rangoMaximo, Math.max(...c) - Math.min(...c));
-  }
+/**
+ * Índice de discordancia D(i,k) sobre la matriz ponderada V.
+ * Numerador: mayor |v_ij - v_kj| en los criterios donde i es peor que k.
+ * Denominador: mayor |v_ij - v_kj| entre todos los criterios.
+ * La dirección de cada criterio define dónde i es peor.
+ */
+function matrizDiscordancia(V, matriz, sentidos) {
+  const m = V.length, k = V[0].length;
   const D = Array.from({ length: m }, () => Array(m).fill(null));
-  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
-    if (a === b) continue;
-    if (rangoMaximo === 0) { D[a][b] = 0; continue; }
-    let peor = 0;
-    for (let j = 0; j < k; j++) { const dv = orientada[b][j] - orientada[a][j]; if (dv > peor) peor = dv; }
-    D[a][b] = peor / rangoMaximo;
+  for (let i = 0; i < m; i++) for (let kk = 0; kk < m; kk++) {
+    if (i === kk) continue;
+    let numerador = 0, denominador = 0;
+    for (let j = 0; j < k; j++) {
+      const dif = Math.abs(V[i][j] - V[kk][j]);
+      if (dif > denominador) denominador = dif;
+      const peor = sentidos[j] === "min" ? matriz[i][j] > matriz[kk][j] : matriz[i][j] < matriz[kk][j];
+      if (peor && dif > numerador) numerador = dif;
+    }
+    D[i][kk] = denominador === 0 ? 0 : numerador / denominador;
   }
   return D;
 }
-
-/** Veto por criterio en unidades originales. Devuelve matriz booleana: true = veta. */
-function matrizVetoPorCriterio(matrizOriginal, sentidos, vetos) {
-  const m = matrizOriginal.length, k = matrizOriginal[0].length;
-  const V = Array.from({ length: m }, () => Array(m).fill(false));
-  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
-    if (a === b) continue;
-    for (let j = 0; j < k; j++) {
-      if (vetos[j] === null || vetos[j] === undefined || vetos[j] === "") continue;
-      const desventaja = sentidos[j] === "min"
-        ? matrizOriginal[a][j] - matrizOriginal[b][j]
-        : matrizOriginal[b][j] - matrizOriginal[a][j];
-      if (desventaja > vetos[j]) { V[a][b] = true; break; }
-    }
-  }
-  return V;
-}
-
-/** Relación de superación de ELECTRE I. */
-function relacionSuperacionI(C, D, veto, cEstrella, dEstrella, modoVeto) {
-  const m = C.length;
-  const S = Array.from({ length: m }, () => Array(m).fill(false));
-  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
-    if (a === b) continue;
-    const concuerda = C[a][b] >= cEstrella - 1e-12;
-    const noVetado = modoVeto === "criterio" ? !veto[a][b] : D[a][b] <= dEstrella + 1e-12;
-    S[a][b] = concuerda && noVetado;
-  }
-  return S;
-}
-
-/** Núcleo de ELECTRE I: alternativas no superadas por otra del núcleo. */
-function calcularNucleo(S) {
-  const m = S.length, enNucleo = Array(m).fill(true);
-  let cambio = true, guarda = 0;
-  while (cambio && guarda < m * m + 5) {
-    cambio = false; guarda++;
-    for (let b = 0; b < m; b++) {
-      if (!enNucleo[b]) continue;
-      for (let a = 0; a < m; a++) {
-        if (a === b || !enNucleo[a]) continue;
-        if (S[a][b] && !S[b][a]) { enNucleo[b] = false; cambio = true; break; }
-      }
-    }
-  }
-  const nucleo = [];
-  for (let i = 0; i < m; i++) if (enNucleo[i]) nucleo.push(i);
-  return nucleo;
-}
-
-/** ELECTRE I completo. */
-function electreI(d) {
-  const orientada = normalizarDecision(d.matriz, d.sentidos, d.normalizacion);
-  const C = matrizConcordancia(orientada, d.pesos);
-  const D = matrizDiscordanciaGlobal(orientada);
-  const veto = d.modoVeto === "criterio" ? matrizVetoPorCriterio(d.matriz, d.sentidos, d.vetos) : null;
-  const S = relacionSuperacionI(C, D, veto, d.umbrales.cEstrella, d.umbrales.dEstrella, d.modoVeto);
-  const nucleo = calcularNucleo(S);
-  return { variante: "I", orientada, C, D, veto, S, nucleo };
-}
-
-/** Relaciones fuerte y débil de ELECTRE II. */
-function relacionesII(C, D, c1, c2, d1, d2) {
-  const m = C.length;
-  const fuerte = Array.from({ length: m }, () => Array(m).fill(false));
-  const debil = Array.from({ length: m }, () => Array(m).fill(false));
-  for (let a = 0; a < m; a++) for (let b = 0; b < m; b++) {
-    if (a === b) continue;
-    const c = C[a][b], dd = D[a][b];
-    if (c >= c1 - 1e-12 && dd <= d1 + 1e-12) fuerte[a][b] = true;
-    else if (c >= c2 - 1e-12 && dd <= d2 + 1e-12) debil[a][b] = true;
-  }
-  return { fuerte, debil };
-}
-
-/** Destilación didáctica sobre el grafo de superación. */
-function destilar(fuerte, debil, ascendente) {
-  const m = fuerte.length;
-  const restantes = new Set(Array.from({ length: m }, (_, i) => i));
-  const niveles = [];
-  let guarda = 0;
-  while (restantes.size > 0 && guarda < m + 5) {
-    guarda++;
-    const candidatos = [];
-    for (const b of restantes) {
-      let superada = false;
-      for (const a of restantes) {
-        if (a === b) continue;
-        const rel = ascendente ? fuerte[b][a] : fuerte[a][b];
-        if (rel) { superada = true; break; }
-      }
-      if (!superada) candidatos.push(b);
-    }
-    let nivel = candidatos.slice();
-    if (candidatos.length > 1) {
-      nivel = candidatos.filter((b) => !candidatos.some((a) => a !== b && (ascendente ? debil[b][a] : debil[a][b])));
-      if (nivel.length === 0) nivel = candidatos.slice();
-    }
-    if (nivel.length === 0) nivel = Array.from(restantes);
-    niveles.push(nivel);
-    nivel.forEach((i) => restantes.delete(i));
-  }
-  return niveles;
-}
-
-/** ELECTRE II completo. */
-function electreII(d) {
-  const orientada = normalizarDecision(d.matriz, d.sentidos, d.normalizacion);
-  const C = matrizConcordancia(orientada, d.pesos);
-  const D = matrizDiscordanciaGlobal(orientada);
-  const u = d.umbrales;
-  const { fuerte, debil } = relacionesII(C, D, u.c1, u.c2, u.d1, u.d2);
-  const descendente = destilar(fuerte, debil, false);
-  const ascendente = destilar(fuerte, debil, true);
-  const m = d.matriz.length;
-  const posDesc = Array(m).fill(0), posAsc = Array(m).fill(0);
-  descendente.forEach((nivel, r) => nivel.forEach((i) => { posDesc[i] = r + 1; }));
-  const totalAsc = ascendente.length;
-  ascendente.forEach((nivel, r) => nivel.forEach((i) => { posAsc[i] = totalAsc - r; }));
-  const promedio = Array.from({ length: m }, (_, i) => (posDesc[i] + posAsc[i]) / 2);
-  const orden = Array.from({ length: m }, (_, i) => i).sort((a, b) => promedio[a] - promedio[b] || posDesc[a] - posDesc[b]);
-  return { variante: "II", orientada, C, D, fuerte, debil, descendente, ascendente, posDesc, posAsc, promedio, orden };
-}
-
-/** Punto de entrada del cálculo según la variante configurada. */
-function calcularElectre(d) { return d.variante === "II" ? electreII(d) : electreI(d); }
 
 /** Promedio de los elementos fuera de la diagonal de una matriz cuadrada. */
 function promedioFueraDiagonal(M) {
@@ -1349,24 +1243,76 @@ function promedioFueraDiagonal(M) {
   return cuenta === 0 ? 0 : suma / cuenta;
 }
 
-/**
- * Umbrales recomendados según la práctica clásica de ELECTRE:
- * c* es el promedio de los elementos de la matriz de concordancia y
- * d* el promedio de los elementos de la matriz de discordancia.
- * Requiere la matriz de decisión completa.
- */
-function umbralesRecomendados(datos) {
-  const orientada = normalizarDecision(datos.matriz, datos.sentidos, datos.normalizacion);
-  const C = matrizConcordancia(orientada, datos.pesos);
-  const D = matrizDiscordanciaGlobal(orientada);
-  return { cEstrella: promedioFueraDiagonal(C), dEstrella: promedioFueraDiagonal(D) };
+/** Matriz de dominancia concordante F: F_ik = 1 si C(i,k) >= c*. */
+function matrizDominanciaConcordante(C, cEstrella) {
+  const m = C.length;
+  return C.map((fila, i) => fila.map((v, k) => (i === k ? null : (v >= cEstrella - 1e-12 ? 1 : 0))));
 }
 
+/** Matriz de dominancia discordante G: G_ik = 1 si D(i,k) <= d*. */
+function matrizDominanciaDiscordante(D, dEstrella) {
+  const m = D.length;
+  return D.map((fila, i) => fila.map((v, k) => (i === k ? null : (v <= dEstrella + 1e-12 ? 1 : 0))));
+}
+
+/** Matriz de dominancia agregada H: H_ik = F_ik AND G_ik. */
+function matrizDominanciaAgregada(F, G) {
+  return F.map((fila, i) => fila.map((v, k) => (i === k ? null : ((F[i][k] === 1 && G[i][k] === 1) ? 1 : 0))));
+}
+
+/**
+ * Núcleo a partir de la matriz de dominancia agregada H.
+ * Una alternativa sale del núcleo si otra que permanece la sobreclasifica
+ * (H = 1) sin ser sobreclasificada de vuelta.
+ */
+function calcularNucleo(H) {
+  const m = H.length, enNucleo = Array(m).fill(true);
+  let cambio = true, guarda = 0;
+  while (cambio && guarda < m * m + 5) {
+    cambio = false; guarda++;
+    for (let b = 0; b < m; b++) {
+      if (!enNucleo[b]) continue;
+      for (let a = 0; a < m; a++) {
+        if (a === b || !enNucleo[a]) continue;
+        if (H[a][b] === 1 && H[b][a] !== 1) { enNucleo[b] = false; cambio = true; break; }
+      }
+    }
+  }
+  const nucleo = [];
+  for (let i = 0; i < m; i++) if (enNucleo[i]) nucleo.push(i);
+  return nucleo;
+}
+
+/**
+ * ELECTRE I completo. Encadena todas las etapas conservando cada resultado
+ * intermedio para la trazabilidad. Si el objeto de datos trae umbrales, se
+ * usan; si no, se calculan como el promedio fuera de la diagonal de C y D.
+ */
+function electreI(d) {
+  const rangos = rangosCriterios(d.matriz);
+  const normalizada = matrizNormalizadaRango(d.matriz, rangos);
+  const V = matrizPonderada(normalizada, d.pesos);
+  const C = matrizConcordancia(d.matriz, d.pesos, d.sentidos);
+  const D = matrizDiscordancia(V, d.matriz, d.sentidos);
+  const cEstrella = (d.umbrales && d.umbrales.cEstrella != null) ? d.umbrales.cEstrella : promedioFueraDiagonal(C);
+  const dEstrella = (d.umbrales && d.umbrales.dEstrella != null) ? d.umbrales.dEstrella : promedioFueraDiagonal(D);
+  const F = matrizDominanciaConcordante(C, cEstrella);
+  const G = matrizDominanciaDiscordante(D, dEstrella);
+  const H = matrizDominanciaAgregada(F, G);
+  const nucleo = calcularNucleo(H);
+  return { rangos, normalizada, V, C, D, F, G, H, nucleo, cEstrella, dEstrella };
+}
+
+/** Punto de entrada del cálculo. */
 /* -------------------------------------------------------------------------
    3. UTILIDADES DE FORMATO Y MENSAJES
    ------------------------------------------------------------------------- */
 function comoPorcentaje(x) { return (x * 100).toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %"; }
 function conDecimales(x, n = 4) { return Number(x).toLocaleString("es-CO", { minimumFractionDigits: n, maximumFractionDigits: n }); }
+/** Formato con la precisión visual configurada por el usuario. No afecta el cálculo. */
+function dec(x) { if (x === null || x === undefined) return "—"; return conDecimales(x, estado.decimales); }
+/** Valor numérico plano para inputs, sin separadores de miles. */
+function conValor(x) { return Number(x).toFixed(6).replace(/0+$/, "").replace(/\.$/, ""); }
 function escaparHtml(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
 
 function mostrarMensaje(id, texto, tipo) {
@@ -1474,20 +1420,6 @@ function construirControlesDemo() {
    5. PASO 1: CONFIGURACIÓN DEL MODELO
    ------------------------------------------------------------------------- */
 
-/** Muestra u oculta los bloques de umbrales según la variante elegida. */
-function alternarUmbrales() {
-  const v = $("variante").value;
-  $("umbralesI").hidden = v !== "I";
-  $("umbralesII").hidden = v !== "II";
-}
-
-/** Muestra u oculta el campo d* global según el modo de veto. */
-function alternarCampoVeto() {
-  const modo = $("modoVeto").value;
-  $("campoDEstrella").style.opacity = modo === "criterio" ? "0.45" : "1";
-  $("dEstrella").disabled = modo === "criterio";
-}
-
 /** Lee y valida la configuración; construye las estructuras del modelo. */
 function aplicarConfiguracion() {
   const nA = parseInt($("numAlternativas").value, 10);
@@ -1499,36 +1431,33 @@ function aplicarConfiguracion() {
     mostrarMensaje("mensajeConfiguracion", "El número de criterios debe ser un entero entre 2 y 15.", "error"); return;
   }
 
-  const v = $("variante").value;
+  // Umbrales opcionales: si el usuario escribe un valor, se respeta; si no, se calculan en el paso 2.
+  const cTxt = $("cEstrella").value.trim();
+  const dTxt = $("dEstrella").value.trim();
   const u = estado.umbrales;
-  if (v === "I") {
-    u.cEstrella = parseFloat($("cEstrella").value);
-    u.dEstrella = parseFloat($("dEstrella").value);
-    if (!(u.cEstrella >= 0 && u.cEstrella <= 1)) { mostrarMensaje("mensajeConfiguracion", "El umbral c* debe estar entre 0 y 1.", "error"); return; }
-    if (!(u.dEstrella >= 0 && u.dEstrella <= 1)) { mostrarMensaje("mensajeConfiguracion", "El umbral d* debe estar entre 0 y 1.", "error"); return; }
-  } else {
-    u.c1 = parseFloat($("c1").value); u.c2 = parseFloat($("c2").value);
-    u.d1 = parseFloat($("d1").value); u.d2 = parseFloat($("d2").value);
-    for (const [k, val] of [["c1", u.c1], ["c2", u.c2], ["d1", u.d1], ["d2", u.d2]]) {
-      if (!(val >= 0 && val <= 1)) { mostrarMensaje("mensajeConfiguracion", "Todos los umbrales deben estar entre 0 y 1.", "error"); return; }
-    }
-    if (u.c2 > u.c1) { mostrarMensaje("mensajeConfiguracion", "La concordancia débil c2 no debe superar a la fuerte c1.", "error"); return; }
-    if (u.d1 > u.d2) { mostrarMensaje("mensajeConfiguracion", "La discordancia fuerte d1 no debe superar a la débil d2.", "error"); return; }
-  }
+  estado.umbralesManuales = false;
+  if (cTxt !== "") {
+    const c = parseFloat(cTxt);
+    if (!(c >= 0)) { mostrarMensaje("mensajeConfiguracion", "El umbral c* debe ser un número mayor o igual a 0.", "error"); return; }
+    u.cEstrella = c; estado.umbralesManuales = true;
+  } else { u.cEstrella = null; }
+  if (dTxt !== "") {
+    const d = parseFloat(dTxt);
+    if (!(d >= 0 && d <= 1)) { mostrarMensaje("mensajeConfiguracion", "El umbral d* debe estar entre 0 y 1.", "error"); return; }
+    u.dEstrella = d; estado.umbralesManuales = true;
+  } else { u.dEstrella = null; }
+
+  estado.decimales = parseInt($("decimales").value, 10) || 4;
 
   // Preservar datos existentes al redimensionar cuando sea posible
   const previa = estado.matriz;
   estado.numAlternativas = nA;
   estado.numCriterios = nC;
-  estado.variante = v;
-  estado.normalizacion = $("normalizacion").value;
-  estado.modoVeto = $("modoVeto").value;
 
   estado.nombresAlternativas = Array.from({ length: nA }, (_, i) => estado.nombresAlternativas[i] || ("Alternativa " + (i + 1)));
   estado.nombresCriterios = Array.from({ length: nC }, (_, j) => estado.nombresCriterios[j] || ("Criterio " + (j + 1)));
   estado.sentidos = Array.from({ length: nC }, (_, j) => estado.sentidos[j] || "max");
-  estado.pesos = Array.from({ length: nC }, (_, j) => (estado.pesos[j] != null ? estado.pesos[j] : 1));
-  estado.vetos = Array.from({ length: nC }, (_, j) => (estado.vetos[j] != null ? estado.vetos[j] : ""));
+  estado.pesos = Array.from({ length: nC }, (_, j) => (estado.pesos[j] != null ? estado.pesos[j] : ""));
   estado.matriz = Array.from({ length: nA }, (_, i) =>
     Array.from({ length: nC }, (_, j) => (previa[i] && previa[i][j] != null ? previa[i][j] : "")));
 
@@ -1537,7 +1466,6 @@ function aplicarConfiguracion() {
   construirTablaCriterios();
   construirMatrizDecision();
   $("seccionDatos").hidden = false;
-  $("filaVetos").hidden = estado.modoVeto !== "criterio";
   ocultarMensaje("mensajeConfiguracion");
   actualizarEstadosRiel();
   $("seccionDatos").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1598,14 +1526,20 @@ function construirTablaCriterios() {
   actualizarAvisoPesos();
 }
 
-/** Muestra cómo se normalizan los pesos para que sumen 100 %. */
+/** Muestra la suma de pesos y avisa si no suma 1. */
 function actualizarAvisoPesos() {
   const pesos = estado.pesos.map((p) => (p === "" || isNaN(p) ? 0 : Number(p)));
   const total = sumar(pesos);
   const aviso = $("avisoPesos");
-  if (total <= 0) { aviso.textContent = "Asigne pesos positivos. Al menos un criterio debe pesar más que cero."; return; }
-  const norm = pesos.map((p) => comoPorcentaje(p / total));
-  aviso.textContent = "Pesos normalizados: " + estado.nombresCriterios.map((n, j) => n + " " + norm[j]).join(" · ");
+  if (total <= 0) { aviso.textContent = "Asigne pesos positivos. Los pesos deben sumar 1 (100 %)."; aviso.style.color = ""; return; }
+  const dif = Math.abs(total - 1);
+  if (dif < 1e-9) {
+    aviso.textContent = "Suma de pesos: 1,0000 (correcto). Reparto: " + estado.nombresCriterios.map((n, j) => n + " " + comoPorcentaje(pesos[j])).join(" · ");
+    aviso.style.color = "var(--exito)";
+  } else {
+    aviso.textContent = "Suma de pesos: " + conDecimales(total, 4) + ". Deben sumar 1 (100 %); ajuste los valores. Diferencia: " + conDecimales(total - 1, 4) + ".";
+    aviso.style.color = "var(--advertencia)";
+  }
 }
 
 /** Construye la cabecera y el cuerpo de la matriz de decisión. */
@@ -1616,7 +1550,7 @@ function construirMatrizDecision() {
     const th = document.createElement("th");
     th.innerHTML = '<div class="crit-cab"><span class="crit-nombre">' + escaparHtml(nombre) +
       '</span><span class="crit-meta crit-sentido-' + estado.sentidos[j] + '">' +
-      (estado.sentidos[j] === "max" ? "maximizar" : "minimizar") + "</span></div>";
+      (estado.sentidos[j] === "max" ? "↑ maximizar" : "↓ minimizar") + "</span></div>";
     th.dataset.col = j;
     cab.appendChild(th);
   });
@@ -1650,8 +1584,6 @@ function construirMatrizDecision() {
     });
     cuerpo.appendChild(tr);
   });
-
-  if (estado.modoVeto === "criterio") construirTablaVetos();
 }
 
 /** Sincroniza las cabeceras de la matriz cuando cambian nombres o sentidos. */
@@ -1662,100 +1594,50 @@ function sincronizarCabecerasDecision() {
     const j = Number(th.dataset.col);
     th.innerHTML = '<div class="crit-cab"><span class="crit-nombre">' + escaparHtml(estado.nombresCriterios[j]) +
       '</span><span class="crit-meta crit-sentido-' + estado.sentidos[j] + '">' +
-      (estado.sentidos[j] === "max" ? "maximizar" : "minimizar") + "</span></div>";
+      (estado.sentidos[j] === "max" ? "↑ maximizar" : "↓ minimizar") + "</span></div>";
   });
-  if (estado.modoVeto === "criterio") construirTablaVetos();
   actualizarAvisoPesos();
 }
 
-/** Construye la fila de umbrales de veto por criterio. */
-function construirTablaVetos() {
-  const cab = $("cabeceraVetos");
-  cab.innerHTML = "<th class=\"esquina\">Veto por criterio</th>";
-  estado.nombresCriterios.forEach((nombre) => {
-    const th = document.createElement("th");
-    th.textContent = nombre;
-    cab.appendChild(th);
-  });
-  const cuerpo = $("cuerpoVetos");
-  cuerpo.innerHTML = '<th class="etiqueta-fila">Umbral vⱼ</th>';
-  estado.nombresCriterios.forEach((_, j) => {
-    const td = document.createElement("td");
-    const inp = document.createElement("input");
-    inp.type = "number"; inp.step = "any"; inp.value = estado.vetos[j];
-    inp.placeholder = "sin veto";
-    inp.setAttribute("aria-label", "Umbral de veto del criterio " + (j + 1));
-    inp.addEventListener("input", () => { estado.vetos[j] = inp.value === "" ? "" : Number(inp.value); });
-    td.appendChild(inp);
-    cuerpo.appendChild(td);
-  });
-}
-
-/** Datos de prueba coherentes, marcados como tales. */
-/** Calcula y aplica los umbrales recomendados a partir de la matriz actual. */
-function aplicarUmbralesRecomendados() {
-  const problemas = validarDatos();
-  if (problemas.length) {
-    mostrarMensaje("mensajeDatos", "Para calcular los umbrales recomendados, primero complete la matriz de decisión y los pesos. " + problemas[0], "advertencia");
-    return;
-  }
-  const datos = {
-    matriz: estado.matriz.map((f) => f.map(Number)),
-    pesos: estado.pesos.map(Number), sentidos: estado.sentidos.slice(),
-    normalizacion: estado.normalizacion
-  };
-  const rec = umbralesRecomendados(datos);
-  if (estado.variante === "I") {
-    estado.umbrales.cEstrella = Number(rec.cEstrella.toFixed(4));
-    estado.umbrales.dEstrella = Number(rec.dEstrella.toFixed(4));
-    $("cEstrella").value = estado.umbrales.cEstrella;
-    if (estado.modoVeto !== "criterio") $("dEstrella").value = estado.umbrales.dEstrella;
-  } else {
-    // En ELECTRE II se sugiere centrar los dos niveles alrededor del promedio.
-    const c = rec.cEstrella, d = rec.dEstrella;
-    estado.umbrales.c1 = Number(Math.min(1, c + 0.10).toFixed(4));
-    estado.umbrales.c2 = Number(Math.max(0, c - 0.05).toFixed(4));
-    estado.umbrales.d1 = Number(Math.max(0, d - 0.10).toFixed(4));
-    estado.umbrales.d2 = Number(Math.min(1, d + 0.10).toFixed(4));
-    $("c1").value = estado.umbrales.c1; $("c2").value = estado.umbrales.c2;
-    $("d1").value = estado.umbrales.d1; $("d2").value = estado.umbrales.d2;
-  }
-  const texto = estado.variante === "I"
-    ? "Umbrales recomendados aplicados: c* = " + conDecimales(rec.cEstrella, 4) + " (promedio de la concordancia) y d* = " + conDecimales(rec.dEstrella, 4) + " (promedio de la discordancia). Puede ajustarlos y conviene revisarlos en el análisis de sensibilidad."
-    : "Umbrales recomendados aplicados alrededor del promedio de concordancia (" + conDecimales(rec.cEstrella, 4) + ") y de discordancia (" + conDecimales(rec.dEstrella, 4) + "). Puede ajustarlos en el paso 1.";
-  mostrarMensaje("mensajeDatos", texto, "info");
-}
-
+/** Carga el caso de validación de la especificación como datos de prueba. */
 function cargarDatosPrueba() {
-  const nA = estado.numAlternativas, nC = estado.numCriterios;
-  estado.nombresAlternativas = Array.from({ length: nA }, (_, i) => "Proveedor " + String.fromCharCode(65 + i));
-  const bancoCrit = ["Costo", "Calidad", "Plazo de entrega", "Servicio posventa", "Riesgo", "Sostenibilidad", "Experiencia", "Flexibilidad"];
-  estado.nombresCriterios = Array.from({ length: nC }, (_, j) => bancoCrit[j] || ("Criterio " + (j + 1)));
-  estado.sentidos = Array.from({ length: nC }, (_, j) => (estado.nombresCriterios[j] === "Costo" || estado.nombresCriterios[j] === "Plazo de entrega" || estado.nombresCriterios[j] === "Riesgo") ? "min" : "max");
-  estado.pesos = Array.from({ length: nC }, (_, j) => [3, 2.5, 2, 1.5, 1, 1, 1, 1][j] || 1);
-  estado.vetos = Array.from({ length: nC }, () => "");
-  // Valores pseudoaleatorios reproducibles
-  let semilla = 20260101;
-  const rnd = () => { semilla = (semilla * 9301 + 49297) % 233280; return semilla / 233280; };
-  estado.matriz = Array.from({ length: nA }, () =>
-    Array.from({ length: nC }, () => Math.round((20 + rnd() * 80) * 10) / 10));
+  estado.numAlternativas = 5;
+  estado.numCriterios = 5;
+  $("numAlternativas").value = 5;
+  $("numCriterios").value = 5;
+  estado.nombresAlternativas = ["A", "B", "C", "D", "E"];
+  estado.nombresCriterios = ["VAN", "TIR", "Empleo", "Ventas", "Impacto ambiental"];
+  estado.sentidos = ["max", "max", "max", "max", "min"];
+  estado.pesos = [0.25, 0.25, 0.20, 0.10, 0.20];
+  estado.matriz = [
+    [100, 15, 7, 40, 50],
+    [200, 25, 7, 60, 200],
+    [100, 20, 4, 25, 25],
+    [200, 30, 20, 70, 350],
+    [250, 25, 15, 100, 500]
+  ];
   estado.origen = "prueba";
   estado.resultados = null;
+  estado.umbrales.cEstrella = null; estado.umbrales.dEstrella = null;
+  estado.umbralesManuales = false;
+  $("cEstrella").value = ""; $("dEstrella").value = "";
   construirTablaCriterios();
   construirMatrizDecision();
   actualizarOrigen();
-  mostrarMensaje("mensajeDatos", "Se cargaron datos de prueba generados por la aplicación. No representan un caso real. Los archivos que exporte llevarán la marca PRUEBA.", "advertencia");
+  mostrarMensaje("mensajeDatos", "Se cargó el caso de validación (proyectos evaluados por VAN, TIR, empleo, ventas e impacto ambiental). Son datos de prueba; los archivos que exporte llevarán la marca PRUEBA.", "advertencia");
 }
 
 /* -------------------------------------------------------------------------
    7. PASO 3: CÁLCULO Y RESULTADOS
    ------------------------------------------------------------------------- */
 
-/** Valida que la matriz esté completa antes de calcular. */
+/** Valida que la matriz esté completa y que los pesos sumen 1 antes de calcular. */
 function validarDatos() {
   const problemas = [];
   const pesos = estado.pesos.map((p) => (p === "" || isNaN(p) ? 0 : Number(p)));
-  if (sumar(pesos) <= 0) problemas.push("Asigne pesos positivos a los criterios.");
+  const total = sumar(pesos);
+  if (total <= 0) problemas.push("Asigne pesos positivos a los criterios.");
+  else if (Math.abs(total - 1) > 1e-6) problemas.push("Los pesos deben sumar 1 (100 %); ahora suman " + conDecimales(total, 4) + ".");
   for (let i = 0; i < estado.numAlternativas; i++)
     for (let j = 0; j < estado.numCriterios; j++) {
       const v = estado.matriz[i][j];
@@ -1766,113 +1648,195 @@ function validarDatos() {
   return problemas;
 }
 
-/** Ejecuta ELECTRE con los datos actuales y muestra los resultados. */
+/** Ejecuta ELECTRE I con los datos actuales y muestra los resultados. */
 function calcularYMostrar() {
   const problemas = validarDatos();
   if (problemas.length) {
     mostrarMensaje("mensajeDatos", "Antes de calcular, corrija: " + problemas.slice(0, 3).join(" ") + (problemas.length > 3 ? " (y otros)" : ""), "error");
     return;
   }
-  const pesos = estado.pesos.map(Number);
   const datos = {
     matriz: estado.matriz.map((f) => f.map(Number)),
-    pesos, sentidos: estado.sentidos.slice(),
-    variante: estado.variante, normalizacion: estado.normalizacion,
-    modoVeto: estado.modoVeto, vetos: estado.vetos.map((v) => (v === "" ? null : Number(v))),
-    umbrales: Object.assign({}, estado.umbrales)
+    pesos: estado.pesos.map(Number),
+    sentidos: estado.sentidos.slice(),
+    umbrales: estado.umbralesManuales ? Object.assign({}, estado.umbrales) : null
   };
-  // Se calculan ambas variantes para que el informe muestre todos los resultados,
-  // sin importar cuál se eligió como principal.
-  estado.resultadosI = electreI(datos); estado.resultadosI.datos = datos;
-  estado.resultadosII = electreII(datos); estado.resultadosII.datos = datos;
-  estado.resultados = estado.variante === "II" ? estado.resultadosII : estado.resultadosI;
+  estado.resultados = electreI(datos);
+  estado.resultados.datos = datos;
+  // Si los umbrales no fueron fijados a mano, se toman los calculados y se reflejan en la interfaz.
+  if (!estado.umbralesManuales) {
+    estado.umbrales.cEstrella = estado.resultados.cEstrella;
+    estado.umbrales.dEstrella = estado.resultados.dEstrella;
+    $("cEstrella").value = conValor(estado.resultados.cEstrella);
+    $("dEstrella").value = conValor(estado.resultados.dEstrella);
+  }
   ocultarMensaje("mensajeDatos");
   estado.sensibilidad = null;
   renderizarResultados();
   $("seccionResultados").hidden = false;
   $("seccionSensibilidad").hidden = false;
   $("seccionExportacion").hidden = false;
-  $("sensibilidadI").hidden = estado.variante !== "I";
-  $("sensibilidadII").hidden = estado.variante !== "II";
   $("contenedorSensibilidad").innerHTML = "";
+  // Inicializar los deslizadores de sensibilidad con los umbrales vigentes.
+  $("sensC").value = estado.resultados.cEstrella;
+  $("sensD").value = estado.resultados.dEstrella;
+  actualizarSensibilidadVivo();
   actualizarEstadosRiel();
   $("seccionResultados").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/** Dibuja una matriz cuadrada de índices (concordancia o discordancia). */
-function tablaIndice(M, titulo, nota, resaltar) {
+/** Recalcula ELECTRE I con umbrales dados sin alterar el estado guardado. */
+function recalcularCon(cEstrella, dEstrella) {
+  const base = estado.resultados.datos;
+  const datos = { matriz: base.matriz, pesos: base.pesos, sentidos: base.sentidos, umbrales: { cEstrella, dEstrella } };
+  return electreI(datos);
+}
+
+/* -------------------------------------------------------------------------
+   7b. RENDERIZADO DE RESULTADOS (trece etapas en acordeones, con trazabilidad)
+   ------------------------------------------------------------------------- */
+
+/** Envuelve contenido en un acordeón con título y número de etapa. */
+function acordeon(numero, titulo, contenidoHtml, abierto) {
+  const id = "acc-" + numero;
+  return '<details class="acordeon" ' + (abierto ? "open" : "") + '>' +
+    '<summary class="acordeon__cab"><span class="acordeon__num">' + numero + '</span>' +
+    '<span class="acordeon__titulo">' + escaparHtml(titulo) + '</span></summary>' +
+    '<div class="acordeon__cuerpo">' + contenidoHtml + '</div></details>';
+}
+
+/** Tabla de una matriz cuadrada alternativa por alternativa (concordancia, discordancia, dominancias). */
+function tablaMatrizCuadrada(M, opciones) {
+  const o = opciones || {};
   const nombres = estado.nombresAlternativas;
-  let html = '<div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">' + escaparHtml(titulo) + "</caption><thead><tr><th></th>";
+  const binaria = o.binaria === true;
+  let html = '<div class="tabla-contenedor"><table class="matriz-indice">';
+  if (o.titulo) html += '<caption class="tabla-titulo">' + escaparHtml(o.titulo) + "</caption>";
+  html += "<thead><tr><th></th>";
   nombres.forEach((n) => { html += "<th>" + escaparHtml(n) + "</th>"; });
   html += "</tr></thead><tbody>";
   M.forEach((fila, a) => {
     html += '<tr><td class="etiqueta-fila">' + escaparHtml(nombres[a]) + "</td>";
     fila.forEach((val, b) => {
-      if (a === b) { html += '<td class="celda-indice diagonal">—</td>'; return; }
-      let clase = "celda-indice";
-      let contenido = conDecimales(val, 4);
-      if (resaltar === "concordancia") {
-        const t = Math.max(0, Math.min(1, val));
-        html += '<td class="celda-indice" style="background:rgba(var(--argos-rgb),' + (0.12 + t * 0.5).toFixed(3) + ')">' + contenido + "</td>";
+      if (a === b || val === null) { html += '<td class="celda-indice diagonal">—</td>'; return; }
+      if (binaria) {
+        html += '<td class="celda-indice ' + (val === 1 ? "celda-supera" : "celda-nosupera") + '">' + (val === 1 ? "1" : "0") + "</td>";
         return;
       }
-      if (resaltar === "discordancia") {
-        const t = Math.max(0, Math.min(1, val));
-        html += '<td class="celda-indice" style="background:rgba(var(--veto-rgb),' + (0.10 + t * 0.5).toFixed(3) + ')">' + contenido + "</td>";
-        return;
-      }
-      html += '<td class="' + clase + '">' + contenido + "</td>";
+      let fondo = "";
+      if (o.resaltar === "concordancia") { const t = Math.max(0, Math.min(1, val)); fondo = ' style="background:rgba(var(--argos-rgb),' + (0.10 + t * 0.5).toFixed(3) + ')"'; }
+      else if (o.resaltar === "discordancia") { const t = Math.max(0, Math.min(1, val)); fondo = ' style="background:rgba(var(--veto-rgb),' + (0.10 + t * 0.5).toFixed(3) + ')"'; }
+      html += '<td class="celda-indice"' + fondo + ">" + dec(val) + "</td>";
     });
     html += "</tr>";
   });
   html += "</tbody></table></div>";
-  if (nota) html += '<p class="ayuda">' + nota + "</p>";
+  if (o.nota) html += '<p class="ayuda">' + o.nota + "</p>";
   return html;
 }
 
-/** Dibuja la matriz booleana de superación S. */
-function tablaSuperacion(S, veto) {
-  const nombres = estado.nombresAlternativas;
-  let html = '<div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Tabla 3. Relación de superación (¿la fila supera a la columna?)</caption><thead><tr><th></th>';
-  nombres.forEach((n) => { html += "<th>" + escaparHtml(n) + "</th>"; });
+/** Tabla rectangular alternativas por criterios (decisión, normalizada, ponderada). */
+function tablaRectangular(M, opciones) {
+  const o = opciones || {};
+  const nombresFila = estado.nombresAlternativas;
+  const nombresCol = estado.nombresCriterios;
+  let html = '<div class="tabla-contenedor"><table class="matriz-indice">';
+  if (o.titulo) html += '<caption class="tabla-titulo">' + escaparHtml(o.titulo) + "</caption>";
+  html += "<thead><tr><th></th>";
+  nombresCol.forEach((n, j) => {
+    const flecha = estado.sentidos[j] === "max" ? " ↑" : " ↓";
+    html += "<th>" + escaparHtml(n) + (o.conSentido ? '<span class="crit-flecha crit-sentido-' + estado.sentidos[j] + '">' + flecha + "</span>" : "") + "</th>";
+  });
   html += "</tr></thead><tbody>";
-  S.forEach((fila, a) => {
-    html += '<tr><td class="etiqueta-fila">' + escaparHtml(nombres[a]) + "</td>";
-    fila.forEach((val, b) => {
-      if (a === b) { html += '<td class="celda-indice diagonal">—</td>'; return; }
-      const vetada = veto && veto[a][b];
-      const clase = "celda-indice " + (val ? "celda-supera" : "celda-nosupera") + (vetada ? " celda-veto" : "");
-      html += '<td class="' + clase + '">' + (val ? "Sí" : (vetada ? "Veto" : "No")) + "</td>";
-    });
+  M.forEach((fila, i) => {
+    html += '<tr><td class="etiqueta-fila">' + escaparHtml(nombresFila[i]) + "</td>";
+    fila.forEach((val) => { html += '<td class="celda-indice">' + dec(val) + "</td>"; });
     html += "</tr>";
   });
-  html += "</tbody></table></div><p class=\"ayuda\">Una celda ámbar indica que la alternativa de la fila supera a la de la columna. «Veto» señala que una desventaja excesiva impidió la superación pese a la concordancia.</p>";
+  html += "</tbody></table></div>";
+  if (o.nota) html += '<p class="ayuda">' + o.nota + "</p>";
   return html;
 }
 
-/** Dibuja el grafo de superación en SVG. */
-function grafoSuperacion(S, destacados) {
-  const n = S.length;
+/** Selector de par de alternativas para las auditorías "Ver cálculo". */
+function selectorPar(idPrefijo, alCambiar) {
   const nombres = estado.nombresAlternativas;
-  const ancho = 520, alto = 360, cx = ancho / 2, cy = alto / 2, radio = Math.min(cx, cy) - 60, rNodo = 30;
-  const pos = Array.from({ length: n }, (_, i) => {
-    const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
-    return { x: cx + radio * Math.cos(ang), y: cy + radio * Math.sin(ang) };
+  const ops = nombres.map((n, i) => '<option value="' + i + '">' + escaparHtml(n) + "</option>").join("");
+  return '<div class="ver-calculo-par"><label>Alternativa i <select id="' + idPrefijo + 'I">' + ops + '</select></label>' +
+    '<label>frente a k <select id="' + idPrefijo + 'K"><option value="1" selected>' + escaparHtml(nombres[1]) + "</option>" +
+    nombres.map((n, i) => (i === 1 ? "" : '<option value="' + i + '">' + escaparHtml(n) + "</option>")).join("") + "</select></label></div>" +
+    '<div id="' + idPrefijo + 'Salida" class="ver-calculo-salida" aria-live="polite"></div>';
+}
+
+/** Detalle del cálculo de C(i,k). */
+function detalleConcordancia(i, k) {
+  if (i === k) return '<p class="ayuda">Seleccione dos alternativas distintas.</p>';
+  const r = estado.resultados, pesos = r.datos.pesos, sent = r.datos.sentidos;
+  const nombres = estado.nombresAlternativas, crit = estado.nombresCriterios;
+  let favorables = [], contrarios = [], suma = 0;
+  for (let j = 0; j < crit.length; j++) {
+    const favorable = sent[j] === "min" ? estado.matriz[i][j] <= estado.matriz[k][j] : estado.matriz[i][j] >= estado.matriz[k][j];
+    if (favorable) { favorables.push(crit[j] + " (w=" + dec(pesos[j]) + ")"); suma += pesos[j]; }
+    else contrarios.push(crit[j]);
+  }
+  return '<div class="detalle-calc"><p><strong>C(' + escaparHtml(nombres[i]) + ", " + escaparHtml(nombres[k]) + ")</strong></p>" +
+    "<p>Criterios donde " + escaparHtml(nombres[i]) + " es igual o mejor que " + escaparHtml(nombres[k]) + " (suman su peso): " + (favorables.length ? favorables.join(", ") : "ninguno") + ".</p>" +
+    "<p>Criterios donde no lo es (no suman): " + (contrarios.length ? contrarios.map(escaparHtml).join(", ") : "ninguno") + ".</p>" +
+    "<p>Suma de pesos favorables: <strong>C = " + dec(r.C[i][k]) + "</strong></p></div>";
+}
+
+/** Detalle del cálculo de D(i,k). */
+function detalleDiscordancia(i, k) {
+  if (i === k) return '<p class="ayuda">Seleccione dos alternativas distintas.</p>';
+  const r = estado.resultados, sent = r.datos.sentidos;
+  const nombres = estado.nombresAlternativas, crit = estado.nombresCriterios;
+  const V = r.V;
+  let numerador = 0, denominador = 0, critNum = "", critDen = "";
+  const filas = [];
+  for (let j = 0; j < crit.length; j++) {
+    const dif = Math.abs(V[i][j] - V[k][j]);
+    const peor = sent[j] === "min" ? estado.matriz[i][j] > estado.matriz[k][j] : estado.matriz[i][j] < estado.matriz[k][j];
+    if (dif > denominador) { denominador = dif; critDen = crit[j]; }
+    if (peor && dif > numerador) { numerador = dif; critNum = crit[j]; }
+    filas.push("<tr><td class=\"etiqueta-fila\">" + escaparHtml(crit[j]) + "</td><td class=\"celda-indice\">" + dec(V[i][j]) + "</td><td class=\"celda-indice\">" + dec(V[k][j]) + "</td><td class=\"celda-indice\">" + dec(dif) + "</td><td class=\"celda-indice\">" + (peor ? "sí" : "no") + "</td></tr>");
+  }
+  return '<div class="detalle-calc"><p><strong>D(' + escaparHtml(nombres[i]) + ", " + escaparHtml(nombres[k]) + ")</strong> sobre la matriz ponderada V</p>" +
+    '<div class="tabla-contenedor"><table class="matriz-indice"><thead><tr><th>Criterio</th><th>v(i)</th><th>v(k)</th><th>|v(i)−v(k)|</th><th>¿i peor?</th></tr></thead><tbody>' + filas.join("") + "</tbody></table></div>" +
+    "<p>Numerador (mayor diferencia donde i es peor" + (critNum ? ", en " + escaparHtml(critNum) : "") + "): <strong>" + dec(numerador) + "</strong></p>" +
+    "<p>Denominador (mayor diferencia total" + (critDen ? ", en " + escaparHtml(critDen) : "") + "): <strong>" + dec(denominador) + "</strong></p>" +
+    "<p>Cociente: <strong>D = " + dec(r.D[i][k]) + "</strong></p></div>";
+}
+
+/** Tabla de rangos por criterio. */
+function tablaRangos(r) {
+  const crit = estado.nombresCriterios;
+  let html = '<div class="tabla-contenedor"><table class="matriz-indice"><thead><tr><th>Criterio</th><th>Mínimo</th><th>Máximo</th><th>Rango</th></tr></thead><tbody>';
+  r.rangos.forEach((rg, j) => {
+    html += '<tr><td class="etiqueta-fila">' + escaparHtml(crit[j]) + "</td><td class=\"celda-indice\">" + dec(rg.min) + "</td><td class=\"celda-indice\">" + dec(rg.max) + "</td><td class=\"celda-indice\">" + dec(rg.rango) + "</td></tr>";
   });
-  // Los colores se leen de las variables CSS y se aplican como atributos directos
-  // en cada elemento del SVG, para no depender de la cascada de estilos.
+  html += "</tbody></table></div>";
+  return html;
+}
+
+/** Grafo de sobreclasificación a partir de H. */
+function grafoSuperacion(H, destacados) {
+  const n = H.length;
+  const nombres = estado.nombresAlternativas;
+  const ancho = 520, alto = 380, cx = ancho / 2, cy = alto / 2, radio = Math.min(cx, cy) - 62, rNodo = 30;
   const raiz = getComputedStyle(document.documentElement);
   const cRelieve = raiz.getPropertyValue("--relieve-alto").trim() || "#1D4351";
   const cArgos = raiz.getPropertyValue("--argos").trim() || "#F2B441";
   const cVeto = raiz.getPropertyValue("--veto").trim() || "#5BC8C2";
   const cTexto = raiz.getPropertyValue("--texto").trim() || "#E8F4F4";
   const cAbismo = raiz.getPropertyValue("--abismo").trim() || "#0A1A24";
-
-  let svg = '<svg class="grafo-superacion" viewBox="0 0 ' + ancho + " " + alto + '" role="img" aria-label="Grafo de superación entre alternativas">';
+  const pos = Array.from({ length: n }, (_, i) => {
+    const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    return { x: cx + radio * Math.cos(ang), y: cy + radio * Math.sin(ang) };
+  });
+  let svg = '<svg class="grafo-superacion" viewBox="0 0 ' + ancho + " " + alto + '" role="img" aria-label="Grafo de sobreclasificación entre alternativas">';
   svg += '<defs><marker id="punta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="' + cVeto + '"/></marker></defs>';
-  // Aristas
   for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) {
-    if (a === b || !S[a][b]) continue;
+    if (a === b || H[a][b] !== 1) continue;
     const p = pos[a], q = pos[b];
     const dx = q.x - p.x, dy = q.y - p.y, dist = Math.hypot(dx, dy) || 1;
     const ux = dx / dist, uy = dy / dist;
@@ -1880,82 +1844,107 @@ function grafoSuperacion(S, destacados) {
     const x2 = q.x - ux * (rNodo + 4), y2 = q.y - uy * (rNodo + 4);
     svg += '<path d="M' + x1.toFixed(1) + "," + y1.toFixed(1) + " L" + x2.toFixed(1) + "," + y2.toFixed(1) + '" stroke="' + cVeto + '" stroke-width="1.8" fill="none" marker-end="url(#punta)"/>';
   }
-  // Nodos
   pos.forEach((p, i) => {
     const enNucleo = destacados && destacados.includes(i);
     const relleno = enNucleo ? cArgos : cRelieve;
     const colorTexto = enNucleo ? cAbismo : cTexto;
     svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + rNodo + '" fill="' + relleno + '"/>';
-    const etq = nombres[i].length > 8 ? nombres[i].slice(0, 7) + "…" : nombres[i];
-    svg += '<text x="' + p.x.toFixed(1) + '" y="' + (p.y + 4).toFixed(1) + '" text-anchor="middle" fill="' + colorTexto + '" font-size="13" font-weight="650" font-family="' + raiz.getPropertyValue("--fuente-titulos").trim().replace(/"/g, "'") + '">' + escaparHtml(etq) + "</text>";
+    const etq = nombres[i].length > 9 ? nombres[i].slice(0, 8) + "…" : nombres[i];
+    svg += '<text x="' + p.x.toFixed(1) + '" y="' + (p.y + 4).toFixed(1) + '" text-anchor="middle" fill="' + colorTexto + '" font-size="13" font-weight="650" font-family="' + raiz.getPropertyValue("--fuente-titulos").trim().replace(/"/g, "'") + '"><title>' + escaparHtml(nombres[i]) + "</title>" + escaparHtml(etq) + "</text>";
   });
   svg += "</svg>";
   return svg;
 }
 
-/** Renderiza toda la sección de resultados. */
-function renderizarResultados() {
-  const rI = estado.resultadosI;
-  const rII = estado.resultadosII;
-  const cont = $("contenedorResultados");
-  const principal = estado.variante;
-  const marcaPrueba = estado.origen === "prueba"
-    ? '<div class="mensaje mensaje--advertencia" role="note">Resultados calculados con datos de prueba generados por la aplicación. No representan un caso real.</div>'
-    : "";
-
-  let html = marcaPrueba + '<div class="panel">';
-
-  // Nota sobre el informe completo
-  html += '<div class="mensaje mensaje--info" role="note">Este informe muestra los resultados de las dos variantes. La variante elegida en el paso 1 fue ELECTRE ' + principal + ', que aparece señalada como principal.</div>';
-
-  // Matrices de concordancia y discordancia (comunes a ambas variantes)
-  html += tablaIndice(rI.C, "Tabla 1. Índice de concordancia C(a, b)", "Proporción del peso de los criterios en que la alternativa de la fila iguala o supera a la de la columna. Más alto es más apoyo a la superación.", "concordancia");
-  html += '<div class="separador"></div>';
-  html += tablaIndice(rI.D, "Tabla 2. Índice de discordancia D(a, b)", "Peor desventaja relativa de la fila frente a la columna. Más alto es más oposición a la superación.", "discordancia");
-  html += '<div class="separador"></div>';
-
-  // --- Bloque ELECTRE I: núcleo ---
-  html += bloqueTitular("ELECTRE I: núcleo de alternativas no superadas", principal === "I");
-  html += tablaSuperacion(rI.S, rI.veto);
-  html += '<div class="separador"></div>';
-  html += '<h3 class="titulo-menor">Grafo de superación</h3>';
-  html += grafoSuperacion(rI.S, rI.nucleo);
-  html += '<div class="separador"></div>';
-  const nombresNucleo = rI.nucleo.map((i) => estado.nombresAlternativas[i]);
-  html += '<div class="bloque-resultado">';
-  html += "<p>El núcleo reúne las alternativas que ninguna otra supera. Son las opciones defendibles con los umbrales actuales:</p>";
-  html += '<p style="margin:0.8rem 0;">' + nombresNucleo.map((n) => '<span class="chip-nucleo">' + escaparHtml(n) + "</span>").join(" ") + "</p>";
-  if (rI.nucleo.length === estado.numAlternativas) {
-    html += '<div class="mensaje mensaje--advertencia" role="note">Con estos umbrales, ninguna alternativa supera a otra: el núcleo es el conjunto completo. Baje c* o suba d* para exigir más y discriminar mejor. Diríjase al paso 4 para explorarlo.</div>';
-  } else if (rI.nucleo.length === 1) {
-    html += '<div class="mensaje mensaje--exito" role="note">El núcleo tiene una sola alternativa. Es una recomendación clara con los umbrales actuales, pero verifique su robustez en el paso 4.</div>';
-  }
-  html += "</div>";
-  html += '<div class="separador"></div>';
-
-  // --- Bloque ELECTRE II: ranking ---
-  html += bloqueTitular("ELECTRE II: ranking completo", principal === "II");
-  html += '<p class="ayuda ayuda--bloque">ELECTRE II combina dos ordenamientos: uno descendente, de la mejor hacia la peor, y uno ascendente, en sentido inverso. El ranking final promedia ambas posiciones. Ver los dos por separado revela empates y desacuerdos.</p>';
-  html += '<div class="doble-columna">';
-  html += "<div><strong>Descendente</strong><ol class=\"lista-preorden\">" + rII.descendente.map((niv) => "<li>" + niv.map((i) => escaparHtml(estado.nombresAlternativas[i])).join(", ") + "</li>").join("") + "</ol></div>";
-  html += "<div><strong>Ascendente</strong><ol class=\"lista-preorden\">" + rII.ascendente.map((niv) => "<li>" + niv.map((i) => escaparHtml(estado.nombresAlternativas[i])).join(", ") + "</li>").join("") + "</ol></div>";
-  html += "</div><div class=\"separador\"></div>";
-  html += '<div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Tabla 3. Ranking final</caption><thead><tr><th>Puesto</th><th>Alternativa</th><th>Posición promedio</th></tr></thead><tbody>';
-  rII.orden.forEach((idx, puesto) => {
-    const destacar = puesto === 0 ? ' style="background:rgba(var(--argos-rgb),0.28)"' : "";
-    html += "<tr" + destacar + '><td class="celda-indice">' + (puesto + 1) + '</td><td class="etiqueta-fila">' + escaparHtml(estado.nombresAlternativas[idx]) + '</td><td class="celda-indice">' + conDecimales(rII.promedio[idx], 2) + "</td></tr>";
-  });
-  html += "</tbody></table></div>";
-  html += '<div class="bloque-resultado"><p>Según ELECTRE II, la alternativa mejor posicionada es <span class="chip-nucleo">' + escaparHtml(estado.nombresAlternativas[rII.orden[0]]) + "</span>. Verifique su robustez en el paso 4.</p></div>";
-
-  html += "</div>";
-  cont.innerHTML = html;
+/** Lista de relaciones de sobreclasificación a partir de H. */
+function listaSobreclasificaciones(H) {
+  const nombres = estado.nombresAlternativas, rel = [];
+  for (let i = 0; i < H.length; i++) for (let k = 0; k < H.length; k++) if (H[i][k] === 1) rel.push(nombres[i] + " → " + nombres[k]);
+  return rel;
 }
 
-/** Título de bloque de variante, con marca de principal cuando corresponde. */
-function bloqueTitular(texto, esPrincipal) {
-  return '<h3 class="titulo-menor titulo-variante">' + escaparHtml(texto) +
-    (esPrincipal ? ' <span class="chip-principal">variante elegida</span>' : "") + "</h3>";
+/** Renderiza la sección de resultados completa con las trece etapas. */
+function renderizarResultados() {
+  const r = estado.resultados;
+  const cont = $("contenedorResultados");
+  const nombres = estado.nombresAlternativas;
+  const marcaPrueba = estado.origen === "prueba"
+    ? '<div class="mensaje mensaje--advertencia" role="note">Resultados calculados con datos de prueba. No representan un caso real.</div>'
+    : "";
+
+  const vectorPesos = "W = (" + estado.pesos.map((p) => dec(Number(p))).join(", ") + ")";
+
+  // 1. Matriz decisional
+  let e1 = tablaRectangular(estado.matriz, { titulo: "Matriz decisional (X)", conSentido: true, nota: "Cada criterio indica su dirección: ↑ maximizar, ↓ minimizar." }) +
+    '<p class="vector-pesos">' + escaparHtml(vectorPesos) + "</p>";
+
+  // 2. Concordancia
+  let e2 = tablaMatrizCuadrada(r.C, { titulo: "Matriz de índices de concordancia (C)", resaltar: "concordancia",
+    nota: "C(i, k) suma los pesos de los criterios en que i es igual o mejor que k, respetando la dirección de cada criterio. Convención de esta implementación: el empate recibe el peso completo del criterio." });
+  e2 += '<details class="ver-calculo"><summary>Ver cálculo de C(i, k)</summary>' + selectorPar("cCalc", "concordancia") + "</details>";
+
+  // 3. Rangos + normalización
+  let e3 = tablaRangos(r) + '<div class="separador"></div>' +
+    tablaRectangular(r.normalizada, { titulo: "Matriz decisional normalizada (R)", nota: "Normalización por rango: r(i, j) = x(i, j) / (máx(j) − mín(j)). No reescala a [0, 1] ni resta el mínimo. Los valores se redondean solo para su lectura." });
+
+  // 4. Ponderada
+  let e4 = tablaRectangular(r.V, { titulo: "Matriz normalizada y ponderada (V)", nota: "v(i, j) = w(j) · r(i, j). Es la base del cálculo de discordancia." });
+
+  // 5. Discordancia
+  let e5 = tablaMatrizCuadrada(r.D, { titulo: "Matriz de índices de discordancia (D)", resaltar: "discordancia",
+    nota: "D(i, k) = mayor |v(i, j) − v(k, j)| entre los criterios donde i es peor que k, dividido por la mayor diferencia entre i y k en cualquier criterio. Se calcula con la precisión completa de V." });
+  e5 += '<details class="ver-calculo"><summary>Ver cálculo de D(i, k)</summary>' + selectorPar("dCalc", "discordancia") + "</details>";
+
+  // 6. Umbrales
+  const fuenteUmbral = estado.umbralesManuales ? "fijados manualmente" : "calculados como el promedio de los elementos fuera de la diagonal";
+  let e6 = '<div class="rejilla-umbrales">' +
+    '<div class="cifra"><span class="cifra__etq">Umbral de concordancia c*</span><span class="cifra__val">' + dec(r.cEstrella) + "</span></div>" +
+    '<div class="cifra"><span class="cifra__etq">Umbral de discordancia d*</span><span class="cifra__val">' + dec(r.dEstrella) + "</span></div></div>" +
+    '<p class="ayuda">Umbrales ' + fuenteUmbral + '. Son un punto de partida a partir de sus datos, no constantes universales de ELECTRE I. Puede modificarlos en el paso de sensibilidad.</p>';
+
+  // 7. Dominancias
+  let e7 = tablaMatrizCuadrada(r.F, { titulo: "Matriz de dominancia concordante (F)", binaria: true, nota: "F(i, k) = 1 si C(i, k) ≥ c*; 0 en caso contrario." }) +
+    '<div class="separador"></div>' +
+    tablaMatrizCuadrada(r.G, { titulo: "Matriz de dominancia discordante (G)", binaria: true, nota: "G(i, k) = 1 si D(i, k) ≤ d*; 0 si la discordancia supera el umbral." }) +
+    '<div class="separador"></div>' +
+    tablaMatrizCuadrada(r.H, { titulo: "Matriz de dominancia agregada (H)", binaria: true, nota: "H(i, k) = F(i, k) y G(i, k). Cuando H(i, k) = 1 se cumple i S k: i sobreclasifica a k con los parámetros adoptados." });
+
+  // 8. Grafo y núcleo
+  const rel = listaSobreclasificaciones(r.H);
+  const nombresNucleo = r.nucleo.map((i) => nombres[i]);
+  let e8 = '<h4 class="titulo-menor">Grafo de sobreclasificación</h4>' + grafoSuperacion(r.H, r.nucleo) +
+    '<p class="ayuda">Un arco i → k indica que i sobreclasifica a k. Los nodos del núcleo aparecen en ámbar.</p>' +
+    "<p><strong>Relaciones de sobreclasificación:</strong> " + (rel.length ? rel.join(", ") : "ninguna con los umbrales actuales") + "</p>" +
+    '<div class="separador"></div><h4 class="titulo-menor">Núcleo</h4>' +
+    '<p style="margin:0.6rem 0;">' + (nombresNucleo.length ? nombresNucleo.map((n) => '<span class="chip-nucleo">' + escaparHtml(n) + "</span>").join(" ") : "vacío") + "</p>" +
+    '<p class="ayuda">El núcleo reúne las alternativas que ninguna otra sobreclasifica. ELECTRE I puede conservar varias alternativas en el núcleo: reduce el conjunto de opciones admisibles mediante relaciones de sobreclasificación, sin producir necesariamente un ranking completo. No debe leerse automáticamente como «la mejor alternativa».</p>';
+
+  let html = marcaPrueba +
+    acordeon(1, "Datos y pesos", e1, true) +
+    acordeon(2, "Concordancia", e2, false) +
+    acordeon(3, "Normalización por rango", e3, false) +
+    acordeon(4, "Ponderación", e4, false) +
+    acordeon(5, "Discordancia", e5, false) +
+    acordeon(6, "Umbrales", e6, false) +
+    acordeon(7, "Dominancias", e7, false) +
+    acordeon(8, "Grafo y núcleo", e8, true);
+
+  cont.innerHTML = html;
+  conectarVerCalculo();
+}
+
+/** Conecta los selectores de par de las auditorías "Ver cálculo". */
+function conectarVerCalculo() {
+  const cI = $("cCalcI"), cK = $("cCalcK");
+  if (cI && cK) {
+    const act = () => { $("cCalcSalida").innerHTML = detalleConcordancia(Number(cI.value), Number(cK.value)); };
+    cI.addEventListener("change", act); cK.addEventListener("change", act); act();
+  }
+  const dI = $("dCalcI"), dK = $("dCalcK");
+  if (dI && dK) {
+    const act = () => { $("dCalcSalida").innerHTML = detalleDiscordancia(Number(dI.value), Number(dK.value)); };
+    dI.addEventListener("change", act); dK.addEventListener("change", act); act();
+  }
 }
 
 /* -------------------------------------------------------------------------
@@ -2057,6 +2046,22 @@ class DocumentoPDF {
 
   linea(x1, y1, x2, y2, { color = COLORES_PDF.linea, grosor = 0.6 } = {}) {
     this.pagina.push(`${DocumentoPDF.rgb(color)} RG ${grosor} w ${x1.toFixed(2)} ${(this.alto - y1).toFixed(2)} m ${x2.toFixed(2)} ${(this.alto - y2).toFixed(2)} l S`);
+  }
+
+  /** Círculo relleno mediante cuatro curvas Bézier. (cx, cy) en coordenadas de página. */
+  circulo(cx, cy, radio, { relleno = null, borde = null, grosor = 0.6 } = {}) {
+    const k = 0.5522847498 * radio;
+    const yc = this.alto - cy;
+    const partes = [];
+    if (relleno) partes.push(`${DocumentoPDF.rgb(relleno)} rg`);
+    if (borde) partes.push(`${DocumentoPDF.rgb(borde)} RG ${grosor} w`);
+    partes.push(`${(cx + radio).toFixed(2)} ${yc.toFixed(2)} m`);
+    partes.push(`${(cx + radio).toFixed(2)} ${(yc + k).toFixed(2)} ${(cx + k).toFixed(2)} ${(yc + radio).toFixed(2)} ${cx.toFixed(2)} ${(yc + radio).toFixed(2)} c`);
+    partes.push(`${(cx - k).toFixed(2)} ${(yc + radio).toFixed(2)} ${(cx - radio).toFixed(2)} ${(yc + k).toFixed(2)} ${(cx - radio).toFixed(2)} ${yc.toFixed(2)} c`);
+    partes.push(`${(cx - radio).toFixed(2)} ${(yc - k).toFixed(2)} ${(cx - k).toFixed(2)} ${(yc - radio).toFixed(2)} ${cx.toFixed(2)} ${(yc - radio).toFixed(2)} c`);
+    partes.push(`${(cx + k).toFixed(2)} ${(yc - radio).toFixed(2)} ${(cx + radio).toFixed(2)} ${(yc - k).toFixed(2)} ${(cx + radio).toFixed(2)} ${yc.toFixed(2)} c`);
+    partes.push(relleno && borde ? "B" : relleno ? "f" : "S");
+    this.pagina.push(partes.join(" "));
   }
 
   /** Divide un texto en líneas que caben en «anchoMaximo». */
@@ -2224,26 +2229,38 @@ class DocumentoPDF {
    10. PASO 4: SENSIBILIDAD Y ROBUSTEZ
    ------------------------------------------------------------------------- */
 
-/** Recalcula ELECTRE con umbrales dados, sin tocar el estado. */
-function recalcularCon(umbralesNuevos) {
-  const datos = Object.assign({}, estado.resultados.datos, { umbrales: Object.assign({}, estado.resultados.datos.umbrales, umbralesNuevos) });
-  return calcularElectre(datos);
+/** Exploración interactiva: recalcula con los umbrales de los deslizadores y muestra H, grafo y núcleo. */
+function actualizarSensibilidadVivo() {
+  if (!estado.resultados) return;
+  const c = parseFloat($("sensC").value), d = parseFloat($("sensD").value);
+  $("sensCval").textContent = "= " + conDecimales(c, 2);
+  $("sensDval").textContent = "= " + conDecimales(d, 2);
+  const r = recalcularCon(c, d);
+  const rel = listaSobreclasificaciones(r.H);
+  const nombresNucleo = r.nucleo.map((i) => estado.nombresAlternativas[i]);
+  let html = '<div class="doble-columna" style="align-items:start;">';
+  html += "<div>" + tablaMatrizCuadrada(r.H, { titulo: "Matriz de dominancia agregada (H)", binaria: true }) + "</div>";
+  html += "<div>" + grafoSuperacion(r.H, r.nucleo) + "</div>";
+  html += "</div>";
+  html += "<p><strong>" + rel.length + " relación(es) de sobreclasificación.</strong> Núcleo: " +
+    (nombresNucleo.length ? nombresNucleo.map((n) => '<span class="chip-nucleo">' + escaparHtml(n) + "</span>").join(" ") : "vacío") + "</p>";
+  $("sensibilidadVivo").innerHTML = html;
 }
 
-/** Barrido de c* en ELECTRE I con d* fija. */
+/** Barrido de c* con d* fijo en el valor actual. */
 function ejecutarBarridoI() {
   const cMin = parseFloat($("barridoCMin").value);
   const cMax = parseFloat($("barridoCMax").value);
-  const dFijo = parseFloat($("barridoDFijo").value);
   const paso = parseFloat($("barridoPaso").value);
-  if (!(cMin >= 0 && cMax <= 1 && cMin < cMax && paso > 0)) {
-    mostrarMensaje("mensajeExportacion", "Revise el rango del barrido: c* desde y hasta entre 0 y 1, con desde menor que hasta.", "error");
+  const dFijo = estado.resultados.dEstrella;
+  if (!(cMin >= 0 && cMin < cMax && paso > 0)) {
+    mostrarMensaje("mensajeExportacion", "Revise el rango del barrido: c* desde debe ser menor que hasta, con paso positivo.", "error");
     return;
   }
   const filas = [];
   for (let c = cMin; c <= cMax + 1e-9; c += paso) {
-    const r = recalcularCon({ cEstrella: Number(c.toFixed(4)), dEstrella: dFijo });
-    filas.push({ c: Number(c.toFixed(4)), nucleo: r.nucleo.slice() });
+    const r = recalcularCon(Number(c.toFixed(4)), dFijo);
+    filas.push({ c: Number(c.toFixed(4)), nucleo: r.nucleo.slice(), relaciones: listaSobreclasificaciones(r.H).length });
   }
   estado.sensibilidad = { tipo: "barridoI", dFijo, filas };
   renderizarBarridoI(filas, dFijo);
@@ -2252,70 +2269,18 @@ function ejecutarBarridoI() {
 function renderizarBarridoI(filas, dFijo) {
   const nombres = estado.nombresAlternativas;
   const base = estado.resultados.nucleo.slice().sort().join(",");
-  let html = '<div class="separador"></div><div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Sensibilidad del núcleo al umbral de concordancia (d* = ' + conDecimales(dFijo, 2) + ")</caption><thead><tr><th>c*</th><th>Tamaño del núcleo</th><th>Alternativas del núcleo</th><th>¿Cambia?</th></tr></thead><tbody>";
+  let html = '<div class="separador"></div><div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Sensibilidad del núcleo al umbral de concordancia (d* = ' + dec(dFijo) + ")</caption><thead><tr><th>c*</th><th>Sobreclasificaciones</th><th>Tamaño del núcleo</th><th>Núcleo</th><th>¿Cambia?</th></tr></thead><tbody>";
   filas.forEach((f) => {
     const clave = f.nucleo.slice().sort().join(",");
     const cambia = clave !== base;
     const nombresNucleo = f.nucleo.map((i) => nombres[i]).join(", ");
-    html += "<tr><td class=\"celda-indice\">" + conDecimales(f.c, 2) + '</td><td class="celda-indice">' + f.nucleo.length + '</td><td class="etiqueta-fila">' + escaparHtml(nombresNucleo) + '</td><td class="celda-indice" style="' + (cambia ? "background:rgba(var(--advertencia-rgb),0.22);color:var(--advertencia)" : "color:var(--texto-3)") + '">' + (cambia ? "Sí" : "igual") + "</td></tr>";
+    html += "<tr><td class=\"celda-indice\">" + conDecimales(f.c, 2) + '</td><td class="celda-indice">' + f.relaciones + '</td><td class="celda-indice">' + f.nucleo.length + '</td><td class="etiqueta-fila">' + escaparHtml(nombresNucleo) + '</td><td class="celda-indice" style="' + (cambia ? "background:rgba(var(--advertencia-rgb),0.22);color:var(--advertencia)" : "color:var(--texto-3)") + '">' + (cambia ? "Sí" : "igual") + "</td></tr>";
   });
   html += "</tbody></table></div>";
-  // Interpretacion
   const primeraDif = filas.find((f) => f.nucleo.slice().sort().join(",") !== base);
-  let interpretacion;
-  if (!primeraDif) {
-    interpretacion = "En todo el rango explorado, el núcleo no cambia. La recomendación es robusta frente al umbral de concordancia con esta discordancia fija.";
-  } else {
-    interpretacion = "El núcleo se mantiene hasta c* = " + conDecimales(primeraDif.c, 2) + ", donde cambia por primera vez. Ese es el punto de quiebre de la recomendación actual.";
-  }
-  html += '<div class="mensaje mensaje--info" role="note">' + interpretacion + "</div>";
-  $("contenedorSensibilidad").innerHTML = html;
-}
-
-/** Robustez del ranking de ELECTRE II perturbando umbrales. */
-function ejecutarRobustezII() {
-  const amp = parseFloat($("perturbacion").value);
-  const reps = parseInt($("repeticiones").value, 10);
-  if (!(amp > 0 && amp <= 0.3 && reps >= 10)) {
-    mostrarMensaje("mensajeExportacion", "Revise la amplitud (entre 0 y 0,3) y el número de escenarios (mínimo 10).", "error");
-    return;
-  }
-  const u = estado.resultados.datos.umbrales;
-  const conteoPrimero = Array(estado.numAlternativas).fill(0);
-  const acotar = (x) => Math.max(0, Math.min(1, x));
-  let semilla = 12345;
-  const rnd = () => { semilla = (semilla * 9301 + 49297) % 233280; return semilla / 233280; };
-  for (let t = 0; t < reps; t++) {
-    const nuevos = {
-      c1: acotar(u.c1 + (rnd() - 0.5) * 2 * amp),
-      c2: acotar(u.c2 + (rnd() - 0.5) * 2 * amp),
-      d1: acotar(u.d1 + (rnd() - 0.5) * 2 * amp),
-      d2: acotar(u.d2 + (rnd() - 0.5) * 2 * amp)
-    };
-    if (nuevos.c2 > nuevos.c1) { const x = nuevos.c1; nuevos.c1 = nuevos.c2; nuevos.c2 = x; }
-    if (nuevos.d1 > nuevos.d2) { const x = nuevos.d1; nuevos.d1 = nuevos.d2; nuevos.d2 = x; }
-    const r = recalcularCon(nuevos);
-    conteoPrimero[r.orden[0]]++;
-  }
-  estado.sensibilidad = { tipo: "robustezII", reps, conteoPrimero };
-  renderizarRobustezII(conteoPrimero, reps);
-}
-
-function renderizarRobustezII(conteo, reps) {
-  const nombres = estado.nombresAlternativas;
-  const orden = Array.from({ length: conteo.length }, (_, i) => i).sort((a, b) => conteo[b] - conteo[a]);
-  let html = '<div class="separador"></div><div class="tabla-contenedor"><table class="matriz-indice"><caption class="tabla-titulo">Frecuencia con que cada alternativa queda primera en ' + reps + " escenarios perturbados</caption><thead><tr><th>Alternativa</th><th>Veces primera</th><th>Frecuencia</th></tr></thead><tbody>";
-  orden.forEach((i) => {
-    const frec = conteo[i] / reps;
-    html += '<tr><td class="etiqueta-fila">' + escaparHtml(nombres[i]) + '</td><td class="celda-indice">' + conteo[i] + '</td><td class="celda-indice" style="background:rgba(var(--argos-rgb),' + (0.12 + frec * 0.5).toFixed(3) + ')">' + comoPorcentaje(frec) + "</td></tr>";
-  });
-  html += "</tbody></table></div>";
-  const lider = orden[0];
-  const frecLider = conteo[lider] / reps;
-  let interpretacion;
-  if (frecLider >= 0.8) interpretacion = escaparHtml(nombres[lider]) + " queda primera en el " + comoPorcentaje(frecLider) + " de los escenarios: la recomendación es sólida frente a variaciones de los umbrales.";
-  else if (frecLider >= 0.5) interpretacion = escaparHtml(nombres[lider]) + " lidera en el " + comoPorcentaje(frecLider) + " de los escenarios, pero hay competencia: revise los umbrales con cuidado.";
-  else interpretacion = "Ninguna alternativa domina con claridad al perturbar los umbrales. La recomendación es frágil: conviene afinar pesos y umbrales o discutir el resultado.";
+  const interpretacion = primeraDif
+    ? "El núcleo se mantiene hasta c* = " + conDecimales(primeraDif.c, 2) + ", donde cambia por primera vez. Ese es un punto de quiebre del resultado actual."
+    : "En todo el rango explorado, el núcleo no cambia: el resultado es estable frente al umbral de concordancia con esta discordancia fija.";
   html += '<div class="mensaje mensaje--info" role="note">' + interpretacion + "</div>";
   $("contenedorSensibilidad").innerHTML = html;
 }
@@ -2358,177 +2323,203 @@ const enlaceHoja = (nombreHoja) => "#'" + nombreHoja.replace(/'/g, "''") + "'!A1
 
 const FMT_PORC = "0.00%";
 const FMT_DEC = "0.0000";
-const FMT_NUM = "0.0##";
+const FMT_NUM = "0.0####";
 
 /** Hoja menú con datos del análisis e índice de hojas. */
 function excelHojaMenu(nombresHojas) {
   const h = crearHojaExcel();
-  h.poner(0, 0, APLICATIVO.nombre + " · Informe de análisis").combinar(0, 0, 4);
-  h.poner(1, 0, "Método: ELECTRE " + estado.variante + (estado.variante === "I" ? " (núcleo de no superadas)" : " (ranking completo)"));
-  h.poner(2, 0, "Origen de los datos: " + (estado.origen === "prueba" ? "DATOS DE PRUEBA generados por la aplicación" : "digitados por el usuario"));
-  h.poner(3, 0, "Alternativas: " + estado.numAlternativas + "   Criterios: " + estado.numCriterios);
-  const u = estado.resultados.datos.umbrales;
-  if (estado.variante === "I") h.poner(4, 0, "Umbrales: c* = " + u.cEstrella + ", d* = " + u.dEstrella + ", veto " + estado.modoVeto);
-  else h.poner(4, 0, "Umbrales: c1 = " + u.c1 + ", c2 = " + u.c2 + ", d1 = " + u.d1 + ", d2 = " + u.d2);
+  h.poner(0, 0, APLICATIVO.nombre + " · Informe de análisis ELECTRE I").combinar(0, 0, 5);
+  h.poner(1, 0, "Origen de los datos: " + (estado.origen === "prueba" ? "DATOS DE PRUEBA" : "digitados por el usuario"));
+  h.poner(2, 0, "Alternativas: " + estado.numAlternativas + "   Criterios: " + estado.numCriterios);
+  const r = estado.resultados;
+  h.poner(3, 0, "Umbral de concordancia c* = " + r.cEstrella);
+  h.poner(4, 0, "Umbral de discordancia d* = " + r.dEstrella);
   h.poner(6, 0, "Índice de hojas");
   nombresHojas.forEach((nombre, i) => h.poner(7 + i, 0, nombre, { enlace: enlaceHoja(nombre), ayuda: "Ir a " + nombre }));
   const filaNota = 8 + nombresHojas.length;
-  h.poner(filaNota, 0, APLICATIVO.nota).combinar(filaNota, 0, 4);
+  h.poner(filaNota, 0, APLICATIVO.nota).combinar(filaNota, 0, 5);
   h.poner(filaNota + 1, 0, "Autor: " + APLICATIVO.autor + "   ·   " + APLICATIVO.correo);
-  h.anchos([46, 14, 14, 14, 14]);
+  h.anchos([46, 14, 14, 14, 14, 14]);
   return h.cerrar();
 }
 
-/** Hoja de la matriz de decisión con datos y normalización por fórmula. */
+/** Hoja simple de datos del modelo (configuración). */
+function excelHojaDatos() {
+  const h = crearHojaExcel();
+  h.poner(0, 0, "Datos del modelo");
+  h.poner(2, 0, "Número de alternativas"); h.poner(2, 1, estado.numAlternativas);
+  h.poner(3, 0, "Número de criterios"); h.poner(3, 1, estado.numCriterios);
+  h.poner(4, 0, "Umbral c*"); h.poner(4, 1, estado.resultados.cEstrella, { formato: FMT_DEC });
+  h.poner(5, 0, "Umbral d*"); h.poner(5, 1, estado.resultados.dEstrella, { formato: FMT_DEC });
+  h.poner(6, 0, "Origen"); h.poner(6, 1, estado.origen === "prueba" ? "DATOS DE PRUEBA" : "usuario");
+  h.anchos([26, 18]);
+  return h.cerrar();
+}
+
+/** Hoja de la matriz decisional con sentido de cada criterio. */
 function excelHojaDecision() {
   const h = crearHojaExcel();
   const nA = estado.numAlternativas, nC = estado.numCriterios;
-  h.poner(0, 0, "Matriz de decisión y normalización");
+  h.poner(0, 0, "Matriz decisional (X)");
   h.poner(2, 0, "Sentido");
   estado.sentidos.forEach((s, j) => h.poner(2, 1 + j, s === "max" ? "maximizar" : "minimizar"));
-  h.poner(3, 0, "Peso");
-  estado.pesos.forEach((p, j) => h.poner(3, 1 + j, Number(p), { formato: FMT_NUM }));
-  // Cabecera
-  h.poner(5, 0, "Alternativa");
-  estado.nombresCriterios.forEach((n, j) => h.poner(5, 1 + j, n));
-  // Datos originales
-  const fila0 = 6;
+  h.poner(3, 0, "Alternativa");
+  estado.nombresCriterios.forEach((n, j) => h.poner(3, 1 + j, n));
+  const fila0 = 4;
   estado.matriz.forEach((fila, i) => {
     h.poner(fila0 + i, 0, estado.nombresAlternativas[i]);
     fila.forEach((v, j) => h.poner(fila0 + i, 1 + j, Number(v), { formato: FMT_NUM }));
   });
-  // Min y max por criterio con fórmulas
-  const filaMin = fila0 + nA, filaMax = filaMin + 1;
-  h.poner(filaMin, 0, "Mínimo");
-  h.poner(filaMax, 0, "Máximo");
-  for (let j = 0; j < nC; j++) {
-    const col = 1 + j;
-    const rango = refCelda(fila0, col) + ":" + refCelda(fila0 + nA - 1, col);
-    h.poner(filaMin, col, null, { formula: "MIN(" + rango + ")", formato: FMT_NUM });
-    h.poner(filaMax, col, null, { formula: "MAX(" + rango + ")", formato: FMT_NUM });
-  }
-  // Matriz normalizada por fórmula (1 = mejor)
-  const filaNorm = filaMax + 2;
-  h.poner(filaNorm, 0, "Matriz normalizada (1 = mejor)");
-  h.poner(filaNorm + 1, 0, "Alternativa");
-  estado.nombresCriterios.forEach((n, j) => h.poner(filaNorm + 1, 1 + j, n));
-  const fila0n = filaNorm + 2;
-  for (let i = 0; i < nA; i++) {
-    h.poner(fila0n + i, 0, estado.nombresAlternativas[i]);
-    for (let j = 0; j < nC; j++) {
-      const col = 1 + j;
-      const val = refCelda(fila0 + i, col);
-      const mn = refCelda(filaMin, col, true);
-      const mx = refCelda(filaMax, col, true);
-      // (v - min)/(max - min); si es minimizar, 1 menos eso. Protege división por cero.
-      const base = "(" + val + "-" + mn + ")/IF(" + mx + "=" + mn + ",1,(" + mx + "-" + mn + "))";
-      const formula = estado.sentidos[j] === "min" ? "1-(" + base + ")" : base;
-      h.poner(fila0n + i, col, null, { formula: "IF(" + mx + "=" + mn + ",1," + formula + ")", formato: FMT_DEC });
-    }
-  }
   h.anchos([18].concat(estado.nombresCriterios.map(() => 13)));
-  return { hoja: h.cerrar(), fila0n, nA, nC };
+  return { hoja: h.cerrar(), fila0, nA, nC };
 }
 
-/** Hoja de concordancia con fórmulas que suman pesos de criterios favorables. */
-function excelHojaConcordancia(refDecision) {
+/** Hoja de pesos. */
+function excelHojaPesos() {
   const h = crearHojaExcel();
-  const nA = estado.numAlternativas;
-  h.poner(0, 0, "Índice de concordancia C(a, b)");
-  h.poner(1, 0, "Proporción del peso de los criterios en que la fila iguala o supera a la columna.");
-  h.poner(3, 0, "");
-  estado.nombresAlternativas.forEach((n, b) => h.poner(3, 1 + b, n));
-  const r = estado.resultados;
-  const fila0 = 4;
-  estado.nombresAlternativas.forEach((n, a) => {
-    h.poner(fila0 + a, 0, n);
-    for (let b = 0; b < nA; b++) {
-      if (a === b) { h.poner(fila0 + a, 1 + b, null, { formula: "\"—\"" }); continue; }
-      h.poner(fila0 + a, 1 + b, r.C[a][b], { formato: FMT_PORC });
-    }
+  h.poner(0, 0, "Pesos de los criterios");
+  h.poner(2, 0, "Criterio"); h.poner(2, 1, "Peso");
+  estado.nombresCriterios.forEach((n, j) => {
+    h.poner(3 + j, 0, n);
+    h.poner(3 + j, 1, Number(estado.pesos[j]), { formato: FMT_DEC });
   });
-  h.poner(fila0 + nA + 1, 0, "Los valores coinciden con la pestaña de resultados de la aplicación.");
-  h.anchos([18].concat(estado.nombresAlternativas.map(() => 13)));
+  const filaSuma = 3 + estado.numCriterios;
+  h.poner(filaSuma, 0, "Suma");
+  h.poner(filaSuma, 1, null, { formula: "SUM(" + refCelda(3, 1) + ":" + refCelda(filaSuma - 1, 1) + ")", formato: FMT_DEC });
+  h.anchos([22, 12]);
   return h.cerrar();
 }
 
-/** Hoja de discordancia. */
-function excelHojaDiscordancia() {
+/** Hoja de rangos por criterio con fórmulas MIN, MAX y resta. */
+function excelHojaRangos(refDec) {
   const h = crearHojaExcel();
-  const nA = estado.numAlternativas;
-  h.poner(0, 0, "Índice de discordancia D(a, b)");
-  h.poner(1, 0, "Peor desventaja relativa de la fila frente a la columna, sobre el rango máximo.");
-  estado.nombresAlternativas.forEach((n, b) => h.poner(3, 1 + b, n));
-  const r = estado.resultados;
-  const fila0 = 4;
-  estado.nombresAlternativas.forEach((n, a) => {
-    h.poner(fila0 + a, 0, n);
-    for (let b = 0; b < nA; b++) {
-      if (a === b) { h.poner(fila0 + a, 1 + b, "—"); continue; }
-      h.poner(fila0 + a, 1 + b, r.D[a][b], { formato: FMT_DEC });
-    }
+  const nA = refDec.nA, nC = refDec.nC;
+  h.poner(0, 0, "Rangos por criterio");
+  h.poner(2, 0, "Criterio"); h.poner(2, 1, "Mínimo"); h.poner(2, 2, "Máximo"); h.poner(2, 3, "Rango");
+  estado.nombresCriterios.forEach((n, j) => {
+    const fila = 3 + j;
+    h.poner(fila, 0, n);
+    // Referencia a la hoja Decisión: columna 1+j, filas de datos.
+    const col = XLSX.utils.encode_col(1 + j);
+    const desde = refDec.fila0 + 1, hasta = refDec.fila0 + nA;
+    const rango = "'Decisión'!" + col + desde + ":" + col + hasta;
+    h.poner(fila, 1, null, { formula: "MIN(" + rango + ")", formato: FMT_NUM });
+    h.poner(fila, 2, null, { formula: "MAX(" + rango + ")", formato: FMT_NUM });
+    h.poner(fila, 3, null, { formula: refCelda(fila, 2) + "-" + refCelda(fila, 1), formato: FMT_NUM });
   });
-  h.anchos([18].concat(estado.nombresAlternativas.map(() => 13)));
+  h.anchos([22, 12, 12, 12]);
   return h.cerrar();
 }
 
-/** Hoja de resultado: núcleo o ranking. */
-/** Hoja del núcleo de ELECTRE I con la relación de superación. */
+/** Hoja de matriz numérica genérica (normalizada, ponderada, concordancia, etc.). */
+function excelHojaMatriz(titulo, M, etiquetasFila, etiquetasCol, formato) {
+  const h = crearHojaExcel();
+  h.poner(0, 0, titulo);
+  h.poner(2, 0, "");
+  etiquetasCol.forEach((n, j) => h.poner(2, 1 + j, n));
+  const fila0 = 3;
+  M.forEach((fila, i) => {
+    h.poner(fila0 + i, 0, etiquetasFila[i]);
+    fila.forEach((v, j) => {
+      if (v === null || v === undefined) { h.poner(fila0 + i, 1 + j, "—"); return; }
+      h.poner(fila0 + i, 1 + j, Number(v), { formato: formato || FMT_DEC });
+    });
+  });
+  h.anchos([18].concat(etiquetasCol.map(() => 12)));
+  return h.cerrar();
+}
+
+/** Hoja de umbrales. */
+function excelHojaUmbrales() {
+  const h = crearHojaExcel();
+  const r = estado.resultados;
+  h.poner(0, 0, "Umbrales de decisión");
+  h.poner(2, 0, "Umbral de concordancia c*"); h.poner(2, 1, r.cEstrella, { formato: FMT_DEC });
+  h.poner(3, 0, "Umbral de discordancia d*"); h.poner(3, 1, r.dEstrella, { formato: FMT_DEC });
+  h.poner(5, 0, estado.umbralesManuales ? "Umbrales fijados manualmente." : "Umbrales calculados como el promedio de los elementos fuera de la diagonal de C y de D.");
+  h.poner(6, 0, "Son un punto de partida a partir de los datos, no constantes universales de ELECTRE I.");
+  h.anchos([30, 14]);
+  return h.cerrar();
+}
+
+/** Hoja de sobreclasificaciones (lista de arcos del grafo). */
+function excelHojaSobreclasificaciones() {
+  const h = crearHojaExcel();
+  const r = estado.resultados, nombres = estado.nombresAlternativas;
+  h.poner(0, 0, "Relaciones de sobreclasificación (i S k)");
+  h.poner(2, 0, "i"); h.poner(2, 1, "sobreclasifica a"); h.poner(2, 2, "k");
+  let fila = 3;
+  for (let i = 0; i < r.H.length; i++) for (let k = 0; k < r.H.length; k++) {
+    if (r.H[i][k] === 1) { h.poner(fila, 0, nombres[i]); h.poner(fila, 1, "→"); h.poner(fila, 2, nombres[k]); fila++; }
+  }
+  if (fila === 3) h.poner(3, 0, "Ninguna con los umbrales actuales.");
+  h.anchos([18, 16, 18]);
+  return h.cerrar();
+}
+
+/** Hoja del núcleo. */
 function excelHojaNucleo() {
   const h = crearHojaExcel();
-  const r = estado.resultadosI;
-  const nA = estado.numAlternativas;
-  h.poner(0, 0, "ELECTRE I: relación de superación y núcleo");
-  h.poner(2, 0, "¿La fila supera a la columna?");
-  estado.nombresAlternativas.forEach((n, b) => h.poner(3, 1 + b, n));
-  const fila0 = 4;
-  estado.nombresAlternativas.forEach((n, a) => {
-    h.poner(fila0 + a, 0, n);
-    for (let b = 0; b < nA; b++) {
-      if (a === b) { h.poner(fila0 + a, 1 + b, "—"); continue; }
-      h.poner(fila0 + a, 1 + b, r.S[a][b] ? "Sí" : (r.veto && r.veto[a][b] ? "Veto" : "No"));
-    }
-  });
-  const filaN = fila0 + nA + 2;
-  h.poner(filaN, 0, "Alternativa"); h.poner(filaN, 1, "¿En el núcleo?");
+  const r = estado.resultados;
+  h.poner(0, 0, "Núcleo de alternativas");
+  h.poner(2, 0, "Alternativa"); h.poner(2, 1, "¿En el núcleo?");
   estado.nombresAlternativas.forEach((n, i) => {
-    h.poner(filaN + 1 + i, 0, n);
-    h.poner(filaN + 1 + i, 1, r.nucleo.includes(i) ? "Sí" : "No");
+    h.poner(3 + i, 0, n);
+    h.poner(3 + i, 1, r.nucleo.includes(i) ? "Sí" : "No");
   });
-  h.anchos([20].concat(estado.nombresAlternativas.map(() => 12)));
+  h.poner(4 + estado.numAlternativas, 0, "El núcleo reúne las alternativas que ninguna otra sobreclasifica. No es un ranking.");
+  h.anchos([22, 16]);
   return h.cerrar();
 }
 
-/** Hoja del ranking de ELECTRE II. */
-function excelHojaRanking() {
+/** Hoja de sensibilidad, si se ejecutó el barrido. */
+function excelHojaSensibilidad() {
   const h = crearHojaExcel();
-  const r = estado.resultadosII;
-  h.poner(0, 0, "ELECTRE II: ranking completo");
-  h.poner(2, 0, "Puesto"); h.poner(2, 1, "Alternativa"); h.poner(2, 2, "Posición promedio");
-  r.orden.forEach((idx, puesto) => {
-    h.poner(3 + puesto, 0, puesto + 1);
-    h.poner(3 + puesto, 1, estado.nombresAlternativas[idx]);
-    h.poner(3 + puesto, 2, r.promedio[idx], { formato: "0.00" });
+  h.poner(0, 0, "Análisis de sensibilidad");
+  if (!estado.sensibilidad || estado.sensibilidad.tipo !== "barridoI") {
+    h.poner(2, 0, "No se ejecutó el barrido de sensibilidad en esta sesión.");
+    h.anchos([50]);
+    return h.cerrar();
+  }
+  h.poner(2, 0, "Barrido de c* con d* = " + estado.sensibilidad.dFijo);
+  h.poner(3, 0, "c*"); h.poner(3, 1, "Sobreclasificaciones"); h.poner(3, 2, "Tamaño del núcleo"); h.poner(3, 3, "Núcleo");
+  estado.sensibilidad.filas.forEach((f, i) => {
+    h.poner(4 + i, 0, f.c, { formato: "0.00" });
+    h.poner(4 + i, 1, f.relaciones);
+    h.poner(4 + i, 2, f.nucleo.length);
+    h.poner(4 + i, 3, f.nucleo.map((idx) => estado.nombresAlternativas[idx]).join(", "));
   });
-  h.anchos([10, 24, 16]);
+  h.anchos([10, 20, 16, 30]);
   return h.cerrar();
 }
 
-/** Ensambla y descarga el libro de Excel con todos los resultados. */
+/** Ensambla y descarga el libro de Excel con las quince hojas. */
 function exportarExcel() {
   if (!estado.resultados) { mostrarMensaje("mensajeExportacion", "Primero calcule los resultados en el paso 3.", "error"); return; }
   if (typeof XLSX === "undefined") { mostrarMensaje("mensajeExportacion", "No se pudo cargar la biblioteca de Excel. Verifique su conexión a internet e intente de nuevo.", "error"); return; }
   const prefijo = estado.origen === "prueba" ? "PRUEBA_" : "";
+  const r = estado.resultados;
+  const nombres = estado.nombresAlternativas, crit = estado.nombresCriterios;
   const libro = XLSX.utils.book_new();
-  const hojas = ["Decisión", "Concordancia", "Discordancia", "Núcleo ELECTRE I", "Ranking ELECTRE II"];
+  const hojas = ["Datos", "Decisión", "Pesos", "Rangos", "Normalizada", "Ponderada", "Concordancia", "Discordancia", "Umbrales", "Dominancia F", "Dominancia G", "Dominancia H", "Sobreclasificación", "Núcleo", "Sensibilidad"];
   const dec = excelHojaDecision();
   XLSX.utils.book_append_sheet(libro, excelHojaMenu(hojas), "Menú");
+  XLSX.utils.book_append_sheet(libro, excelHojaDatos(), "Datos");
   XLSX.utils.book_append_sheet(libro, dec.hoja, "Decisión");
-  XLSX.utils.book_append_sheet(libro, excelHojaConcordancia(dec), "Concordancia");
-  XLSX.utils.book_append_sheet(libro, excelHojaDiscordancia(), "Discordancia");
-  XLSX.utils.book_append_sheet(libro, excelHojaNucleo(), "Núcleo ELECTRE I");
-  XLSX.utils.book_append_sheet(libro, excelHojaRanking(), "Ranking ELECTRE II");
-  const archivo = prefijo + "Aristos_ELECTRE.xlsx";
+  XLSX.utils.book_append_sheet(libro, excelHojaPesos(), "Pesos");
+  XLSX.utils.book_append_sheet(libro, excelHojaRangos(dec), "Rangos");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Matriz normalizada (R)", r.normalizada, nombres, crit, FMT_DEC), "Normalizada");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Matriz normalizada y ponderada (V)", r.V, nombres, crit, FMT_DEC), "Ponderada");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Índices de concordancia (C)", r.C, nombres, nombres, FMT_DEC), "Concordancia");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Índices de discordancia (D)", r.D, nombres, nombres, FMT_DEC), "Discordancia");
+  XLSX.utils.book_append_sheet(libro, excelHojaUmbrales(), "Umbrales");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Dominancia concordante (F)", r.F, nombres, nombres, "0"), "Dominancia F");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Dominancia discordante (G)", r.G, nombres, nombres, "0"), "Dominancia G");
+  XLSX.utils.book_append_sheet(libro, excelHojaMatriz("Dominancia agregada (H)", r.H, nombres, nombres, "0"), "Dominancia H");
+  XLSX.utils.book_append_sheet(libro, excelHojaSobreclasificaciones(), "Sobreclasificación");
+  XLSX.utils.book_append_sheet(libro, excelHojaNucleo(), "Núcleo");
+  XLSX.utils.book_append_sheet(libro, excelHojaSensibilidad(), "Sensibilidad");
+  const archivo = prefijo + "Aristos_ELECTRE_I.xlsx";
   XLSX.writeFile(libro, archivo);
   mostrarMensaje("mensajeExportacion", "Libro de Excel descargado: " + archivo, "exito");
 }
@@ -2566,96 +2557,139 @@ function generarInformePDF() {
   const r = estado.resultados;
   const doc = new DocumentoPDF();
   const esPrueba = estado.origen === "prueba";
+  const nombres = estado.nombresAlternativas;
 
   // Portada del informe
   doc.rect(doc.margen.izq, doc.y, doc.anchoUtil, 66, { relleno: COLORES_PDF.petroleo });
   doc.texto(doc.margen.izq + 16, doc.y + 28, APLICATIVO.nombre, { tamano: 20, negrita: true, color: COLORES_PDF.blanco });
-  doc.texto(doc.margen.izq + 16, doc.y + 48, "Informe ejecutivo · ELECTRE I y II · variante elegida: ELECTRE " + estado.variante, { tamano: 10, color: COLORES_PDF.aquaClaro });
+  doc.texto(doc.margen.izq + 16, doc.y + 48, "Informe metodológico · ELECTRE I", { tamano: 10, color: COLORES_PDF.aquaClaro });
   doc.y += 80;
 
   if (esPrueba) {
     doc.rect(doc.margen.izq, doc.y, doc.anchoUtil, 22, { relleno: COLORES_PDF.naranja });
-    doc.texto(doc.margen.izq + 10, doc.y + 15, "DATOS DE PRUEBA generados por la aplicación. No representan un caso real.", { tamano: 9, negrita: true, color: COLORES_PDF.blanco });
+    doc.texto(doc.margen.izq + 10, doc.y + 15, "DATOS DE PRUEBA. No representan un caso real.", { tamano: 9, negrita: true, color: COLORES_PDF.blanco });
     doc.y += 34;
   }
 
-  const rI = estado.resultadosI, rII = estado.resultadosII;
+  const nombresNucleo = r.nucleo.map((i) => nombres[i]);
 
-  // 1. Recomendación
-  doc.tituloSeccion("1. Recomendación");
-  doc.parrafo("Variante elegida en el análisis: ELECTRE " + estado.variante + ". Este informe presenta los resultados de las dos variantes.", { tamano: 9, color: COLORES_PDF.tinta2 });
-  const nombresNucleo = rI.nucleo.map((i) => estado.nombresAlternativas[i]);
-  if (rI.nucleo.length === 1) {
-    doc.parrafo("ELECTRE I. El núcleo contiene una sola alternativa no superada: " + nombresNucleo[0] + ". Es la recomendación más clara posible con esta variante, sujeta a la verificación de robustez.", { tamano: 10 });
-  } else if (rI.nucleo.length === estado.numAlternativas) {
-    doc.parrafo("ELECTRE I. Ninguna alternativa supera a otra con los umbrales aplicados: el núcleo es el conjunto completo. Conviene exigir más concordancia o menos discordancia para discriminar.", { tamano: 10 });
-  } else {
-    doc.parrafo("ELECTRE I. El núcleo reúne las alternativas que ninguna otra supera: " + nombresNucleo.join(", ") + ". La decisión final entre ellas requiere criterios adicionales o el ranking de ELECTRE II.", { tamano: 10 });
-  }
-  doc.parrafo("ELECTRE II. La alternativa mejor posicionada en el ranking es " + estado.nombresAlternativas[rII.orden[0]] + ". El orden completo aparece en la sección de resultados.", { tamano: 10 });
-
-  // 2. Estructura del modelo
-  doc.tituloSeccion("2. Estructura del modelo");
+  // 1. Configuración
+  doc.tituloSeccion("1. Configuración");
   doc.tabla(
-    [{ titulo: "Criterio", ancho: 0.4 }, { titulo: "Sentido", ancho: 0.3 }, { titulo: "Peso", ancho: 0.3, alineacion: "der" }],
-    estado.nombresCriterios.map((n, j) => {
-      const sp = sumar(estado.pesos.map(Number));
-      return [n, estado.sentidos[j] === "max" ? "maximizar" : "minimizar", comoPorcentaje(Number(estado.pesos[j]) / sp)];
-    })
+    [{ titulo: "Criterio", ancho: 0.45 }, { titulo: "Sentido", ancho: 0.3 }, { titulo: "Peso", ancho: 0.25, alineacion: "der" }],
+    estado.nombresCriterios.map((n, j) => [n, estado.sentidos[j] === "max" ? "maximizar" : "minimizar", dec(Number(estado.pesos[j]))])
+  );
+  doc.parrafo("Umbral de concordancia c* = " + dec(r.cEstrella) + ".   Umbral de discordancia d* = " + dec(r.dEstrella) + ".", { tamano: 9.5 });
+
+  // 2. Matriz de decisión
+  doc.tituloSeccion("2. Matriz de decisión");
+  doc.tabla(
+    [{ titulo: "Alt.", ancho: 0.2 }].concat(estado.nombresCriterios.map((n) => ({ titulo: n, ancho: 0.8 / estado.numCriterios, alineacion: "der" }))),
+    nombres.map((n, i) => [n].concat(estado.matriz[i].map((v) => dec(Number(v)))))
   );
 
-  // 3. Resultados: ambas variantes
-  doc.tituloSeccion("3. Resultados principales");
-  doc.parrafo("ELECTRE I: núcleo de alternativas no superadas.", { tamano: 9.5, negrita: true });
+  // 3. Concordancia y discordancia
+  doc.tituloSeccion("3. Concordancia y discordancia");
+  doc.parrafo("Matriz de concordancia C(i, k):", { tamano: 9.5, negrita: true });
   doc.tabla(
-    [{ titulo: "Alternativa", ancho: 0.5 }, { titulo: "¿En el núcleo?", ancho: 0.5, alineacion: "der" }],
-    estado.nombresAlternativas.map((n, i) => [n, { texto: rI.nucleo.includes(i) ? "Sí" : "No", negrita: rI.nucleo.includes(i), color: rI.nucleo.includes(i) ? COLORES_PDF.verde : COLORES_PDF.tinta3 }])
+    [{ titulo: "", ancho: 0.2 }].concat(nombres.map((n) => ({ titulo: n, ancho: 0.8 / nombres.length, alineacion: "der" }))),
+    r.C.map((fila, i) => [nombres[i]].concat(fila.map((v) => v === null ? "—" : dec(v))))
   );
-  doc.parrafo("ELECTRE II: ranking completo.", { tamano: 9.5, negrita: true });
+  doc.parrafo("Matriz de discordancia D(i, k):", { tamano: 9.5, negrita: true });
   doc.tabla(
-    [{ titulo: "Puesto", ancho: 0.2 }, { titulo: "Alternativa", ancho: 0.5 }, { titulo: "Posición promedio", ancho: 0.3, alineacion: "der" }],
-    rII.orden.map((idx, puesto) => [String(puesto + 1), { texto: estado.nombresAlternativas[idx], negrita: puesto === 0 }, conDecimales(rII.promedio[idx], 2)])
+    [{ titulo: "", ancho: 0.2 }].concat(nombres.map((n) => ({ titulo: n, ancho: 0.8 / nombres.length, alineacion: "der" }))),
+    r.D.map((fila, i) => [nombres[i]].concat(fila.map((v) => v === null ? "—" : dec(v))))
   );
 
-  // 4. Robustez
-  doc.tituloSeccion("4. Robustez de la recomendación");
+  // 4. Dominancia agregada
+  doc.tituloSeccion("4. Dominancia agregada (H)");
+  doc.parrafo("H(i, k) = 1 cuando i sobreclasifica a k, es decir cuando hay concordancia suficiente y la discordancia no supera el umbral.", { tamano: 9 });
+  doc.tabla(
+    [{ titulo: "", ancho: 0.2 }].concat(nombres.map((n) => ({ titulo: n, ancho: 0.8 / nombres.length, alineacion: "der" }))),
+    r.H.map((fila, i) => [nombres[i]].concat(fila.map((v) => v === null ? "—" : String(v))))
+  );
+
+  // 5. Grafo de sobreclasificación
+  doc.tituloSeccion("5. Grafo de sobreclasificación");
+  dibujarGrafoPDF(doc, r);
+
+  // 6. Núcleo
+  doc.tituloSeccion("6. Núcleo");
+  doc.parrafo("El núcleo reúne las alternativas que ninguna otra sobreclasifica: " + (nombresNucleo.length ? nombresNucleo.join(", ") : "vacío") + ".", { tamano: 10 });
+  doc.parrafo("ELECTRE I puede conservar varias alternativas en el núcleo. Reduce el conjunto de opciones admisibles mediante relaciones de sobreclasificación; no produce necesariamente un ranking completo, y el núcleo no debe leerse como «la mejor alternativa».", { tamano: 9, color: COLORES_PDF.tinta2 });
+
+  // 7. Robustez
+  doc.tituloSeccion("7. Robustez");
   if (estado.sensibilidad && estado.sensibilidad.tipo === "barridoI") {
-    const base = estado.resultados.nucleo.slice().sort().join(",");
+    const base = r.nucleo.slice().sort().join(",");
     const primeraDif = estado.sensibilidad.filas.find((f) => f.nucleo.slice().sort().join(",") !== base);
     doc.parrafo(primeraDif
-      ? "En el barrido del umbral de concordancia, el núcleo se mantiene hasta c* = " + conDecimales(primeraDif.c, 2) + ", donde cambia por primera vez. Ese es el punto de quiebre."
-      : "En el barrido del umbral de concordancia explorado, el núcleo no cambia: la recomendación es robusta frente a ese umbral.", { tamano: 9.5 });
-  } else if (estado.sensibilidad && estado.sensibilidad.tipo === "robustezII") {
-    const c = estado.sensibilidad.conteoPrimero, reps = estado.sensibilidad.reps;
-    const lider = c.indexOf(Math.max(...c));
-    doc.parrafo(estado.nombresAlternativas[lider] + " queda primera en " + comoPorcentaje(c[lider] / reps) + " de los " + reps + " escenarios perturbados.", { tamano: 9.5 });
+      ? "En el barrido del umbral de concordancia, el núcleo se mantiene hasta c* = " + conDecimales(primeraDif.c, 2) + ", donde cambia por primera vez."
+      : "En el barrido del umbral de concordancia explorado, el núcleo no cambia: el resultado es estable frente a ese umbral.", { tamano: 9.5 });
   } else {
-    doc.parrafo("No se ejecutó el análisis de sensibilidad. Se recomienda hacerlo en el paso 4 para conocer la estabilidad de la recomendación frente a cambios en los umbrales.", { tamano: 9.5, color: COLORES_PDF.tinta2 });
+    doc.parrafo("No se ejecutó el análisis de sensibilidad. Se recomienda hacerlo en el paso 4 para conocer la estabilidad del resultado frente a los umbrales.", { tamano: 9.5, color: COLORES_PDF.tinta2 });
   }
 
-  // 5. Nota metodológica
-  doc.tituloSeccion("5. Nota metodológica");
-  doc.parrafo("ELECTRE es una familia de métodos de superación desarrollada por Bernard Roy. A diferencia de los métodos que agregan todo en un único puntaje, ELECTRE compara las alternativas por pares y admite que algunas sean incomparables. La concordancia mide el peso de los criterios a favor de una superación; la discordancia mide la oposición más fuerte. Una superación se acepta si hay concordancia suficiente y ninguna desventaja la veta.", { tamano: 9 });
-  doc.parrafo("ELECTRE I entrega un núcleo: el subconjunto de alternativas que ninguna otra del núcleo supera. No produce un orden completo, y esa es una elección metodológica, no una limitación por resolver.", { tamano: 9 });
-  doc.parrafo("ELECTRE II construye un ranking mediante dos relaciones de superación, una fuerte y una débil, y combina un preorden descendente con uno ascendente.", { tamano: 9 });
+  // 8. Nota metodológica
+  doc.tituloSeccion("8. Nota metodológica");
+  doc.parrafo("Áristos ELECTRE implementa ELECTRE I como herramienta de apoyo a la decisión multicriterio. La aplicación explicita las convenciones utilizadas para la normalización por rango, el tratamiento de empates y la determinación inicial de umbrales. Estos parámetros deben interpretarse en el contexto del problema y pueden someterse a análisis de sensibilidad.", { tamano: 9 });
+  doc.parrafo("Convenciones de esta implementación: la concordancia trata el empate con el peso completo del criterio; la normalización es por rango, r = x / (máx − mín); los umbrales por defecto son el promedio de los elementos fuera de la diagonal de cada matriz.", { tamano: 8.5, color: COLORES_PDF.tinta2 });
 
-  // 6. Referencias
-  doc.tituloSeccion("6. Referencias");
+  // 9. Referencias
+  doc.tituloSeccion("9. Referencias");
   [
-    "Roy, B. (1968). Classement et choix en présence de points de vue multiples (la méthode ELECTRE). RIRO, 2(8), 57-75.",
-    "Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. Theory and Decision, 31(1), 49-73.",
-    "Figueira, J., Mousseau, V., & Roy, B. (2016). ELECTRE methods. En Multiple Criteria Decision Analysis (pp. 155-185). Springer."
+    "Roy, B. (1991). The outranking approach and the foundations of ELECTRE methods. Theory and Decision, 31, 49-73. DOI: 10.1007/BF00134132",
+    "Figueira, J., Mousseau, V., & Roy, B. (2005). ELECTRE Methods. En Multiple Criteria Decision Analysis: State of the Art Surveys. Springer. DOI: 10.1007/0-387-23081-5_4",
+    "Shanian, A., & Savadogo, O. (2006). ELECTRE I Decision Support Model for Material Selection of Bipolar Plates for Polymer Electrolyte Fuel Cells Applications. Journal of New Materials for Electrochemical Systems, 9(3), 191-199."
   ].forEach((ref) => doc.parrafo(ref, { tamano: 8.5, interlineado: 1.35, despues: 4 }));
 
   doc.parrafo(APLICATIVO.nota, { tamano: 8, color: COLORES_PDF.tinta2, despues: 2 });
 
   return doc.generar({
-    titulo: APLICATIVO.nombre + " · Informe ELECTRE " + r.variante,
+    titulo: APLICATIVO.nombre + " · Informe ELECTRE I",
     autor: APLICATIVO.autor,
-    asunto: "Informe de decisión multicriterio con ELECTRE",
+    asunto: "Informe de decisión multicriterio con ELECTRE I",
     decorarFondo: decorarFondoPDF,
     decorarPie: decorarPiePDF
   });
+}
+
+/** Dibuja el grafo de sobreclasificación dentro del PDF. */
+function dibujarGrafoPDF(doc, r) {
+  const n = r.H.length;
+  const nombres = estado.nombresAlternativas;
+  const alto = 230, rNodo = 20;
+  doc.asegurar(alto + 20);
+  const cx = doc.margen.izq + doc.anchoUtil / 2;
+  const cy = doc.y + alto / 2;
+  const radio = Math.min(doc.anchoUtil / 2, alto / 2) - rNodo - 12;
+  const pos = Array.from({ length: n }, (_, i) => {
+    const ang = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    return { x: cx + radio * Math.cos(ang), y: cy + radio * Math.sin(ang) };
+  });
+  // Aristas
+  for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) {
+    if (a === b || r.H[a][b] !== 1) continue;
+    const p = pos[a], q = pos[b];
+    const dx = q.x - p.x, dy = q.y - p.y, dist = Math.hypot(dx, dy) || 1;
+    const ux = dx / dist, uy = dy / dist;
+    const x1 = p.x + ux * rNodo, y1 = p.y + uy * rNodo;
+    const x2 = q.x - ux * (rNodo + 3), y2 = q.y - uy * (rNodo + 3);
+    doc.linea(x1, y1, x2, y2, { color: COLORES_PDF.aqua, grosor: 1 });
+    // Punta de flecha
+    const ang = Math.atan2(y2 - y1, x2 - x1);
+    doc.linea(x2, y2, x2 - 6 * Math.cos(ang - 0.4), y2 - 6 * Math.sin(ang - 0.4), { color: COLORES_PDF.aqua, grosor: 1 });
+    doc.linea(x2, y2, x2 - 6 * Math.cos(ang + 0.4), y2 - 6 * Math.sin(ang + 0.4), { color: COLORES_PDF.aqua, grosor: 1 });
+  }
+  // Nodos
+  pos.forEach((p, i) => {
+    const enNucleo = r.nucleo.includes(i);
+    doc.circulo(p.x, p.y, rNodo, { relleno: enNucleo ? COLORES_PDF.ambar : COLORES_PDF.petroleoClaro });
+    const etq = nombres[i].length > 7 ? nombres[i].slice(0, 6) + "…" : nombres[i];
+    doc.texto(p.x, p.y + 3, etq, { tamano: 8, negrita: true, color: enNucleo ? COLORES_PDF.petroleo : COLORES_PDF.blanco, alineacion: "centro" });
+  });
+  doc.y += alto;
+  doc.parrafo("Un arco de i hacia k indica que i sobreclasifica a k. Los nodos del núcleo aparecen en ámbar.", { tamano: 8.5, color: COLORES_PDF.tinta2 });
 }
 
 /** Descarga el informe PDF. */
@@ -2667,7 +2701,7 @@ function exportarInformePDF() {
     const blob = new Blob([bytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = prefijo + "Aristos_ELECTRE.pdf";
+    a.href = url; a.download = prefijo + "Aristos_ELECTRE_I.pdf";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     mostrarMensaje("mensajeExportacion", "Informe PDF descargado.", "exito");
@@ -2685,83 +2719,134 @@ function exportarInformePDF() {
 /** Comparación con tolerancia. */
 function cerca(a, b, tol = 1e-9) { return Math.abs(a - b) < tol; }
 
-/** Batería de pruebas. Cada una devuelve { ok, detalle }. */
+/** Batería de pruebas de ELECTRE I. Cada una devuelve { ok, detalle }. */
 const PRUEBAS = [
-  { nombre: "1. Concordancia total cuando A domina en todo", fn: () => {
-    const d = { matriz: [[10, 10], [1, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
-    const r = electreI(d);
-    return { ok: cerca(r.C[0][1], 1) && cerca(r.C[1][0], 0), detalle: "C(A,B)=" + r.C[0][1] + ", C(B,A)=" + r.C[1][0] };
+  { nombre: "1. Los pesos del caso de validación suman 1", fn: () => {
+    const w = [0.25, 0.25, 0.20, 0.10, 0.20];
+    return { ok: cerca(sumar(w), 1), detalle: "suma = " + conDecimales(sumar(w), 4) };
   }},
-  { nombre: "2. Discordancia nula cuando A domina en todo", fn: () => {
-    const d = { matriz: [[10, 10], [1, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+  { nombre: "2. Dirección: en maximizar, el mayor es igual o mejor", fn: () => {
+    const d = { matriz: [[10, 5], [5, 10]], pesos: [0.5, 0.5], sentidos: ["max", "max"], umbrales: { cEstrella: 0.5, dEstrella: 0.5 } };
     const r = electreI(d);
-    return { ok: cerca(r.D[0][1], 0) && cerca(r.D[1][0], 1), detalle: "D(A,B)=" + r.D[0][1] + ", D(B,A)=" + r.D[1][0] };
+    return { ok: cerca(r.C[0][1], 0.5) && cerca(r.C[1][0], 0.5), detalle: "C(A,B)=" + conDecimales(r.C[0][1], 4) };
   }},
-  { nombre: "3. A domina a B: A supera y B no", fn: () => {
-    const d = { matriz: [[10, 10], [1, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+  { nombre: "3. Dirección: en minimizar, el menor es igual o mejor", fn: () => {
+    const d = { matriz: [[1], [10]], pesos: [1], sentidos: ["min"], umbrales: { cEstrella: 0.5, dEstrella: 0.5 } };
     const r = electreI(d);
-    return { ok: r.S[0][1] === true && r.S[1][0] === false, detalle: "S(A,B)=" + r.S[0][1] + ", S(B,A)=" + r.S[1][0] };
+    return { ok: cerca(r.C[0][1], 1) && cerca(r.C[1][0], 0), detalle: "A(1) mejor que B(10): C(A,B)=" + conDecimales(r.C[0][1], 4) };
   }},
-  { nombre: "4. Núcleo de dominancia clara es la alternativa dominante", fn: () => {
-    const d = { matriz: [[10, 10], [1, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+  { nombre: "4. Empate: recibe el peso completo del criterio", fn: () => {
+    const d = { matriz: [[5, 3], [5, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], umbrales: { cEstrella: 0.5, dEstrella: 0.5 } };
     const r = electreI(d);
-    return { ok: r.nucleo.length === 1 && r.nucleo[0] === 0, detalle: "núcleo=" + JSON.stringify(r.nucleo) };
+    // A empata en el primero (0.5) y gana el segundo (0.5) => C(A,B)=1. B empata en el primero => C(B,A)=0.5.
+    return { ok: cerca(r.C[0][1], 1) && cerca(r.C[1][0], 0.5), detalle: "C(A,B)=" + conDecimales(r.C[0][1], 4) + ", C(B,A)=" + conDecimales(r.C[1][0], 4) };
   }},
-  { nombre: "5. Criterio de minimizar invierte la ventaja", fn: () => {
-    // A tiene costo 1 (mejor si min), B tiene costo 10. A debe superar a B.
-    const d = { matriz: [[1], [10]], pesos: [1], sentidos: ["min"], normalizacion: "minmax", modoVeto: "global", vetos: [null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+  { nombre: "5. Rangos por criterio: máx menos mín", fn: () => {
+    const d = { matriz: [[10, 2], [4, 8]], pesos: [0.5, 0.5], sentidos: ["max", "max"], umbrales: { cEstrella: 0.5, dEstrella: 0.5 } };
     const r = electreI(d);
-    return { ok: r.S[0][1] === true && r.S[1][0] === false, detalle: "con costo, A(1) supera a B(10): S(A,B)=" + r.S[0][1] };
+    return { ok: cerca(r.rangos[0].rango, 6) && cerca(r.rangos[1].rango, 6), detalle: "rangos = " + r.rangos.map((x) => x.rango).join(", ") };
   }},
-  { nombre: "6. Veto por criterio impide superación pese a concordancia", fn: () => {
-    // A gana en 2 criterios (concordancia alta) pero tiene una desventaja enorme en el 3.
-    const d = { matriz: [[10, 10, 0], [0, 0, 100]], pesos: [0.4, 0.4, 0.2], sentidos: ["max", "max", "max"], normalizacion: "minmax", modoVeto: "criterio", vetos: [null, null, 50], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+  { nombre: "6. Normalización por rango: r = x / (máx − mín)", fn: () => {
+    const d = { matriz: [[10, 2], [4, 8]], pesos: [0.5, 0.5], sentidos: ["max", "max"], umbrales: { cEstrella: 0.5, dEstrella: 0.5 } };
     const r = electreI(d);
-    return { ok: r.veto[0][1] === true && r.S[0][1] === false, detalle: "veto activo=" + r.veto[0][1] + ", A no supera a B pese a concordancia " + conDecimales(r.C[0][1], 2) };
+    return { ok: cerca(r.normalizada[0][0], 10 / 6) && cerca(r.normalizada[1][0], 4 / 6), detalle: "r(A,C1)=" + conDecimales(r.normalizada[0][0], 4) + " (esperado " + conDecimales(10 / 6, 4) + ")" };
   }},
-  { nombre: "7. Empate total: nadie supera, núcleo completo", fn: () => {
-    const d = { matriz: [[5, 5], [5, 5], [5, 5]], pesos: [0.5, 0.5], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+  { nombre: "7. Ponderación: v = w · r", fn: () => {
+    const d = { matriz: [[10, 2], [4, 8]], pesos: [0.3, 0.7], sentidos: ["max", "max"], umbrales: { cEstrella: 0.5, dEstrella: 0.5 } };
     const r = electreI(d);
-    return { ok: r.nucleo.length === 3, detalle: "núcleo=" + JSON.stringify(r.nucleo) };
+    return { ok: cerca(r.V[0][0], 0.3 * (10 / 6)), detalle: "v(A,C1)=" + conDecimales(r.V[0][0], 4) };
   }},
-  { nombre: "8. Concordancia contra cálculo analítico conocido", fn: () => {
-    // 2 criterios peso 0.3 y 0.7; A gana solo el segundo => C(A,B)=0.7
-    const d = { matriz: [[1, 10], [10, 1]], pesos: [0.3, 0.7], sentidos: ["max", "max"], normalizacion: "minmax", modoVeto: "global", vetos: [null, null], umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+  { nombre: "8. Concordancia analítica: C(A,B) con pesos 0.3 y 0.7", fn: () => {
+    const d = { matriz: [[1, 10], [10, 1]], pesos: [0.3, 0.7], sentidos: ["max", "max"], umbrales: { cEstrella: 0.5, dEstrella: 0.5 } };
     const r = electreI(d);
     return { ok: cerca(r.C[0][1], 0.7) && cerca(r.C[1][0], 0.3), detalle: "C(A,B)=" + conDecimales(r.C[0][1], 4) + " (esperado 0.7)" };
   }},
-  { nombre: "9. Tamaño dinámico: matriz 6x5 produce resultados coherentes", fn: () => {
-    const nA = 6, nC = 5;
-    let s = 7;
-    const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-    const matriz = Array.from({ length: nA }, () => Array.from({ length: nC }, () => rnd() * 100));
-    const d = { matriz, pesos: Array(nC).fill(1), sentidos: Array(nC).fill("max"), normalizacion: "minmax", modoVeto: "global", vetos: Array(nC).fill(null), umbrales: { cEstrella: 0.6, dEstrella: 0.4 } };
+  { nombre: "9. Discordancia nula cuando A domina en todo", fn: () => {
+    const d = { matriz: [[10, 10], [1, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], umbrales: { cEstrella: 0.5, dEstrella: 0.5 } };
     const r = electreI(d);
-    const cValido = r.C.every((f, a) => f.every((v, b) => a === b || (v >= 0 && v <= 1)));
-    return { ok: cValido && r.nucleo.length >= 1 && r.nucleo.length <= nA, detalle: "C en rango [0,1] y núcleo de tamaño " + r.nucleo.length };
+    return { ok: cerca(r.D[0][1], 0) && cerca(r.D[1][0], 1), detalle: "D(A,B)=" + conDecimales(r.D[0][1], 4) + ", D(B,A)=" + conDecimales(r.D[1][0], 4) };
   }},
-  { nombre: "10. ELECTRE II ordena alternativa dominante primero", fn: () => {
-    const d = { matriz: [[10, 10, 10], [5, 5, 5], [1, 1, 1]], pesos: [1, 1, 1], sentidos: ["max", "max", "max"], normalizacion: "minmax", c1: 0.65, c2: 0.5, d1: 0.4, d2: 0.7, umbrales: { c1: 0.65, c2: 0.5, d1: 0.4, d2: 0.7 } };
-    const r = electreII(d);
-    return { ok: r.orden[0] === 0 && r.orden[2] === 2, detalle: "orden=" + JSON.stringify(r.orden.map((i) => i + 1)) };
+  { nombre: "10. Umbrales por defecto: promedio fuera de la diagonal", fn: () => {
+    const d = { matriz: [[100, 15], [200, 25], [250, 20]], pesos: [0.5, 0.5], sentidos: ["max", "max"] };
+    const r = electreI(d);
+    const off = [];
+    for (let i = 0; i < r.C.length; i++) for (let k = 0; k < r.C.length; k++) if (i !== k) off.push(r.C[i][k]);
+    return { ok: cerca(r.cEstrella, sumar(off) / off.length), detalle: "c* = " + conDecimales(r.cEstrella, 4) };
   }},
-  { nombre: "11. Estructura del Excel: seis hojas con nombres esperados", fn: () => {
+  { nombre: "11. F, G y H: H es la conjunción de F y G", fn: () => {
+    const r = electreI(datosValidacion());
+    let ok = true;
+    for (let i = 0; i < r.H.length; i++) for (let k = 0; k < r.H.length; k++) if (i !== k) {
+      const esperado = (r.F[i][k] === 1 && r.G[i][k] === 1) ? 1 : 0;
+      if (r.H[i][k] !== esperado) ok = false;
+    }
+    return { ok, detalle: "H(i,k) = F(i,k) y G(i,k) en todas las celdas" };
+  }},
+  { nombre: "12. Generación de arcos: H(i,k)=1 equivale a i sobreclasifica a k", fn: () => {
+    const r = electreI(datosValidacion());
+    const arcos = listaSobreclasificacionesIdx(r.H).length;
+    let unos = 0;
+    for (let i = 0; i < r.H.length; i++) for (let k = 0; k < r.H.length; k++) if (r.H[i][k] === 1) unos++;
+    return { ok: arcos === unos, detalle: "arcos = " + arcos };
+  }},
+  { nombre: "13. Núcleo: alternativa sale si otra la sobreclasifica", fn: () => {
+    // A dominada por B; C independiente. Núcleo debe excluir A.
+    const d = { matriz: [[1, 1], [10, 10], [5, 1]], pesos: [0.5, 0.5], sentidos: ["max", "max"], umbrales: { cEstrella: 0.5, dEstrella: 0.99 } };
+    const r = electreI(d);
+    return { ok: !r.nucleo.includes(0), detalle: "núcleo = " + JSON.stringify(r.nucleo.map((i) => i + 1)) };
+  }},
+  { nombre: "14. Precisión visual independiente del cálculo", fn: () => {
+    const d = datosValidacion();
+    const r1 = electreI(d);
+    const previa = estado.decimales;
+    estado.decimales = 2;
+    const texto = dec(r1.cEstrella);
+    estado.decimales = previa;
+    const r2 = electreI(d);
+    return { ok: cerca(r1.cEstrella, r2.cEstrella) && texto.length > 0, detalle: "c* completo = " + r1.cEstrella + ", mostrado a 2 dec = " + texto };
+  }},
+  { nombre: "15. Caso de validación: c* esperado 0.5475", fn: () => {
+    const r = electreI(datosValidacion());
+    return { ok: cerca(r.cEstrella, 0.5475, 1e-4), detalle: "c* = " + conDecimales(r.cEstrella, 4) };
+  }},
+  { nombre: "16. Caso de validación: núcleo = {D, E}", fn: () => {
+    const r = electreI(datosValidacion());
+    const nucleo = r.nucleo.slice().sort().join(",");
+    return { ok: nucleo === "3,4", detalle: "núcleo = " + JSON.stringify(r.nucleo.map((i) => "ABCDE"[i])) };
+  }},
+  { nombre: "17. Caso de validación: sobreclasificaciones esperadas", fn: () => {
+    const r = electreI(datosValidacion());
+    const arcos = listaSobreclasificacionesIdx(r.H).map((p) => "ABCDE"[p[0]] + "→" + "ABCDE"[p[1]]).sort().join(", ");
+    const esperado = ["B→A", "B→C", "C→A", "D→A", "D→B", "D→C", "E→A", "E→C"].sort().join(", ");
+    return { ok: arcos === esperado, detalle: arcos };
+  }},
+  { nombre: "18. Estructura del Excel: quince hojas con nombres esperados", fn: () => {
     if (typeof XLSX === "undefined") return { ok: false, detalle: "SheetJS no disponible en este entorno" };
-    guardarEstadoParaPrueba();
+    prepararEstadoValidacion();
     const libro = XLSX.utils.book_new();
     const dec = excelHojaDecision();
-    XLSX.utils.book_append_sheet(libro, excelHojaMenu(["Decisión", "Concordancia", "Discordancia", "Núcleo ELECTRE I", "Ranking ELECTRE II"]), "Menú");
+    const nombres = estado.nombresAlternativas, crit = estado.nombresCriterios, r = estado.resultados;
+    ["Menú", "Datos", "Decisión", "Pesos", "Rangos", "Normalizada", "Ponderada", "Concordancia", "Discordancia", "Umbrales", "Dominancia F", "Dominancia G", "Dominancia H", "Sobreclasificación", "Núcleo", "Sensibilidad"].forEach(() => {});
+    XLSX.utils.book_append_sheet(libro, excelHojaMenu(["Datos"]), "Menú");
+    XLSX.utils.book_append_sheet(libro, excelHojaDatos(), "Datos");
     XLSX.utils.book_append_sheet(libro, dec.hoja, "Decisión");
-    XLSX.utils.book_append_sheet(libro, excelHojaConcordancia(dec), "Concordancia");
-    XLSX.utils.book_append_sheet(libro, excelHojaDiscordancia(), "Discordancia");
-    XLSX.utils.book_append_sheet(libro, excelHojaNucleo(), "Núcleo ELECTRE I");
-    XLSX.utils.book_append_sheet(libro, excelHojaRanking(), "Ranking ELECTRE II");
-    const esperadas = ["Menú", "Decisión", "Concordancia", "Discordancia", "Núcleo ELECTRE I", "Ranking ELECTRE II"];
-    const ok = esperadas.every((n) => libro.SheetNames.includes(n));
-    return { ok, detalle: "hojas=" + libro.SheetNames.join(", ") };
+    XLSX.utils.book_append_sheet(libro, excelHojaPesos(), "Pesos");
+    XLSX.utils.book_append_sheet(libro, excelHojaRangos(dec), "Rangos");
+    XLSX.utils.book_append_sheet(libro, excelHojaMatriz("R", r.normalizada, nombres, crit, FMT_DEC), "Normalizada");
+    XLSX.utils.book_append_sheet(libro, excelHojaMatriz("V", r.V, nombres, crit, FMT_DEC), "Ponderada");
+    XLSX.utils.book_append_sheet(libro, excelHojaMatriz("C", r.C, nombres, nombres, FMT_DEC), "Concordancia");
+    XLSX.utils.book_append_sheet(libro, excelHojaMatriz("D", r.D, nombres, nombres, FMT_DEC), "Discordancia");
+    XLSX.utils.book_append_sheet(libro, excelHojaUmbrales(), "Umbrales");
+    XLSX.utils.book_append_sheet(libro, excelHojaMatriz("F", r.F, nombres, nombres, "0"), "Dominancia F");
+    XLSX.utils.book_append_sheet(libro, excelHojaMatriz("G", r.G, nombres, nombres, "0"), "Dominancia G");
+    XLSX.utils.book_append_sheet(libro, excelHojaMatriz("H", r.H, nombres, nombres, "0"), "Dominancia H");
+    XLSX.utils.book_append_sheet(libro, excelHojaSobreclasificaciones(), "Sobreclasificación");
+    XLSX.utils.book_append_sheet(libro, excelHojaNucleo(), "Núcleo");
+    XLSX.utils.book_append_sheet(libro, excelHojaSensibilidad(), "Sensibilidad");
+    return { ok: libro.SheetNames.length === 16, detalle: libro.SheetNames.length + " hojas (Menú + 15)" };
   }},
-  { nombre: "12. Estructura del PDF: genera bytes con cabecera válida", fn: () => {
-    guardarEstadoParaPrueba();
+  { nombre: "19. Estructura del PDF: genera bytes con cabecera válida", fn: () => {
+    prepararEstadoValidacion();
     const bytes = generarInformePDF();
     const cabecera = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]);
     const cola = Array.from(bytes.slice(-6)).map((b) => String.fromCharCode(b)).join("");
@@ -2769,20 +2854,36 @@ const PRUEBAS = [
   }}
 ];
 
-/** Prepara un estado mínimo válido para las pruebas de exportación. */
-function guardarEstadoParaPrueba() {
-  if (estado.resultados) return; // ya hay resultados reales
-  estado.numAlternativas = 3; estado.numCriterios = 3;
-  estado.nombresAlternativas = ["A", "B", "C"];
-  estado.nombresCriterios = ["C1", "C2", "C3"];
-  estado.sentidos = ["max", "max", "max"];
-  estado.pesos = [1, 1, 1]; estado.vetos = ["", "", ""];
-  estado.matriz = [[8, 6, 7], [5, 9, 4], [6, 5, 8]];
-  estado.variante = "I"; estado.modoVeto = "global"; estado.normalizacion = "minmax";
-  const datos = { matriz: estado.matriz, pesos: estado.pesos, sentidos: estado.sentidos, variante: "I", normalizacion: "minmax", modoVeto: "global", vetos: [null, null, null], umbrales: Object.assign({}, estado.umbrales) };
-  estado.resultadosI = electreI(datos); estado.resultadosI.datos = datos;
-  estado.resultadosII = electreII(datos); estado.resultadosII.datos = datos;
-  estado.resultados = estado.resultadosI;
+/** Datos del caso de validación de la especificación. */
+function datosValidacion() {
+  return {
+    matriz: [[100, 15, 7, 40, 50], [200, 25, 7, 60, 200], [100, 20, 4, 25, 25], [200, 30, 20, 70, 350], [250, 25, 15, 100, 500]],
+    pesos: [0.25, 0.25, 0.20, 0.10, 0.20],
+    sentidos: ["max", "max", "max", "max", "min"]
+  };
+}
+
+/** Lista de arcos (pares de índices) a partir de H. */
+function listaSobreclasificacionesIdx(H) {
+  const arcos = [];
+  for (let i = 0; i < H.length; i++) for (let k = 0; k < H.length; k++) if (H[i][k] === 1) arcos.push([i, k]);
+  return arcos;
+}
+
+/** Prepara un estado completo con el caso de validación para las pruebas de exportación. */
+function prepararEstadoValidacion() {
+  const d = datosValidacion();
+  estado.numAlternativas = 5; estado.numCriterios = 5;
+  estado.nombresAlternativas = ["A", "B", "C", "D", "E"];
+  estado.nombresCriterios = ["VAN", "TIR", "Empleo", "Ventas", "Impacto ambiental"];
+  estado.sentidos = d.sentidos.slice();
+  estado.pesos = d.pesos.slice();
+  estado.matriz = d.matriz.map((f) => f.slice());
+  estado.umbralesManuales = false;
+  estado.resultados = electreI(d);
+  estado.resultados.datos = d;
+  estado.umbrales.cEstrella = estado.resultados.cEstrella;
+  estado.umbrales.dEstrella = estado.resultados.dEstrella;
 }
 
 /** Ejecuta la batería y muestra la tabla de resultados. */
@@ -2815,34 +2916,39 @@ function rellenarIdentidad() {
 function limpiarAplicacion() {
   if (!confirm("Esto borrará los datos ingresados y reiniciará la aplicación. ¿Desea continuar?")) return;
   estado.nombresAlternativas = []; estado.nombresCriterios = [];
-  estado.sentidos = []; estado.pesos = []; estado.vetos = [];
+  estado.sentidos = []; estado.pesos = [];
   estado.matriz = []; estado.resultados = null; estado.configurado = false; estado.origen = "vacio";
+  estado.umbrales.cEstrella = null; estado.umbrales.dEstrella = null; estado.umbralesManuales = false;
+  estado.sensibilidad = null;
+  $("cEstrella").value = ""; $("dEstrella").value = "";
   $("seccionDatos").hidden = true; $("seccionResultados").hidden = true;
+  $("seccionSensibilidad").hidden = true; $("seccionExportacion").hidden = true;
   actualizarOrigen(); actualizarEstadosRiel();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   rellenarIdentidad();
-  construirControlesDemo();
-  pintarDemo();
+  if (typeof construirControlesDemo === "function") { construirControlesDemo(); pintarDemo(); }
   actualizarOrigen();
   actualizarEstadosRiel();
 
-  $("variante").addEventListener("change", alternarUmbrales);
-  $("modoVeto").addEventListener("change", alternarCampoVeto);
   $("aplicarConfiguracion").addEventListener("click", aplicarConfiguracion);
   $("cargarEjemplo").addEventListener("click", cargarDatosPrueba);
-  $("umbralesSugeridos").addEventListener("click", aplicarUmbralesRecomendados);
   $("calcularResultados").addEventListener("click", calcularYMostrar);
-  $("limpiarAplicacion").addEventListener("click", limpiarAplicacion);
+  $("decimales").addEventListener("change", () => {
+    estado.decimales = parseInt($("decimales").value, 10) || 4;
+    if (estado.resultados) renderizarResultados();
+  });
+  $("sensC").addEventListener("input", actualizarSensibilidadVivo);
+  $("sensD").addEventListener("input", actualizarSensibilidadVivo);
   $("ejecutarBarridoI").addEventListener("click", ejecutarBarridoI);
-  $("ejecutarRobustezII").addEventListener("click", ejecutarRobustezII);
   $("exportarExcel").addEventListener("click", exportarExcel);
   $("exportarPDF").addEventListener("click", exportarInformePDF);
-  $("ejecutarPruebas").addEventListener("click", ejecutarPruebas);
-  alternarUmbrales();
-  alternarCampoVeto();
+  const btnPruebas = $("ejecutarPruebas");
+  if (btnPruebas) btnPruebas.addEventListener("click", ejecutarPruebas);
+  const btnLimpiar = $("limpiarAplicacion");
+  if (btnLimpiar) btnLimpiar.addEventListener("click", limpiarAplicacion);
 });
 </script>
 </body>
